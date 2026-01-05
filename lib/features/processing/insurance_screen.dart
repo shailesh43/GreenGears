@@ -28,7 +28,9 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
           ),
         ),
       ),
-      body: const Center(
+
+
+      body:  Center(
         child: Text(
           'Insurance Screen',
           style: TextStyle(fontSize: 18),
