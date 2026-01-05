@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../request/request_vehicle.dart';
 import '../../features/profile/profile_page.dart';
-
+import '../request/search_request_vehicle.dart';
 class DashboardAdmin extends StatelessWidget {
   const DashboardAdmin({super.key});
 
@@ -244,29 +244,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Search Requests',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color.fromRGBO(0, 0, 0, 0.80),
+                          GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SearchScreen(),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Browse through the requested vehicles',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[500],
+                                );
+                              },
+                            child: Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Search Requests',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color.fromRGBO(0, 0, 0, 0.80),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Browse through the requested vehicles',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+
                         ],
                       ),
                     ),

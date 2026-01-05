@@ -440,7 +440,7 @@ class _Policy extends State<Policy> {
       ),
       child: Column(
         children: [
-          _buildTableRow('Grade', 'Ex-showroom', 'Maintenance', 'Fuel', 'Driver', isHeader: true),
+          _buildTableRow('Grade', 'Ex-SR', 'MNT', 'Fuel', 'Driver', isHeader: true),
           _buildTableRow('MA', '₹20L', '₹5,000', '₹19,000', '₹12,000'),
           _buildTableRow('MB', '₹12L', '₹4,000', '₹16,000', '₹11,000'),
           _buildTableRow('MC', '₹10L', '₹3,500', '₹14,500', '₹10,000'),
