@@ -20,7 +20,7 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Insurance',
+          'Assign ESNA',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -30,7 +30,7 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
       ),
       body: const Center(
         child: Text(
-          'Insurance Screen',
+          'Assign ESNA Screen',
           style: TextStyle(fontSize: 18),
         ),
       ),

@@ -58,7 +58,7 @@ class _Policy extends State<Policy> {
               const SnackBar(
                 content: Text('Downloading policy ...'),
                 backgroundColor: Color.fromRGBO(
-                    152, 151, 151, 0.9607843137254902),
+                    117, 117, 117, 1),
               ),
             );
 

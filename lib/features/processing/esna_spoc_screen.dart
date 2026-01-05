@@ -20,7 +20,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Insurance',
+          'ESNA spoc',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -30,7 +30,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
       ),
       body: const Center(
         child: Text(
-          'Insurance Screen',
+          'ESNA spoc Screen',
           style: TextStyle(fontSize: 18),
         ),
       ),
