@@ -59,7 +59,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -101,6 +101,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF2ECC71),
+                        letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 24),
