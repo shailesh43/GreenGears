@@ -74,7 +74,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => InsuraceScreen(),
+                    builder: (context) => InsuranceScreen(),
                   ),
                 );
               },
