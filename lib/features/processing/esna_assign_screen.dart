@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-class InsuranceScreen extends StatefulWidget {
-  const InsuranceScreen({super.key});
+class EsnaAssignScreen extends StatefulWidget {
+  const EsnaAssignScreen({Key? key}) : super(key: key);
 
   @override
-  State<InsuranceScreen> createState() => _InsuranceScreenState();
+  State<EsnaAssignScreen> createState() => _EsnaAssignScreenState();
 }
 
-class _InsuranceScreenState extends State<InsuranceScreenState> {
+class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -22,21 +22,18 @@ class _InsuranceScreenState extends State<InsuranceScreenState> {
         title: const Text(
           'Insurance',
           style: TextStyle(
-            fontFamily: 'Inter',
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
-      body: Padding(
-        const Center(
-          child: Text(
-            'List of requests which has to assign insurance statements',
-            style: TextStyle(fontSize: 24),
-          ),
+      body: const Center(
+        child: Text(
+          'Insurance Screen',
+          style: TextStyle(fontSize: 18),
         ),
       ),
-    )
+    );
   }
 }

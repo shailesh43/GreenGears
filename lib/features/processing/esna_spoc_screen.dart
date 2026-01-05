@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-class EsnaAssignScreen extends StatefulWidget {
-  const EsnaAssignScreen({super.key});
+class EsnaSpocScreen extends StatefulWidget {
+  const EsnaSpocScreen({Key? key}) : super(key: key);
 
   @override
-  State<EsnaAssignScreen> createState() => _EsnaAssignScreenState();
+  State<EsnaSpocScreen> createState() => _EsnaSpocScreenState();
 }
 
-class _EsnaAssignScreenState extends State<EsnaAssignScreenState> {
+class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -20,23 +20,20 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreenState> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Assign ES&A spoc',
+          'Insurance',
           style: TextStyle(
-            fontFamily: 'Inter',
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
-      body: Padding(
-        const Center(
-          child: Text(
-            'List of ES&As spoc assignment requests',
-            style: TextStyle(fontSize: 24),
-          ),
+      body: const Center(
+        child: Text(
+          'Insurance Screen',
+          style: TextStyle(fontSize: 18),
         ),
       ),
-    )
+    );
   }
 }

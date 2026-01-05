@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import '../screens/esna_assign_screen.dart';
-import '../screens/esna_spoc_screen.dart';
-import '../screens/insurance_screen.dart';
+import 'esna_assign_screen.dart';
+import 'esna_spoc_screen.dart';
+import 'insurance_screen.dart';
 
-class ProcessingPage extends StatelessWidget {
+class ProcessingPage extends StatefulWidget {
   const ProcessingPage({Key? key}) : super(key: key);
 
+  @override
+  State<ProcessingPage> createState() => _ProcessingPageState();
+}
+
+class _ProcessingPageState extends State<ProcessingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,40 +37,45 @@ class ProcessingPage extends StatelessWidget {
         child: Column(
           children: [
             _buildCard(
-              context,
               title: 'Assign ES&A spoc',
               subtitle: 'List of ES&As spoc assignment requests',
               imagePath: 'assets/images/assign_esna.png',
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Sample1()),
+                  MaterialPageRoute(
+                    builder: (context) => EsnaAssignScreen(),
+                  ),
                 );
               },
             ),
             const SizedBox(height: 16),
             _buildCard(
-              context,
               title: 'ES&A spoc',
-              subtitle: 'List of requests which has to be assigned to insurance',
+              subtitle:
+              'List of requests which has to be assigned to insurance',
               imagePath: 'assets/images/esna_spoc.png',
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Sample2()),
+                  MaterialPageRoute(
+                    builder: (context) => EsnaSpocScreen(),
+                  ),
                 );
               },
             ),
             const SizedBox(height: 16),
             _buildCard(
-              context,
               title: 'Insurance',
-              subtitle: 'List of requests which has to provide insurance statements',
+              subtitle:
+              'List of requests which has to provide insurance statements',
               imagePath: 'assets/images/insurance.png',
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Sample3()),
+                  MaterialPageRoute(
+                    builder: (context) => InsuraceScreen(),
+                  ),
                 );
               },
             ),
@@ -75,13 +85,12 @@ class ProcessingPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(
-      BuildContext context, {
-        required String title,
-        required String subtitle,
-        required String imagePath,
-        required VoidCallback onTap,
-      }) {
+  Widget _buildCard({
+    required String title,
+    required String subtitle,
+    required String imagePath,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -126,43 +135,6 @@ class ProcessingPage extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// Placeholder screens
-class Sample1 extends StatelessWidget {
-  const Sample1({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sample 1')),
-      body: const Center(child: Text('Sample 1 Screen')),
-    );
-  }
-}
-
-class Sample2 extends StatelessWidget {
-  const Sample2({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sample 2')),
-      body: const Center(child: Text('Sample 2 Screen')),
-    );
-  }
-}
-
-class Sample3 extends StatelessWidget {
-  const Sample3({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sample 3')),
-      body: const Center(child: Text('Sample 3 Screen')),
     );
   }
 }
