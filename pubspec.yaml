@@ -17,6 +17,8 @@ dependencies:
   # Material icons
   cupertino_icons: ^1.0.8
 
+  # download functionality
+  path_provider: ^2.1.5
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -27,6 +29,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/docs/CarPolicy.pdf
   fonts:
     - family: Inter
       fonts:

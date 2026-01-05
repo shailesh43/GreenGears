@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+
 
 class PolicyPage extends StatelessWidget {
   const PolicyPage({super.key});
@@ -49,33 +53,52 @@ class _Policy extends State<Policy> {
       ),
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
+          shape: CircleBorder(),
         onPressed: () async {
-          // Download policy logic here
           try {
-            // Add flutter_downloader or path_provider package for actual download
-            // For now, showing a message
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Downloading policy ...'),
-                backgroundColor: Color.fromRGBO(
-                    117, 117, 117, 1),
+                backgroundColor: Color.fromRGBO(117, 117, 117, 1),
               ),
             );
 
-            // Actual implementation would be:
-            // final ByteData bytes = await rootBundle.load('assets/docs/policy.pdf');
-            // final Directory dir = await getApplicationDocumentsDirectory();
-            // final File file = File('${dir.path}/CarPolicy.pdf');
-            // await file.writeAsBytes(bytes.buffer.asUint8List());
+            // Load PDF from assets
+            final byteData = await rootBundle.load('assets/docs/CarPolicy.pdf');
 
+            // Get device directory
+            final directory = await getApplicationDocumentsDirectory();
+
+            final file = File('${directory.path}/CarPolicy.pdf');
+
+            // Write file
+            await file.writeAsBytes(
+              byteData.buffer.asUint8List(
+                byteData.offsetInBytes,
+                byteData.lengthInBytes,
+              ),
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                // content: Text('Policy downloaded to ${file.path}'),
+                content: Text('Policy downloaded to your files'),
+                backgroundColor: Color.fromRGBO(98, 202, 102, 1.0),
+              ),
+            );
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error downloading: $e')),
+              SnackBar(
+                content: Text('Error downloading policy: $e'),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         },
-        backgroundColor: const Color.fromRGBO(108, 108, 108, 1.0),
-        child: const Icon(Icons.download, color: Colors.white),
+
+        backgroundColor: const Color.fromRGBO(255, 255, 255, 1.0),
+        child: const Icon(Icons.download, color: Color.fromRGBO(80, 80, 80, 1.0)),
+
 
       ),
       body: SingleChildScrollView(
@@ -84,37 +107,6 @@ class _Policy extends State<Policy> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Section Filter Dropdown
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color.fromRGBO(229, 231, 235, 1)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedSection,
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down),
-                  style: const TextStyle(
-                    color: Color.fromRGBO(75, 85, 99, 1),
-                    fontSize: 14,
-                    fontFamily: 'Inter',
-                  ),
-                  items: _sections.map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedSection = newValue!;
-                    });
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
 
             // Policy Version Info
             Container(
