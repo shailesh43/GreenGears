@@ -20,7 +20,7 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Assign ESNA',
+          'Uploaded Quotation docs',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -30,7 +30,7 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
       ),
       body: const Center(
         child: Text(
-          'Assign ESNA Screen',
+          'Uploaded quotations',
           style: TextStyle(fontSize: 18),
         ),
       ),

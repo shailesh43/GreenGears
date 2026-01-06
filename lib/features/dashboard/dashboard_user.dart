@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../request/request_vehicle.dart';
 import '../../features/profile/profile_page.dart';
+import '../docs/uploaded_quotations.dart';
 
 class DashboardUser extends StatelessWidget {
   const DashboardUser({super.key});
@@ -244,27 +245,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
 
                           const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Quotation docs',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF000000),
-                                  ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const UploadedQuotations(),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Read your previously uploaded documents',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[500],
+                              );
+                            },
+                            child: Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Quotation docs',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color.fromRGBO(0, 0, 0, 0.80),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'List of uploaded quotation docs till now',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
