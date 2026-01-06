@@ -18,10 +18,6 @@ class _ProcessingPageState extends State<ProcessingPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back, color: Colors.black),
-        //   onPressed: () => Navigator.pop(context),
-        // ),
         title: const Text(
           'Processing',
           style: TextStyle(
@@ -59,7 +55,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>  EsnaSpocScreen(),
+                    builder: (context) => EsnaSpocScreen(),
                   ),
                 );
               },
@@ -96,10 +92,20 @@ class _ProcessingPageState extends State<ProcessingPage> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: Colors.white,
+          // border: Border.all(color: Colors.black, width: 0.25),
           borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.20),
+              offset: const Offset(2, 2), // right & bottom shadow
+              blurRadius: 4,
+              spreadRadius: -1, // prevents shadow on top/left
+            ),
+          ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Column(
@@ -112,25 +118,34 @@ class _ProcessingPageState extends State<ProcessingPage> {
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
+                      letterSpacing: 0.2,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
                       color: Colors.grey,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 16),
-            Image.asset(
-              imagePath,
-              width: 48,
-              height: 48,
+
+            /// 🔥 OVERFLOW-SAFE IMAGE
+            SizedBox(
+              width: 72,
+              height: 72,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: Image.asset(imagePath),
+              ),
             ),
           ],
         ),
