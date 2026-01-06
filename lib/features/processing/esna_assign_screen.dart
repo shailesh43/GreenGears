@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+// import '/actions/actions_assign_esna.dart';
 import '../profile/profile_page.dart';
+// import 'search_request_result.dart';
 
 class EsnaAssignScreen extends StatefulWidget {
   const EsnaAssignScreen({Key? key}) : super(key: key);
@@ -220,14 +222,18 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
                       fontFamily: 'Inter',
                       color: Color.fromARGB(255, 158, 158, 158),
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.1,
                     ),
                     prefixIcon: const Icon(Icons.search, color: Colors.grey),
                     filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
-                    border: OutlineInputBorder(
+                    fillColor: const Color(0xFFFFFFFF),
+                    enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
+                      borderSide: const BorderSide(
+                        color: Colors.grey, // 👈 border color
+                        width: 0.1,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -237,15 +243,15 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
                 ),
                 const SizedBox(height: 12),
                 // Filter Buttons
-                Row(
-                  children: [
-                    _buildFilterButton('Active', Color.fromRGBO(
-                        98, 202, 102, 1.0)),
-                    const SizedBox(width: 8),
-                    _buildFilterButton('Inactive', Color.fromRGBO(
-                        250, 77, 77, 1.0)),
-                  ],
-                ),
+                // Row(
+                //   children: [
+                //     _buildFilterButton('Active', Color.fromRGBO(
+                //         98, 202, 102, 1.0)),
+                //     const SizedBox(width: 8),
+                //     _buildFilterButton('Inactive', Color.fromRGBO(
+                //         250, 77, 77, 1.0)),
+                //   ],
+                // ),
               ],
             ),
           ),
@@ -333,15 +339,6 @@ class RequestCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Request ID',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
                 Text(
                   request['requestId'],
                   style: const TextStyle(
@@ -351,38 +348,21 @@ class RequestCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Colors.grey,
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            _buildRow('Vehicle Name', request['vehicleName']),
+            _buildRow('EMP ID', request['employeeId']),
             const SizedBox(height: 8),
-            _buildRow('Date of Request', request['dateOfRequest']),
+            _buildRow('EMP name', request['employeeName']),
             const SizedBox(height: 8),
             _buildRow('Contact', request['contact']),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Status',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  request['status'],
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: statusColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+            _buildRow('Date of Request', request['dateOfRequest']),
           ],
         ),
       ),
@@ -532,10 +512,7 @@ class _RequestDetailsModal extends StatelessWidget {
                         ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      onPressed: () => _showDeleteConfirmation(context),
-                    ),
+                    const SizedBox(width: 40)
                   ],
                 ),
               ),
@@ -549,11 +526,12 @@ class _RequestDetailsModal extends StatelessWidget {
                     children: [
                       _buildHeader(request),
                       const SizedBox(height: 24),
-                      _buildDetailRow('Vehicle Name', request['vehicleName'] ?? 'RE Guerilla'),
+                      _buildDetailRow('Vehicle Type', request['vehicleType'] ?? 'XUV700'),
+                      _buildDetailRow('Manufactured by', request['manufacturedBy'] ?? 'Mahindra'),
+                      _buildDetailRow('Color', request['vehicleColor'] ?? 'Black'),
                       _buildDetailRow('Employee Name', request['employeeName'] ?? 'Rahil Bopche'),
                       _buildDetailRow('Employee ID', request['employeeId'] ?? '209164'),
                       _buildDetailRow('Phone', request['phone'] ?? '+84549721'),
-                      _buildDetailRow('Date of Request', request['dateOfRequest'] ?? '01/11/2019'),
                       _buildDetailRow('Company', request['company'] ?? 'The Tata Power Co. Ltd.'),
                       _buildDetailRow(
                         'Address',
@@ -561,23 +539,151 @@ class _RequestDetailsModal extends StatelessWidget {
                         isMultiline: true,
                       ),
                       const SizedBox(height: 8),
-                      _buildDetailRow(
-                        'Cluster',
-                        request['cluster'] ?? 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-                        isMultiline: true,
-                      ),
                       _buildDetailRow('Grade', request['grade'] ?? 'ME03'),
-                      _buildDetailRow('Cost center', request['costCenter'] ?? '1900022041'),
+                      _buildDetailRow('Email', request['costCenter'] ?? '1900022041'),
                       _buildDetailRow('Eligibility', request['eligibility'] ?? '₹ 4300.50'),
-                      const Divider(height: 24, thickness: 1),
-                      _buildDetailRow('Base Amount', request['baseAmount'] ?? '₹ 40, 500', isBold: true),
-                      _buildDetailRow('CESS percentage', request['cessPercentage'] ?? '10 %'),
-                      _buildDetailRow('Corporate Registration Amount', request['corporateRegistration'] ?? '₹ 2000'),
-                      _buildDetailRow('Quotation Amount', request['quotation'] ?? '5 %'),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       _buildTotalRow(request),
                       const SizedBox(height: 24),
-                      _buildStatusRow(request),
+
+                      // Select ES&A Dropdown
+                      const Text(
+                        'Select ES&A *',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          hintText: 'Select ES&A',
+                          hintStyle: const TextStyle(
+                            fontFamily: 'Inter',
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        items: ['ES&A 1', 'ES&A 2', 'ES&A 3', 'ES&A 4']
+                            .map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              value,
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          // Handle ES&A selection
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // View Document Dropdown
+                      const Text(
+                        'View Document *',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          hintText: 'View Document',
+                          hintStyle: const TextStyle(
+                            fontFamily: 'Inter',
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        items: ['Document 1', 'Document 2', 'Document 3', 'Document 4']
+                            .map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              value,
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          // Handle document selection
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Proceed Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            final requestId = request['requestId'] ?? 'CAR2025242';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'ES&A has been assigned to $requestId',
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                                backgroundColor: Colors.green,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Proceed',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // _buildStatusRow(request),
                     ],
                   ),
                 ),
@@ -655,7 +761,7 @@ class _RequestDetailsModal extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text(
-          'Total',
+          'Quotation received',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
