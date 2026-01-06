@@ -82,15 +82,19 @@ class _Policy extends State<Policy> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 // content: Text('Policy downloaded to ${file.path}'),
-                content: Text('Policy downloaded to your files'),
-                backgroundColor: Color.fromRGBO(98, 202, 102, 1.0),
+                content: Text(
+                  'Policy downloaded to your files',
+                  style: const TextStyle(color: Colors.green),
+                ),
+
+                backgroundColor: Color.fromRGBO(215, 255, 216, 1.0),
               ),
             );
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error downloading policy: $e'),
-                backgroundColor: Colors.red,
+                backgroundColor: Color.fromRGBO(255, 227, 227, 1.0),
               ),
             );
           }

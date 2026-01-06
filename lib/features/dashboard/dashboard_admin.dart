@@ -88,7 +88,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
 
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsetsGeometry.fromLTRB(24, 4, 24, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -213,7 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
 
                     // Quotation docs
                     Container(
@@ -281,10 +281,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
-                    const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                    const Divider(height: 0.5, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         // boxShadow: [
