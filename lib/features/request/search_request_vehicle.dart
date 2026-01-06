@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 // import '/actions/actions_assign_esna.dart';
 import '../profile/profile_page.dart';
-import 'search_request_result.dart';
+// import 'search_request_result.dart';
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
 
@@ -20,6 +21,21 @@ class _SearchScreenState extends State<SearchScreen> {
       'dateOfRequest': '02/11/2020',
       'contact': '8600957261',
       'status': 'ACTIVE',
+      'employeeName': 'Rahil Bopche',
+      'employeeId': '209164',
+      'phone': '+84549721',
+      'company': 'The Tata Power Co. Ltd.',
+      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+      'grade': 'ME03',
+      'costCenter': '1900022041',
+      'eligibility': '₹ 4300.50',
+      'baseAmount': '₹ 40, 500',
+      'cessPercentage': '10 %',
+      'corporateRegistration': '₹ 2000',
+      'quotation': '5 %',
+      'total': '₹ 10,00, 000',
+      'requestStatus': 'Requested to ES&A',
     },
     {
       'requestId': 'CAR2025205',
@@ -27,6 +43,21 @@ class _SearchScreenState extends State<SearchScreen> {
       'dateOfRequest': '23/05/2020',
       'contact': '8600957261',
       'status': 'ACTIVE',
+      'employeeName': 'Rahil Bopche',
+      'employeeId': '209164',
+      'phone': '+84549721',
+      'company': 'The Tata Power Co. Ltd.',
+      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+      'grade': 'ME03',
+      'costCenter': '1900022041',
+      'eligibility': '₹ 4300.50',
+      'baseAmount': '₹ 40, 500',
+      'cessPercentage': '10 %',
+      'corporateRegistration': '₹ 2000',
+      'quotation': '5 %',
+      'total': '₹ 10,00, 000',
+      'requestStatus': 'Requested to ES&A',
     },
     {
       'requestId': 'CAR2025206',
@@ -34,6 +65,21 @@ class _SearchScreenState extends State<SearchScreen> {
       'dateOfRequest': '18/02/2020',
       'contact': '8600957261',
       'status': 'ACTIVE',
+      'employeeName': 'Rahil Bopche',
+      'employeeId': '209164',
+      'phone': '+84549721',
+      'company': 'The Tata Power Co. Ltd.',
+      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+      'grade': 'ME03',
+      'costCenter': '1900022041',
+      'eligibility': '₹ 4300.50',
+      'baseAmount': '₹ 40, 500',
+      'cessPercentage': '10 %',
+      'corporateRegistration': '₹ 2000',
+      'quotation': '5 %',
+      'total': '₹ 10,00, 000',
+      'requestStatus': 'Requested to ES&A',
     },
     {
       'requestId': 'CAR2025207',
@@ -41,6 +87,21 @@ class _SearchScreenState extends State<SearchScreen> {
       'dateOfRequest': '15/08/2021',
       'contact': '9876543210',
       'status': 'ACTIVE',
+      'employeeName': 'Rahil Bopche',
+      'employeeId': '209164',
+      'phone': '+84549721',
+      'company': 'The Tata Power Co. Ltd.',
+      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+      'grade': 'ME03',
+      'costCenter': '1900022041',
+      'eligibility': '₹ 4300.50',
+      'baseAmount': '₹ 40, 500',
+      'cessPercentage': '10 %',
+      'corporateRegistration': '₹ 2000',
+      'quotation': '5 %',
+      'total': '₹ 10,00, 000',
+      'requestStatus': 'Requested to ES&A',
     },
     {
       'requestId': 'CAR2025004',
@@ -48,6 +109,21 @@ class _SearchScreenState extends State<SearchScreen> {
       'dateOfRequest': '18/11/2016',
       'contact': '9140957261',
       'status': 'INACTIVE',
+      'employeeName': 'Rahil Bopche',
+      'employeeId': '209164',
+      'phone': '+84549721',
+      'company': 'The Tata Power Co. Ltd.',
+      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+      'grade': 'ME03',
+      'costCenter': '1900022041',
+      'eligibility': '₹ 4300.50',
+      'baseAmount': '₹ 40, 500',
+      'cessPercentage': '10 %',
+      'corporateRegistration': '₹ 2000',
+      'quotation': '5 %',
+      'total': '₹ 10,00, 000',
+      'requestStatus': 'Requested to ES&A',
     },
     {
       'requestId': 'CAR2025005',
@@ -55,6 +131,21 @@ class _SearchScreenState extends State<SearchScreen> {
       'dateOfRequest': '28/04/2018',
       'contact': '8450957261',
       'status': 'INACTIVE',
+      'employeeName': 'Rahil Bopche',
+      'employeeId': '209164',
+      'phone': '+84549721',
+      'company': 'The Tata Power Co. Ltd.',
+      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+      'grade': 'ME03',
+      'costCenter': '1900022041',
+      'eligibility': '₹ 4300.50',
+      'baseAmount': '₹ 40, 500',
+      'cessPercentage': '10 %',
+      'corporateRegistration': '₹ 2000',
+      'quotation': '5 %',
+      'total': '₹ 10,00, 000',
+      'requestStatus': 'Requested to ES&A',
     },
     {
       'requestId': 'CAR2025008',
@@ -62,6 +153,21 @@ class _SearchScreenState extends State<SearchScreen> {
       'dateOfRequest': '12/09/2019',
       'contact': '7890123456',
       'status': 'INACTIVE',
+      'employeeName': 'Rahil Bopche',
+      'employeeId': '209164',
+      'phone': '+84549721',
+      'company': 'The Tata Power Co. Ltd.',
+      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+      'grade': 'ME03',
+      'costCenter': '1900022041',
+      'eligibility': '₹ 4300.50',
+      'baseAmount': '₹ 40, 500',
+      'cessPercentage': '10 %',
+      'corporateRegistration': '₹ 2000',
+      'quotation': '5 %',
+      'total': '₹ 10,00, 000',
+      'requestStatus': 'Requested to ES&A',
     },
   ];
 
@@ -69,6 +175,15 @@ class _SearchScreenState extends State<SearchScreen> {
     return allRequests
         .where((request) => request['status'] == selectedFilter.toUpperCase())
         .toList();
+  }
+
+  void _showRequestDetailsModal(BuildContext context, Map<String, dynamic> request) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _RequestDetailsModal(request: request),
+    );
   }
 
   @override
@@ -126,9 +241,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 // Filter Buttons
                 Row(
                   children: [
-                    _buildFilterButton('Active', Colors.green),
+                    _buildFilterButton('Active', Color.fromRGBO(
+                        98, 202, 102, 1.0)),
                     const SizedBox(width: 8),
-                    _buildFilterButton('Inactive', Colors.red),
+                    _buildFilterButton('Inactive', Color.fromRGBO(
+                        250, 77, 77, 1.0)),
                   ],
                 ),
               ],
@@ -143,31 +260,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 return RequestCard(
                   request: filteredRequests[index],
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SearchRequestResult(
-                        requestId: 'CAR2025242',
-                        vehicleName: 'RE Guerilla',
-                        employeeName: 'Rahil Bopche',
-                        employeeId: '209164',
-                        phone: '+84549721',
-                        dateOfRequest: '01/11/2019',
-                        company: 'The Tata Power Co. Ltd.',
-                        address: 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-                        cluster: 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-                        grade: 'ME03',
-                        costCenter: '1900022041',
-                        eligibility: '₹ 4300.50',
-                        baseAmount: '₹ 40, 500',
-                        cessPercentage: '10 %',
-                        corporateRegistration: '₹ 2000',
-                        quotation: '5 %',
-                        total: '₹ 10,00, 000',
-                        status: 'Requested to ES&A',
-                        ),
-                      ),
-                    );
+                    _showRequestDetailsModal(context, filteredRequests[index]);
                   },
                 );
               },
@@ -318,6 +411,293 @@ class RequestCard extends StatelessWidget {
             fontSize: 14,
             color: Colors.black,
             fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RequestDetailsModal extends StatelessWidget {
+  final Map<String, dynamic> request;
+
+  const _RequestDetailsModal({required this.request});
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Delete Request',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to delete this request?',
+            style: TextStyle(
+              fontFamily: 'Inter',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: Color.fromRGBO(128, 128, 128, 1.0),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                final requestId = request['requestId'] ?? 'CAR2025242';
+               Navigator.of(context).pop();// Close dialog
+
+                // Show snackbar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '$requestId has been deleted',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        color: Color.fromRGBO(255, 60, 60, 1.0),
+                      ),
+                    ),
+                    backgroundColor: Color.fromRGBO(255, 227, 227, 1.0),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              },
+              child: const Text(
+                'Delete',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.9,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Color(0xFFE0E0E0),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Expanded(
+                      child: Text(
+                        request['employeeName'] ?? 'Rahil Bopche',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      onPressed: () => _showDeleteConfirmation(context),
+                    ),
+                  ],
+                ),
+              ),
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(request),
+                      const SizedBox(height: 24),
+                      _buildDetailRow('Vehicle Name', request['vehicleName'] ?? 'RE Guerilla'),
+                      _buildDetailRow('Employee Name', request['employeeName'] ?? 'Rahil Bopche'),
+                      _buildDetailRow('Employee ID', request['employeeId'] ?? '209164'),
+                      _buildDetailRow('Phone', request['phone'] ?? '+84549721'),
+                      _buildDetailRow('Date of Request', request['dateOfRequest'] ?? '01/11/2019'),
+                      _buildDetailRow('Company', request['company'] ?? 'The Tata Power Co. Ltd.'),
+                      _buildDetailRow(
+                        'Address',
+                        request['address'] ?? 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+                        isMultiline: true,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDetailRow(
+                        'Cluster',
+                        request['cluster'] ?? 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+                        isMultiline: true,
+                      ),
+                      _buildDetailRow('Grade', request['grade'] ?? 'ME03'),
+                      _buildDetailRow('Cost center', request['costCenter'] ?? '1900022041'),
+                      _buildDetailRow('Eligibility', request['eligibility'] ?? '₹ 4300.50'),
+                      const Divider(height: 24, thickness: 1),
+                      _buildDetailRow('Base Amount', request['baseAmount'] ?? '₹ 40, 500', isBold: true),
+                      _buildDetailRow('CESS percentage', request['cessPercentage'] ?? '10 %'),
+                      _buildDetailRow('Corporate Registration Amount', request['corporateRegistration'] ?? '₹ 2000'),
+                      _buildDetailRow('Quotation Amount', request['quotation'] ?? '5 %'),
+                      const SizedBox(height: 16),
+                      _buildTotalRow(request),
+                      const SizedBox(height: 24),
+                      _buildStatusRow(request),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader(Map<String, dynamic> request) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Request ID',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        Text(
+          request['requestId'] ?? 'CAR2025242',
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {bool isMultiline = false, bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: Color(0xFF757575),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalRow(Map<String, dynamic> request) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Total',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        Text(
+          request['total'] ?? '₹ 10,00, 000',
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusRow(Map<String, dynamic> request) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'STATUS',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        Text(
+          request['requestStatus'] ?? 'Requested to ES&A',
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF2196F3),
           ),
         ),
       ],
