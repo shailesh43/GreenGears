@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-// import '/actions/actions_assign_esna.dart';
 import '../profile/profile_page.dart';
-// import 'search_request_result.dart';
 
 class EsnaAssignScreen extends StatefulWidget {
   const EsnaAssignScreen({Key? key}) : super(key: key);
@@ -11,7 +9,6 @@ class EsnaAssignScreen extends StatefulWidget {
 }
 
 class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
-  String selectedFilter = 'Active';
   final TextEditingController _searchController = TextEditingController();
 
   final List<Map<String, dynamic>> allRequests = [
@@ -28,8 +25,9 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
       'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
       'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
       'grade': 'ME03',
+      'email': 'rahil.bopche@tatapower.com',
       'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
+      'eligibility': '₹ 40,000',
       'baseAmount': '₹ 40, 500',
       'cessPercentage': '10 %',
       'corporateRegistration': '₹ 2000',
@@ -50,8 +48,9 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
       'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
       'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
       'grade': 'ME03',
+      'email': 'rahil.bopche@tatapower.com',
       'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
+      'eligibility': '₹ 40,000',
       'baseAmount': '₹ 40, 500',
       'cessPercentage': '10 %',
       'corporateRegistration': '₹ 2000',
@@ -72,8 +71,9 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
       'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
       'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
       'grade': 'ME03',
+      'email': 'rahil.bopche@tatapower.com',
       'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
+      'eligibility': '₹ 40,000',
       'baseAmount': '₹ 40, 500',
       'cessPercentage': '10 %',
       'corporateRegistration': '₹ 2000',
@@ -94,8 +94,9 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
       'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
       'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
       'grade': 'ME03',
+      'email': 'rahil.bopche@tatapower.com',
       'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
+      'eligibility': '₹ 40,000',
       'baseAmount': '₹ 40, 500',
       'cessPercentage': '10 %',
       'corporateRegistration': '₹ 2000',
@@ -116,8 +117,9 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
       'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
       'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
       'grade': 'ME03',
+      'email': 'rahil.bopche@tatapower.com',
       'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
+      'eligibility': '₹ 40,000',
       'baseAmount': '₹ 40, 500',
       'cessPercentage': '10 %',
       'corporateRegistration': '₹ 2000',
@@ -138,8 +140,9 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
       'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
       'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
       'grade': 'ME03',
+      'email': 'rahil.bopche@tatapower.com',
       'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
+      'eligibility': '₹ 40,000',
       'baseAmount': '₹ 40, 500',
       'cessPercentage': '10 %',
       'corporateRegistration': '₹ 2000',
@@ -160,8 +163,9 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
       'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
       'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
       'grade': 'ME03',
+      'email': 'rahil.bopche@tatapower.com',
       'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
+      'eligibility': '₹ 40,000',
       'baseAmount': '₹ 40, 500',
       'cessPercentage': '10 %',
       'corporateRegistration': '₹ 2000',
@@ -172,9 +176,7 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
   ];
 
   List<Map<String, dynamic>> get filteredRequests {
-    return allRequests
-        .where((request) => request['status'] == selectedFilter.toUpperCase())
-        .toList();
+    return allRequests;
   }
 
   void _showRequestDetailsModal(BuildContext context, Map<String, dynamic> request) {
@@ -242,16 +244,6 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Filter Buttons
-                // Row(
-                //   children: [
-                //     _buildFilterButton('Active', Color.fromRGBO(
-                //         98, 202, 102, 1.0)),
-                //     const SizedBox(width: 8),
-                //     _buildFilterButton('Inactive', Color.fromRGBO(
-                //         250, 77, 77, 1.0)),
-                //   ],
-                // ),
               ],
             ),
           ),
@@ -275,33 +267,6 @@ class _EsnaAssignScreenState extends State<EsnaAssignScreen> {
     );
   }
 
-  Widget _buildFilterButton(String label, Color activeColor) {
-    final isSelected = selectedFilter == label;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedFilter = label;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.grey.shade400,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -321,9 +286,6 @@ class RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isActive = request['status'] == 'ACTIVE';
-    final statusColor = isActive ? Colors.green : Colors.red;
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -401,70 +363,6 @@ class _RequestDetailsModal extends StatelessWidget {
 
   const _RequestDetailsModal({required this.request});
 
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Delete Request',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: const Text(
-            'Are you sure you want to delete this request?',
-            style: TextStyle(
-              fontFamily: 'Inter',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  color: Color.fromRGBO(128, 128, 128, 1.0),
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                final requestId = request['requestId'] ?? 'CAR2025242';
-                Navigator.of(context).pop();// Close dialog
-
-                // Show snackbar
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '$requestId has been deleted',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        color: Color.fromRGBO(255, 60, 60, 1.0),
-                      ),
-                    ),
-                    backgroundColor: Color.fromRGBO(255, 227, 227, 1.0),
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              },
-              child: const Text(
-                'Delete',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -484,7 +382,8 @@ class _RequestDetailsModal extends StatelessWidget {
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 16),
                 decoration: const BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -526,24 +425,32 @@ class _RequestDetailsModal extends StatelessWidget {
                     children: [
                       _buildHeader(request),
                       const SizedBox(height: 24),
-                      _buildDetailRow('Vehicle Type', request['vehicleType'] ?? 'XUV700'),
-                      _buildDetailRow('Manufactured by', request['manufacturedBy'] ?? 'Mahindra'),
-                      _buildDetailRow('Color', request['vehicleColor'] ?? 'Black'),
-                      _buildDetailRow('Employee Name', request['employeeName'] ?? 'Rahil Bopche'),
-                      _buildDetailRow('Employee ID', request['employeeId'] ?? '209164'),
+                      _buildDetailRow(
+                          'Vehicle Model', request['vehicleModel'] ?? 'XUV700'),
+                      _buildDetailRow('Manufactured by',
+                          request['manufacturedBy'] ?? 'Mahindra'),
+                      _buildDetailRow(
+                          'Color', request['vehicleColor'] ?? 'Black'),
+                      _buildDetailRow('Employee Name',
+                          request['employeeName'] ?? 'Rahil Bopche'),
+                      _buildDetailRow(
+                          'Employee ID', request['employeeId'] ?? '209164'),
                       _buildDetailRow('Phone', request['phone'] ?? '+84549721'),
-                      _buildDetailRow('Company', request['company'] ?? 'The Tata Power Co. Ltd.'),
+                      _buildDetailRow('Company',
+                          request['company'] ?? 'The Tata Power Co. Ltd.'),
                       _buildDetailRow(
                         'Address',
-                        request['address'] ?? 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+                        request['address'] ??
+                            'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
                         isMultiline: true,
                       ),
-                      const SizedBox(height: 8),
                       _buildDetailRow('Grade', request['grade'] ?? 'ME03'),
-                      _buildDetailRow('Email', request['costCenter'] ?? '1900022041'),
-                      _buildDetailRow('Eligibility', request['eligibility'] ?? '₹ 4300.50'),
-                      const SizedBox(height: 12),
-                      _buildTotalRow(request),
+                      _buildDetailRow(
+                          'Email', request['email'] ?? '1900022041'),
+                      _buildDetailRow(
+                          'Eligibility', request['eligibility'] ?? '₹ 50,000'),
+                      _buildDetailRow(
+                          'Quotation Amount', request['total'] ?? '₹ 5,00,000'),
                       const SizedBox(height: 24),
 
                       // Select ES&A Dropdown
@@ -625,7 +532,12 @@ class _RequestDetailsModal extends StatelessWidget {
                             vertical: 12,
                           ),
                         ),
-                        items: ['Document 1', 'Document 2', 'Document 3', 'Document 4']
+                        items: [
+                          'Document 1',
+                          'Document 2',
+                          'Document 3',
+                          'Document 4'
+                        ]
                             .map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -649,25 +561,29 @@ class _RequestDetailsModal extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            final requestId = request['requestId'] ?? 'CAR2025242';
+                            final requestId = request['requestId'] ??
+                                'CAR2025242';
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   'ES&A has been assigned to $requestId',
                                   style: const TextStyle(
                                     fontFamily: 'Inter',
+                                    color: Color.fromRGBO(56, 142, 59, 1.0)
                                   ),
                                 ),
-                                backgroundColor: Colors.green,
+                                backgroundColor: Color.fromRGBO(
+                                    215, 255, 216, 1.0),
                                 duration: const Duration(seconds: 3),
                               ),
                             );
+                            Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
+                            backgroundColor: Color.fromRGBO(89, 191, 92, 1.0),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(40),
                             ),
                           ),
                           child: const Text(
@@ -694,6 +610,7 @@ class _RequestDetailsModal extends StatelessWidget {
       },
     );
   }
+}
 
   Widget _buildHeader(Map<String, dynamic> request) {
     return Row(
@@ -714,7 +631,7 @@ class _RequestDetailsModal extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Colors.blue,
           ),
         ),
       ],
@@ -756,55 +673,3 @@ class _RequestDetailsModal extends StatelessWidget {
     );
   }
 
-  Widget _buildTotalRow(Map<String, dynamic> request) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          'Quotation received',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        Text(
-          request['total'] ?? '₹ 10,00, 000',
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusRow(Map<String, dynamic> request) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          'STATUS',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        Text(
-          request['requestStatus'] ?? 'Requested to ES&A',
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2196F3),
-          ),
-        ),
-      ],
-    );
-  }
-}
