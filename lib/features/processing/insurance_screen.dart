@@ -566,7 +566,7 @@ class _RequestDetailsModalState extends State<_RequestDetailsModal> {
                                       'ES&A has been assigned to $requestId',
                                       style: const TextStyle(
                                         fontFamily: 'Inter',
-                                        color: Color.fromRGBO(98, 202, 102, 1.0),
+                                        color: Color.fromRGBO(56, 142, 59, 1.0),
                                       ),
                                     ),
                                     backgroundColor:

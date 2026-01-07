@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 
 class EsnaSpocScreen extends StatefulWidget {
   const EsnaSpocScreen({Key? key}) : super(key: key);
-
   @override
   State<EsnaSpocScreen> createState() => _EsnaSpocScreenState();
 }
@@ -17,7 +17,6 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
     'RTO tax receipt',
   ];
 
-  // You'll replace this with your actual data list
   final List<Map<String, dynamic>> allRequests = [
     {
       'requestId': 'CAR2025204',
@@ -162,7 +161,6 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
       'total': '₹ 10,00, 000',
       'requestStatus': 'Requested to ES&A',
       'category': 'RTO tax receipt',
-
     },
     {
       'requestId': 'CAR2025008',
@@ -190,7 +188,6 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
     },
   ];
 
-  // Filter requests based on selected tab category
   List<Map<String, dynamic>> get filteredRequests {
     return allRequests
         .where((request) => request['category'] == _tabs[_selectedTabIndex])
@@ -277,7 +274,6 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
       ),
       body: Column(
         children: [
-          // Selected Tab Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -291,8 +287,6 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
               ),
             ),
           ),
-
-          // Horizontal Scrollable Tab Bar
           Container(
             height: 50,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -315,13 +309,13 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? Colors.white
-                          : const Color(0xFFF5F5F5),
+                          ? Color.fromRGBO(224, 255, 225, 1.0)
+                          : const Color(0xFFFFFEFE),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
-                            ? const Color(0xFFE0E0E0)
-                            : Colors.transparent,
+                            ? const Color(0xFF98FC9B)
+                            : Color.fromRGBO(217, 217, 217, 1.0),
                         width: 1,
                       ),
                     ),
@@ -333,8 +327,8 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: isSelected
-                              ? Colors.black
-                              : const Color(0xFF9E9E9E),
+                              ? Color.fromRGBO(66, 179, 71, 1.0)
+                              : const Color.fromRGBO(90, 90, 90, 1.0),
                         ),
                       ),
                     ),
@@ -343,8 +337,6 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
               },
             ),
           ),
-
-          // Request Cards List
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
@@ -396,7 +388,6 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
   }
 }
 
-// Reusable Request Card Widget
 class _RequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
   final VoidCallback onTap;
@@ -480,6 +471,270 @@ class _RequestCard extends StatelessWidget {
   }
 }
 
+// Reusable Form Widgets
+class _FormTextField extends StatelessWidget {
+  final String label;
+  final TextEditingController? controller;
+  final int maxLines;
+
+  const _FormTextField({
+    required this.label,
+    this.controller,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF757575),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF59BF5C)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FileUploadField extends StatefulWidget {
+  final String label;
+  final bool acceptExcel;
+
+  const _FileUploadField({
+    required this.label,
+    this.acceptExcel = false,
+  });
+
+  @override
+  State<_FileUploadField> createState() => _FileUploadFieldState();
+}
+
+class _FileUploadFieldState extends State<_FileUploadField> {
+  String? _fileName;
+
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: widget.acceptExcel ? FileType.custom : FileType.any,
+      allowedExtensions: widget.acceptExcel ? ['xlsx', 'xls'] : null,
+    );
+
+    if (result != null) {
+      setState(() {
+        _fileName = result.files.single.name;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF757575),
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickFile,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  _fileName == null ? Icons.cloud_upload_outlined : Icons.check_circle,
+                  size: 32,
+                  color: _fileName == null ? Colors.grey : const Color(0xFF59BF5C),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _fileName ?? 'Click to upload',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: _fileName == null ? Colors.grey : Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DatePickerField extends StatefulWidget {
+  final String label;
+
+  const _DatePickerField({required this.label});
+
+  @override
+  State<_DatePickerField> createState() => _DatePickerFieldState();
+}
+
+class _DatePickerFieldState extends State<_DatePickerField> {
+  DateTime? _selectedDate;
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF757575),
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _selectDate,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _selectedDate == null
+                      ? 'Select date'
+                      : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: _selectedDate == null ? Colors.grey : Colors.black,
+                  ),
+                ),
+                const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DropdownField extends StatefulWidget {
+  final String label;
+  final List<String> items;
+
+  const _DropdownField({
+    required this.label,
+    required this.items,
+  });
+
+  @override
+  State<_DropdownField> createState() => _DropdownFieldState();
+}
+
+class _DropdownFieldState extends State<_DropdownField> {
+  String? _selectedValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF757575),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedValue,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+          hint: const Text('Select document'),
+          items: widget.items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedValue = newValue;
+            });
+          },
+        ),
+      ],
+    );
+  }
+}
+
 // Modal 1: Request Verification
 class _RequestVerificationModal extends StatelessWidget {
   final Map<String, dynamic> request;
@@ -494,15 +749,27 @@ class _RequestVerificationModal extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow('Vehicle Type', request['vehicleName'] ?? ''),
-          _buildDetailRow('Employee Name', request['employeeName'] ?? ''),
-          _buildDetailRow('Employee ID', request['employeeId'] ?? ''),
-          _buildDetailRow('Contact', request['contact'] ?? ''),
-          _buildDetailRow('Date of Request', request['dateOfRequest'] ?? ''),
-          _buildDetailRow('Status', request['status'] ?? ''),
+          _buildDetailRow('Employee Name', request['employeeName'] ?? 'Rahil Bopche'),
+          _buildDetailRow('Employee ID', request['employeeId'] ?? '209164'),
+          _buildDetailRow('Grade', request['grade'] ?? 'ME03'),
+          _buildDetailRow('Manufactured by', request['manufacturedBy'] ?? 'Honda'),
+          _buildDetailRow('Vehicle Type', request['vehicleType'] ?? 'Diesel'),
+          _buildDetailRow('Vehicle Model', request['vehicleModel'] ?? 'fourseater'),
+          _buildDetailRow('Email', request['email'] ?? ''),
+          _buildDetailRow('Color', request['color'] ?? 'white'),
+          _buildDetailRow('Comments by Employee', request['comments'] ?? 'String'),
           const SizedBox(height: 24),
 
-          // Action Buttons
+          const _FormTextField(label: 'ES&A Comments', maxLines: 3),
+          const SizedBox(height: 16),
+          const _FileUploadField(label: 'Upload Document'),
+          const SizedBox(height: 16),
+          _DropdownField(
+            label: 'View Document',
+            items: ['Document 1', 'Document 2', 'Document 3'],
+          ),
+          const SizedBox(height: 24),
+
           Row(
             children: [
               Expanded(
@@ -606,401 +873,3 @@ class _RequestVerificationModal extends StatelessWidget {
 }
 
 // Modal 2: Monthly Deduction
-class _MonthlyDeductionModal extends StatelessWidget {
-  final Map<String, dynamic> request;
-
-  const _MonthlyDeductionModal({required this.request});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseModal(
-      request: request,
-      title: 'Monthly Deduction',
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildDetailRow('Employee Name', request['employeeName'] ?? ''),
-          _buildDetailRow('Employee ID', request['employeeId'] ?? ''),
-          _buildDetailRow('Base Amount', request['baseAmount'] ?? ''),
-          _buildDetailRow('Cess Percentage', request['cessPercentage'] ?? ''),
-          _buildDetailRow('Total', request['total'] ?? ''),
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF59BF5C),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(40),
-                ),
-              ),
-              child: const Text(
-                'Confirm Deduction',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: Color(0xFF757575),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Modal 3: Payment Details
-class _PaymentDetailsModal extends StatelessWidget {
-  final Map<String, dynamic> request;
-
-  const _PaymentDetailsModal({required this.request});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseModal(
-      request: request,
-      title: 'Payment Details',
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildDetailRow('Eligibility', request['eligibility'] ?? ''),
-          _buildDetailRow('Quotation', request['quotation'] ?? ''),
-          _buildDetailRow('Corporate Registration', request['corporateRegistration'] ?? ''),
-          _buildDetailRow('Total Amount', request['total'] ?? ''),
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF59BF5C),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(40),
-                ),
-              ),
-              child: const Text(
-                'Process Payment',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: Color(0xFF757575),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Modal 4: RTO Tax Receipt
-class _RtoTaxReceiptModal extends StatelessWidget {
-  final Map<String, dynamic> request;
-
-  const _RtoTaxReceiptModal({required this.request});
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseModal(
-      request: request,
-      title: 'RTO Tax Receipt',
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildDetailRow('Vehicle Type', request['vehicleName'] ?? ''),
-          _buildDetailRow('Employee Name', request['employeeName'] ?? ''),
-          _buildDetailRow('Cost Center', request['costCenter'] ?? ''),
-          const SizedBox(height: 16),
-
-          const Text(
-            'Upload Receipt',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: const Color(0xFFE0E0E0),
-                style: BorderStyle.solid,
-              ),
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.cloud_upload_outlined, size: 40, color: Colors.grey),
-                SizedBox(height: 8),
-                Text(
-                  'Click to upload receipt',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF59BF5C),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(40),
-                ),
-              ),
-              child: const Text(
-                'Submit',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: Color(0xFF757575),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Base Modal Widget (DRY principle)
-class _BaseModal extends StatelessWidget {
-  final Map<String, dynamic> request;
-  final String title;
-  final Widget content;
-
-  const _BaseModal({
-    required this.request,
-    required this.title,
-    required this.content,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Color(0xFFE0E0E0),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    Expanded(
-                      child: Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          color: Colors.black,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 40),
-                  ],
-                ),
-              ),
-
-              // Scrollable Content
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Request ID',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                          Text(
-                            request['requestId'] ?? '',
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      content,
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
