@@ -112,7 +112,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
       'quotation': '5 %',
       'total': '₹ 10,00, 000',
       'requestStatus': 'Requested to ES&A',
-      'category': 'Request Verification',
+      'category': 'Payment Details',
     },
     {
       'requestId': 'CAR2025004',
@@ -873,3 +873,195 @@ class _RequestVerificationModal extends StatelessWidget {
 }
 
 // Modal 2: Monthly Deduction
+class _MonthlyDeductionModal extends StatefulWidget {
+  final Map<String, dynamic> request;
+
+  const _MonthlyDeductionModal({required this.request});
+
+  @override
+  State<_MonthlyDeductionModal> createState() => _MonthlyDeductionModalState();
+}
+
+class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
+  String? _total;
+  String? _carAllowance;
+  String? _companyContribution;
+  String? _emiTenure;
+  String? _monthlyEmi;
+  bool _excelUploaded = false;
+
+  void _openExcelStatic() {
+    // Logic to open static excel template
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Opening Excel Template'),
+        backgroundColor: Color(0xFFD7FFD8),
+      ),
+    );
+  }
+
+  void _handleExcelUpload() {
+    // Simulate excel data extraction
+    setState(() {
+      _excelUploaded = true;
+      _total = '₹ 10,00,000';
+      _carAllowance = '₹ 40,000';
+      _companyContribution = '₹ 60,000';
+      _emiTenure = '5 years';
+      _monthlyEmi = '₹ 16,667';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _BaseModal(
+      request: widget.request,
+      title: 'Monthly Deduction',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ElevatedButton.icon(
+            onPressed: _openExcelStatic,
+            icon: const Icon(Icons.file_open, size: 18),
+            label: const Text('Open Excel Template'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF59BF5C),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          _ExcelFileUploadField(
+            label: 'Upload Excel',
+            onFileSelected: _handleExcelUpload,
+          ),
+          const SizedBox(height: 24),
+
+          if (_excelUploaded) ...[
+            const Text(
+              'Extracted Data',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildDetailRow('Total', _total ?? ''),
+            _buildDetailRow('Car Allowance', _carAllowance ?? ''),
+            _buildDetailRow('Company Contribution', _companyContribution ?? ''),
+            _buildDetailRow('EMI Tenure in Years', _emiTenure ?? ''),
+            _buildDetailRow('Monthly EMI', _monthlyEmi ?? ''),
+            const SizedBox(height: 24),
+          ],
+
+          const _FormTextField(label: 'ES&A Comments', maxLines: 3),
+          const SizedBox(height: 24),
+
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Monthly Deduction Saved',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Color(0xFF388E3B),
+                          ),
+                        ),
+                        backgroundColor: Color(0xFFD7FFD8),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF59BF5C),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: Color(0xFFE0E0E0)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                  ),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: Color(0xFF757575),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
