@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 // import '/actions/actions_assign_esna.dart';
 import '../profile/profile_page.dart';
 // import 'search_request_result.dart';
+import 'package:file_picker/file_picker.dart';
+
 
 class InsuranceScreen extends StatefulWidget {
   const InsuranceScreen({Key? key}) : super(key: key);
@@ -514,17 +516,8 @@ class _RequestDetailsModalState extends State<_RequestDetailsModal> {
                       const SizedBox(height: 20),
 
                       // Upload Files
-                      _buildLabel('Upload Files', required: true),
-                      Text(
-                        'in .pdf/.txt/.docx',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildUploadField(),
-                      const SizedBox(height: 20),
+                      const _FileUploadField(label: 'Upload Document'),
+                      const SizedBox(height: 16),
 
                       // Comments
                       _buildLabel('Comments', required: true),
@@ -606,7 +599,8 @@ class _RequestDetailsModalState extends State<_RequestDetailsModal> {
                                 Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
+                                backgroundColor: Color.fromRGBO(
+                                    255, 255, 255, 1.0),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(40),
@@ -617,8 +611,9 @@ class _RequestDetailsModalState extends State<_RequestDetailsModal> {
                                 style: TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color.fromRGBO(
+                                      50, 50, 50, 0.9607843137254902),
                                 ),
                               ),
                             ),
@@ -751,6 +746,7 @@ class _RequestDetailsModalState extends State<_RequestDetailsModal> {
     );
   }
 
+
   Widget _buildUploadField() {
     return Container(
       decoration: BoxDecoration(
@@ -765,21 +761,13 @@ class _RequestDetailsModalState extends State<_RequestDetailsModal> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 border: Border(
-                  right: BorderSide(color: Colors.grey[300]!),
+                  right: BorderSide(
+                    color: Colors.grey[300]!,
+                  ),
                 ),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.upload_outlined, size: 20, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Upload',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
+              child: _FileUploadField(
+                label: 'Upload Document',
               ),
             ),
           ),
@@ -797,9 +785,91 @@ class _RequestDetailsModalState extends State<_RequestDetailsModal> {
           ),
         ],
       ),
+
     );
   }
 }
+
+class _FileUploadField extends StatefulWidget {
+  final String label;
+  final bool acceptExcel;
+
+  const _FileUploadField({
+    required this.label,
+    this.acceptExcel = false,
+  });
+
+  @override
+  State<_FileUploadField> createState() => _FileUploadFieldState();
+}
+
+class _FileUploadFieldState extends State<_FileUploadField> {
+  String? _fileName;
+
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: widget.acceptExcel ? FileType.custom : FileType.any,
+      allowedExtensions: widget.acceptExcel ? ['xlsx', 'xls'] : null,
+    );
+
+    if (result != null) {
+      setState(() {
+        _fileName = result.files.single.name;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF757575),
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickFile,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  _fileName == null ? Icons.cloud_upload_outlined : Icons.check_circle,
+                  size: 32,
+                  color: _fileName == null ? Colors.grey : const Color(0xFF59BF5C),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _fileName ?? 'Click to upload',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: _fileName == null ? Colors.grey : Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+
 
 Widget _buildHeader(Map<String, dynamic> request) {
   return Row(

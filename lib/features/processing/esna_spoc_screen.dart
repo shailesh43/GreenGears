@@ -817,7 +817,7 @@ class _RequestVerificationModal extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Approve',
+                    'Proceed',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
@@ -1232,19 +1232,19 @@ class _PaymentDetailsModal extends StatelessWidget {
           _buildDetailRow('EMI approval comments', request['comments'] ?? 'Approved'),
           const SizedBox(height: 16),
 
-          const _FormTextField(label: 'PO Number'),
+          const _FormTextField(label: 'PO Number', required: true,),
           const SizedBox(height: 16),
           const _DatePickerField(label: 'PO Date'),
           const SizedBox(height: 16),
-          const _FormTextField(label: 'Disbursement Amount'),
+          const _FormTextField(label: 'Disbursement Amount', required: true,),
           const SizedBox(height: 16),
           const _DatePickerField(label: 'Payment Date'),
           const SizedBox(height: 16),
-          const _FormTextField(label: 'UTR'),
+          const _FormTextField(label: 'UTR', required: true,),
           const SizedBox(height: 16),
           const _FileUploadField(label: 'Upload Document'),
           const SizedBox(height: 16),
-          const _FormTextField(label: 'Comments', maxLines: 3),
+          const _FormTextField(label: 'Comments', maxLines: 3, required: true,),
           const SizedBox(height: 24),
 
           Row(
@@ -1298,7 +1298,7 @@ class _PaymentDetailsModal extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Cancel',
+                    'reject',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
@@ -1416,7 +1416,7 @@ class _RtoTaxReceiptModal extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Submit',
+                    'Proceed',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
@@ -1440,7 +1440,7 @@ class _RtoTaxReceiptModal extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Cancel',
+                    'Reject',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
