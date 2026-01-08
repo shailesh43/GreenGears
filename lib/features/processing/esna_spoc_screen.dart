@@ -184,7 +184,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
       'quotation': '5 %',
       'total': '₹ 10,00, 000',
       'requestStatus': 'Requested to ES&A',
-      'category': 'Monthly deduction',
+      'category': 'Payment details',
     },
   ];
 
@@ -474,11 +474,13 @@ class _RequestCard extends StatelessWidget {
 // Reusable Form Widgets
 class _FormTextField extends StatelessWidget {
   final String label;
+  final bool required;
   final TextEditingController? controller;
   final int maxLines;
 
   const _FormTextField({
     required this.label,
+    this.required = false,
     this.controller,
     this.maxLines = 1,
   });
@@ -488,13 +490,27 @@ class _FormTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF757575),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: label,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF757575),
+                ),
+              ),
+              if (required)
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -514,13 +530,17 @@ class _FormTextField extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFF59BF5C)),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
           ),
         ),
       ],
     );
   }
 }
+
 
 class _FileUploadField extends StatefulWidget {
   final String label;
@@ -655,7 +675,7 @@ class _DatePickerFieldState extends State<_DatePickerField> {
               children: [
                 Text(
                   _selectedDate == null
-                      ? 'Select date'
+                      ? 'Select date '
                       : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
                   style: TextStyle(
                     fontFamily: 'Inter',
@@ -700,7 +720,7 @@ class _DropdownFieldState extends State<_DropdownField> {
             fontFamily: 'Inter',
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF757575),
+            color: Color(0xFF6C6C6C),
           ),
         ),
         const SizedBox(height: 8),
@@ -760,7 +780,7 @@ class _RequestVerificationModal extends StatelessWidget {
           _buildDetailRow('Comments by Employee', request['comments'] ?? 'String'),
           const SizedBox(height: 24),
 
-          const _FormTextField(label: 'ES&A Comments', maxLines: 3),
+          const _FormTextField(label: 'ES&A Comments', maxLines: 3, required: true,),
           const SizedBox(height: 16),
           const _FileUploadField(label: 'Upload Document'),
           const SizedBox(height: 16),
@@ -920,12 +940,19 @@ class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            "1. Download and fill the cells",
+            style: TextStyle(
+              color: Color.fromRGBO(108, 108, 108, 1.0),
+            ),
+          ),
+          const SizedBox(height: 8),
           ElevatedButton.icon(
             onPressed: _openExcelStatic,
             icon: const Icon(Icons.file_open, size: 18),
             label: const Text('Open Excel Template'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF59BF5C),
+              backgroundColor: const Color(0xFF585858),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -936,7 +963,7 @@ class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
           const SizedBox(height: 16),
 
           _ExcelFileUploadField(
-            label: 'Upload Excel',
+            label: '2. Upload Excel',
             onFileSelected: _handleExcelUpload,
           ),
           const SizedBox(height: 24),
@@ -983,14 +1010,14 @@ class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF59BF5C),
+                    backgroundColor: const Color(0xFF62CA66),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(40),
                     ),
                   ),
                   child: const Text(
-                    'Save',
+                    'Proceed',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
@@ -1014,7 +1041,7 @@ class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
                     ),
                   ),
                   child: const Text(
-                    'Cancel',
+                    'Reject',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
@@ -1151,6 +1178,38 @@ class _PaymentDetailsModal extends StatelessWidget {
   final Map<String, dynamic> request;
 
   const _PaymentDetailsModal({required this.request});
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: Color(0xFF757575),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1160,6 +1219,19 @@ class _PaymentDetailsModal extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildDetailRow('EMP ID', request['employeeId'] ?? '208829'),
+          const SizedBox(height: 8),
+          _buildDetailRow('Request ID', request['requestId'] ?? 'CAR2025241'),
+          const SizedBox(height: 8),
+          _buildDetailRow('EMP name', request['employeeName'] ?? 'Rahil Bopche'),
+          const SizedBox(height: 8),
+          _buildDetailRow('Grade', request['grade'] ?? 'ME03'),
+          const SizedBox(height: 8),
+          _buildDetailRow('Eligibility (RS)', request['eligibility'] ?? '50,000'),
+          const SizedBox(height: 8),
+          _buildDetailRow('EMI approval comments', request['comments'] ?? 'Approved'),
+          const SizedBox(height: 16),
+
           const _FormTextField(label: 'PO Number'),
           const SizedBox(height: 16),
           const _DatePickerField(label: 'PO Date'),
@@ -1202,7 +1274,7 @@ class _PaymentDetailsModal extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Submit',
+                    'Proceed',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
@@ -1250,6 +1322,39 @@ class _RtoTaxReceiptModal extends StatelessWidget {
 
   const _RtoTaxReceiptModal({required this.request});
 
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: Color(0xFF757575),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _BaseModal(
@@ -1258,11 +1363,21 @@ class _RtoTaxReceiptModal extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _FormTextField(label: 'Chassis Number'),
+          _buildDetailRow('Request ID', request['request ID'] ?? 'CAR2025241'),
+          const SizedBox(height: 8),
+          _buildDetailRow('EMP ID', request['employeeId'] ?? '208277'),
+          const SizedBox(height: 8),
+          _buildDetailRow('EMP name', request['employeeName'] ?? 'Rahil Bopche'),
+          const SizedBox(height: 8),
+          _buildDetailRow('Vehicle model', request['vehiclemodell'] ?? 'Kia Sonet G1.2 MT Gravity'),
+          const SizedBox(height: 8),
+          const _FormTextField(label: 'Vehicle Number', required: true,),
+          const SizedBox(height: 8),
+          const _FormTextField(label: 'Chassis Number', required: true,),
           const SizedBox(height: 16),
-          const _FormTextField(label: 'Engine Number'),
+          const _FormTextField(label: 'Engine Number', required: true,),
           const SizedBox(height: 16),
-          const _FormTextField(label: 'Fastag Number'),
+          const _FormTextField(label: 'Fastag Number', required: true,),
           const SizedBox(height: 16),
           const _DatePickerField(label: 'Vehicle Handover Date'),
           const SizedBox(height: 16),
