@@ -1065,3 +1065,182 @@ class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
   }
 }
 
+// Excel File Upload Widget
+class _ExcelFileUploadField extends StatefulWidget {
+  final String label;
+  final VoidCallback onFileSelected;
+
+  const _ExcelFileUploadField({
+    required this.label,
+    required this.onFileSelected,
+  });
+
+  @override
+  State<_ExcelFileUploadField> createState() => _ExcelFileUploadFieldState();
+}
+
+class _ExcelFileUploadFieldState extends State<_ExcelFileUploadField> {
+  String? _fileName;
+
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx', 'xls'],
+    );
+
+    if (result != null) {
+      setState(() {
+        _fileName = result.files.single.name;
+      });
+      widget.onFileSelected();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF757575),
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickFile,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  _fileName == null ? Icons.cloud_upload_outlined : Icons.check_circle,
+                  size: 32,
+                  color: _fileName == null ? Colors.grey : const Color(0xFF59BF5C),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _fileName ?? 'Click to upload Excel',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: _fileName == null ? Colors.grey : Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Modal 3: Payment Details
+class _PaymentDetailsModal extends StatelessWidget {
+  final Map<String, dynamic> request;
+
+  const _PaymentDetailsModal({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    return _BaseModal(
+      request: request,
+      title: 'Payment Details',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _FormTextField(label: 'PO Number'),
+          const SizedBox(height: 16),
+          const _DatePickerField(label: 'PO Date'),
+          const SizedBox(height: 16),
+          const _FormTextField(label: 'Disbursement Amount'),
+          const SizedBox(height: 16),
+          const _DatePickerField(label: 'Payment Date'),
+          const SizedBox(height: 16),
+          const _FormTextField(label: 'UTR'),
+          const SizedBox(height: 16),
+          const _FileUploadField(label: 'Upload Document'),
+          const SizedBox(height: 16),
+          const _FormTextField(label: 'Comments', maxLines: 3),
+          const SizedBox(height: 24),
+
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Payment Details Saved',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Color(0xFF388E3B),
+                          ),
+                        ),
+                        backgroundColor: Color(0xFFD7FFD8),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF59BF5C),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                  ),
+                  child: const Text(
+                    'Submit',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: Color(0xFFE0E0E0)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                  ),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
