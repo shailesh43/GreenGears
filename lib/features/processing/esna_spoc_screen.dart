@@ -1244,3 +1244,164 @@ class _PaymentDetailsModal extends StatelessWidget {
   }
 }
 
+// Modal 4: RTO Tax Receipt
+class _RtoTaxReceiptModal extends StatelessWidget {
+  final Map<String, dynamic> request;
+
+  const _RtoTaxReceiptModal({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    return _BaseModal(
+      request: request,
+      title: 'RTO Tax Receipt',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _FormTextField(label: 'Chassis Number'),
+          const SizedBox(height: 16),
+          const _FormTextField(label: 'Engine Number'),
+          const SizedBox(height: 16),
+          const _FormTextField(label: 'Fastag Number'),
+          const SizedBox(height: 16),
+          const _DatePickerField(label: 'Vehicle Handover Date'),
+          const SizedBox(height: 16),
+          const _FileUploadField(label: 'Upload Files'),
+          const SizedBox(height: 16),
+          _DropdownField(
+            label: 'View Document',
+            items: ['RTO Certificate', 'Tax Receipt', 'Insurance Copy'],
+          ),
+          const SizedBox(height: 24),
+
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'RTO Details Submitted',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Color(0xFF388E3B),
+                          ),
+                        ),
+                        backgroundColor: Color(0xFFD7FFD8),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF59BF5C),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                  ),
+                  child: const Text(
+                    'Submit',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: Color(0xFFE0E0E0)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                  ),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Base Modal Template
+class _BaseModal extends StatelessWidget {
+  final Map<String, dynamic> request;
+  final String title;
+  final Widget content;
+
+  const _BaseModal({
+    required this.request,
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFE0E0E0)),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: content,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
