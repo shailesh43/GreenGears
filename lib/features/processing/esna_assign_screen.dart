@@ -557,47 +557,90 @@ class _RequestDetailsModal extends StatelessWidget {
                       const SizedBox(height: 24),
 
                       // Proceed Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final requestId = request['requestId'] ??
-                                'CAR2025242';
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'ES&A has been assigned to $requestId',
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    color: Color.fromRGBO(56, 142, 59, 1.0)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                final requestId = request['requestId'] ??
+                                    'CAR2025242';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'ES&A has been assigned to $requestId',
+                                      style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          color: Color.fromRGBO(56, 142, 59, 1.0)
+                                      ),
+                                    ),
+                                    backgroundColor: Color.fromRGBO(
+                                        215, 255, 216, 1.0),
+                                    duration: const Duration(seconds: 3),
                                   ),
+                                );
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color.fromRGBO(89, 191, 92, 1.0),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(40),
                                 ),
-                                backgroundColor: Color.fromRGBO(
-                                    215, 255, 216, 1.0),
-                                duration: const Duration(seconds: 3),
                               ),
-                            );
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromRGBO(89, 191, 92, 1.0),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(40),
+                              child: const Text(
+                                'Proceed',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
-                          child: const Text(
-                            'Proceed',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                final requestId = request['requestId'] ??
+                                    'CAR2025242';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      '$requestId has been rejected.',
+                                      style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          color: Color.fromRGBO(250, 98, 98, 1.0)
+                                      ),
+                                    ),
+                                    backgroundColor: Color.fromRGBO(
+                                        255, 227, 227, 1.0),
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color.fromRGBO(
+                                    255, 255, 255, 1.0),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                              ),
+                              child: const Text(
+                                'Reject',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color.fromRGBO(80, 80, 80, 1.0),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                        ],
+                      )
 
                       // _buildStatusRow(request),
                     ],
