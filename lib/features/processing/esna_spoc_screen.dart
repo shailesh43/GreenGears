@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 class EsnaSpocScreen extends StatefulWidget {
   const EsnaSpocScreen({Key? key}) : super(key: key);
   @override
@@ -892,7 +898,7 @@ class _RequestVerificationModal extends StatelessWidget {
   }
 }
 
-// Modal 2: Monthly Deduction
+/// Modal 2: Monthly Deduction
 class _MonthlyDeductionModal extends StatefulWidget {
   final Map<String, dynamic> request;
 
@@ -910,14 +916,80 @@ class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
   String? _monthlyEmi;
   bool _excelUploaded = false;
 
-  void _openExcelStatic() {
-    // Logic to open static excel template
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening Excel Template'),
-        backgroundColor: Color(0xFFD7FFD8),
-      ),
-    );
+  Future<void> _downloadExcelTemplate() async {
+    try {
+      // Request storage permission
+      if (Platform.isAndroid) {
+        var status = await Permission.storage.status;
+        if (!status.isGranted) {
+          status = await Permission.storage.request();
+          if (!status.isGranted) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Storage permission denied'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            return;
+          }
+        }
+      }
+
+      // Load the Excel file from assets
+      final ByteData data = await rootBundle.load('assets/docs/EMI_Calculator.xlsx');
+      final List<int> bytes = data.buffer.asUint8List();
+
+      // Get the Downloads directory
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      } else if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      if (directory == null) {
+        throw Exception('Could not find download directory');
+      }
+
+      // Create the file path
+      final String filePath = '${directory.path}/EMI_Calculator.xlsx';
+      final File file = File(filePath);
+
+      // Write the file
+      await file.writeAsBytes(bytes);
+
+      // Show success message with file path
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Download format excel at $filePath',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                color: Color(0xFF388E3B),
+              ),
+            ),
+            backgroundColor: const Color(0xFFD7FFD8),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading template: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _handleExcelUpload() {
@@ -948,9 +1020,9 @@ class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
           ),
           const SizedBox(height: 8),
           ElevatedButton.icon(
-            onPressed: _openExcelStatic,
-            icon: const Icon(Icons.file_open, size: 18),
-            label: const Text('Open Excel Template'),
+            onPressed: _downloadExcelTemplate,
+            icon: const Icon(Icons.download, size: 18),
+            label: const Text('Download Excel Template'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF585858),
               foregroundColor: Colors.white,
@@ -1091,7 +1163,6 @@ class _MonthlyDeductionModalState extends State<_MonthlyDeductionModal> {
     );
   }
 }
-
 // Excel File Upload Widget
 class _ExcelFileUploadField extends StatefulWidget {
   final String label;
