@@ -454,105 +454,19 @@ class _RequestDetailsModal extends StatelessWidget {
                       const SizedBox(height: 24),
 
                       // Select ES&A Dropdown
-                      const Text(
-                        'Select ES&A *',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
                       const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          hintText: 'Select ES&A',
-                          hintStyle: const TextStyle(
-                            fontFamily: 'Inter',
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                          filled: true,
-                          fillColor: const Color(0xFFF5F5F5),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        items: ['ES&A 1', 'ES&A 2', 'ES&A 3', 'ES&A 4']
-                            .map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value,
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          // Handle ES&A selection
-                        },
+                      _DropdownField(
+                        label: 'Assign ES&A to the Request',
+                        hint: 'Select ES&A',
+                        items: ['Mr. Aditya Bakshi', 'Mrs. Naina Mukharjee', 'Mr. Samay Gupta'],
                       ),
                       const SizedBox(height: 16),
 
                       // View Document Dropdown
-                      const Text(
-                        'View Document *',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          hintText: 'View Document',
-                          hintStyle: const TextStyle(
-                            fontFamily: 'Inter',
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                          filled: true,
-                          fillColor: const Color(0xFFF5F5F5),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        items: [
-                          'Document 1',
-                          'Document 2',
-                          'Document 3',
-                          'Document 4'
-                        ]
-                            .map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value,
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          // Handle document selection
-                        },
+                      _DropdownField(
+                        label: 'View Document',
+                        hint: 'Select Quotation Document',
+                        items: ['Document 1', 'Document 2', 'Document 3'],
                       ),
                       const SizedBox(height: 24),
 
@@ -716,3 +630,66 @@ class _RequestDetailsModal extends StatelessWidget {
     );
   }
 
+class _DropdownField extends StatefulWidget {
+  final String label;
+  final String hint;
+  final List<String> items;
+
+  const _DropdownField({
+    required this.label,
+    required this.hint,
+    required this.items,
+  });
+
+  @override
+  State<_DropdownField> createState() => _DropdownFieldState();
+}
+
+class _DropdownFieldState extends State<_DropdownField> {
+  String? _selectedValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF6C6C6C),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedValue,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+          hint:  Text(widget.hint),
+          items: widget.items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedValue = newValue;
+            });
+          },
+        ),
+      ],
+    );
+  }
+}
