@@ -34,6 +34,53 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
+  final Map<String, String> mainRequest = {
+    // Basic Request Info
+    'requestId': 'CAR2025204',
+    'vehicleName': 'Himalayan',
+    'dateOfRequest': '02/11/2020',
+    'contact': '8600957261',
+    'status': 'ACTIVE',
+
+    // Employee Details
+    'employeeName': 'Rahil Bopche',
+    'employeeId': '209164',
+    'phone': '+84549721',
+    'email': 'rahil.bopche@tatapower.com',
+
+    // Company & Work Details
+    'company': 'The Tata Power Co. Ltd.',
+    'workLocation': 'Mumbai',
+    'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+    'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
+    'grade': 'ME03',
+    'costCenter': '1900022041',
+
+    // Financial Details
+    'eligibility': '₹ 40,000',
+    'baseAmount': '₹ 40,500',
+    'basePremium': '36,460', // For stage 23
+    'cessPercentage': '10 %',
+    'corporateRegistration': '₹ 2000',
+    'quotation': '5 %',
+    'total': '₹ 10,00,000',
+
+    // Insurance Details (Stage 23)
+    'insuranceType': 'Add on',
+
+    // EMI Details (Stage 25)
+    'totalEMI': '36,460',
+    'allowance': '13,500',
+    'contribution': '3800',
+    'tenure': '3 years',
+
+    // Workflow Details
+    'requestStatus': 'Requested to ES&A',
+    'category': 'Request Verification',
+    'comments': 'Approved',
+    'assignedTo': 'ES&A SPOC Name',
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,7 +255,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const UserApproval(),
+                                  builder: (context) => UserApproval(stage: 25, request: mainRequest,),
                                 ),
                               );
                             },
