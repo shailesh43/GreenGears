@@ -4,6 +4,9 @@ import 'core/user_role.dart';
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // call me to authentucante , emp id
+  // role api call
+
   // TEMP: Replace with auth / API / local storage
   UserRole get _userRole => UserRole.admin; // or UserRole.user
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../request/request_vehicle.dart';
+import '../request/user_approval.dart';
 import '../../features/profile/profile_page.dart';
 import '../docs/uploaded_quotations.dart';
 
@@ -197,7 +198,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: _buildActionCard(
                             icon: Icons.check_circle_outline,
-                            title: 'Approval/Reject\nRequests',
+                            title: 'Approve/Reject\nRequests',
                             color: Color.fromRGBO(242, 241, 249, 1.0),
                             titleColor: Color.fromRGBO(152, 152, 152, 1.0),
                             iconColor: Color.fromRGBO(152, 152, 152, 1.0),
@@ -205,7 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const VehicleDetailsPage(),
+                                  builder: (context) => const UserApproval(),
                                 ),
                               );
                             },
