@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-class LocalPreferances {
+class LocalPreferences {
   static const int preftypeInt = 0;
   static const int preftypeString = 1;
   static const int preftypeBool = 2;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/user_role.dart';
+import './auth/login.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: DashboardShell(role: _userRole),
+      home: LoginScreen(),
     );
   }
 }
