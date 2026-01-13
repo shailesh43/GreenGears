@@ -21,6 +21,10 @@ dependencies:
   path_provider: ^2.1.5
   open_file: ^3.5.10
 
+  # msauth
+  msal_flutter: ^2.0.1
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -32,7 +36,7 @@ dev_dependencies:
   flutter_appauth: ^7.0.1
   http: ^1.2.0
   jwt_decode: ^0.3.1
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.4
 
 #  testing above
 
@@ -43,6 +47,8 @@ flutter:
     - assets/images/
     - assets/docs/CarPolicy.pdf
     - assets/docs/EMI_Calculator.xlsx
+    - assets/msal_config.json
+
   fonts:
     - family: Inter
       fonts:
