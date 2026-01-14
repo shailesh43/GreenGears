@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './azure_auth_service.dart';
+import '../core/user_role.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -11,14 +12,32 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
 
-
+  @override
+  void initState() {
+    super.initState();
+    // Automatically call login when the app opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _login();
+    });
+  }
 
   Future<void> _login() async {
     setState(() => _loading = true);
     try {
-      final success = await AuthenticationService.login();
-      if (success && mounted) {
-        //Navigator.pushReplacementNamed(context, '/home');
+      final userInfo = await AuthenticationService.login();
+      if (userInfo != null && mounted) {
+        print("login successful");
+        // Navigate to DashboardShell with user info
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => DashboardShell(
+              role: _determineUserRole(userInfo),
+              empName: userInfo['empName'] ?? '',
+              empId: userInfo['empId'] ?? '',
+              empMail: userInfo['empMail'] ?? '',
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -26,22 +45,23 @@ class _LoginScreenState extends State<LoginScreen> {
         SnackBar(content: Text(e.toString())),
       );
     } finally {
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
-  init(){
-
+  // Determine user role based on userInfo or other logic
+  UserRole _determineUserRole(Map<String, dynamic> userInfo) {
+    // Add your logic here to determine if user is admin or regular user
+    // For example, check email domain, specific employee IDs, or call another API
+    // This is a placeholder - replace with your actual logic
+    final empMail = userInfo['empMail'] ?? '';
+    if (empMail.contains('admin') || empMail.endsWith('@admin.tatapower.com')) {
+      return UserRole.admin;
+    }
+    return UserRole.user;
   }
-
-  // Future<void> _logout() async {
-  //   setState(() => _loading = true);
-  //   await AuthenticationService.logout();
-  //   if (mounted) {
-  //     Navigator.pushReplacementNamed(context, '/login');
-  //   }
-  //   setState(() => _loading = false);
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -53,17 +73,14 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ElevatedButton(
-                onPressed: _loading ? null : _login,
-                child: _loading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Login with Microsoft'),
-              ),
+              if (_loading)
+                const CircularProgressIndicator()
+              else
+                ElevatedButton(
+                  onPressed: _login,
+                  child: const Text('Login with Microsoft'),
+                ),
               const SizedBox(height: 16),
-              // OutlinedButton(
-              //   onPressed: _loading ? null : _logout,
-              //   child: const Text('Logout'),
-              // ),
             ],
           ),
         ),

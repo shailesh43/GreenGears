@@ -14,7 +14,17 @@ enum UserRole { admin, user }
 
 class DashboardShell extends StatefulWidget {
   final UserRole role;
-  const DashboardShell({super.key, required this.role});
+  final String empName;
+  final String empId;
+  final String empMail;
+
+  const DashboardShell({
+    super.key,
+    required this.role,
+    required this.empName,
+    required this.empId,
+    required this.empMail,
+  });
 
   @override
   State<DashboardShell> createState() => _DashboardShellState();
