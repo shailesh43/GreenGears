@@ -40,7 +40,7 @@ class _DashboardShellState extends State<DashboardShell> {
   void initState() {
     super.initState();
 
-    if (widget.role == UserRole.admin) {
+    if (widget.role == UserRole.user) {
       _pages = const [
         DashboardAdmin(),
         ProcessingPage(),

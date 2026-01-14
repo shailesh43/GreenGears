@@ -111,6 +111,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Flexible(
+                      child: Image.asset(
+                        'assets/images/tata_power_logo.png',
+                        height: 48,
+                        fit: BoxFit.contain,
+                        color: Colors.white,
+                      ),
+                    ),
                     const Text(
                       'GreenGears',
                       style: TextStyle(
@@ -118,14 +126,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         fontSize: 24,
                         letterSpacing: -0.4,
                         fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Flexible(
-                      child: Image.asset(
-                        'assets/images/tata_power_logo.png',
-                        height: 48,
-                        fit: BoxFit.contain,
-                        color: Colors.white,
                       ),
                     ),
                   ],

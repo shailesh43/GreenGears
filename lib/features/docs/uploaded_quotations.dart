@@ -30,7 +30,7 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
       ),
       body: const Center(
         child: Text(
-          'Uploaded quotations',
+          'No Uploaded docs yet',
           style: TextStyle(fontSize: 18),
         ),
       ),
