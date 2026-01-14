@@ -52,6 +52,7 @@ flutter:
     - assets/docs/CarPolicy.pdf
     - assets/docs/EMI_Calculator.xlsx
     - assets/msal_config.json
+    - .env
 
   fonts:
     - family: Inter
