@@ -4,9 +4,21 @@ import '../request/user_approval.dart';
 import '../../features/profile/profile_page.dart';
 import '../request/search_request_vehicle.dart';
 import '../docs/uploaded_quotations.dart';
+import '../../core/user_role.dart';
 
-class DashboardAdmin extends StatelessWidget {
-  const DashboardAdmin({super.key});
+class MainDashboard extends StatelessWidget {
+  final String empName;
+  final String empId;
+  final String empMail;
+  final UserRole role;
+
+  const MainDashboard({
+    super.key,
+    required this.empName,
+    required this.empId,
+    required this.empMail,
+    required this.role,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +30,30 @@ class DashboardAdmin extends StatelessWidget {
         fontFamily: 'Inter',
         useMaterial3: true,
       ),
-      home: const DashboardScreen(),
+      home: DashboardScreen(
+        empName: empName,
+        empId: empId,
+        empMail: empMail,
+        role: role,
+      ),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String empName;
+  final String empId;
+  final String empMail;
+  final UserRole role;
+
+  const DashboardScreen({
+    super.key,
+    required this.empName,
+    required this.empId,
+    required this.empMail,
+    required this.role,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -143,18 +171,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Welcome Section
-                    const Text(
-                      'Welcome',
-                      style: TextStyle(fontSize: 24, letterSpacing: -0.4, color: Color(0xFF666666)),
+                    Row(
+                children: [
+                  const Text(
+                    'Welcome',
+                    style: TextStyle(fontSize: 24, letterSpacing: -0.4, color: Color(
+                        0xFF505050)),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.empName,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.4,
+                      color: Color(0xFF000000),
+                    ),
+                  ),
+                ]
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Rahil Bopche',
+                    Text(
+                      widget.empMail,
                       style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.4,
-                        color: Color(0xFF000000),
+                        fontSize: 14,
+                        letterSpacing: -0.2,
+                        color: Colors.grey[600],
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -181,13 +223,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildInfoItem('EMP code', '209164'),
+                                child: _buildInfoItem('EMP code', widget.empId),
                               ),
                               Expanded(child: _buildInfoItem('Grade', 'ME03')),
                               Expanded(
                                 child: _buildInfoItem(
-                                  'Cost Center',
-                                  '1900022041',
+                                  'Role',
+                                  widget.role == UserRole.admin ? 'Admin' : 'User',
                                 ),
                               ),
                             ],
@@ -271,13 +313,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsetsGeometry.fromLTRB(4, 0, 4, 8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        // boxShadow: [
-                        //   BoxShadow(
-                        //     color: Colors.black.withOpacity(0.05),
-                        //     blurRadius: 12,
-                        //     offset: const Offset(0, 2),
-                        //   ),
-                        // ],
                       ),
                       child: Row(
                         children: [
@@ -295,14 +330,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(width: 16),
                           GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SearchScreen(),
-                                  ),
-                                );
-                              },
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SearchScreen(),
+                                ),
+                              );
+                            },
                             child: Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,13 +372,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        // boxShadow: [
-                        //   BoxShadow(
-                        //     color: Colors.black.withOpacity(0.05),
-                        //     blurRadius: 12,
-                        //     offset: const Offset(0, 2),
-                        //   ),
-                        // ],
                       ),
                       child: Row(
                         children: [

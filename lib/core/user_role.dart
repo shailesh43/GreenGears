@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 //Home dashboard body
-import '../features/dashboard/dashboard_user.dart'; // for user -> this + bottom nav
-import '../features/dashboard/dashboard_admin.dart';// for admin -> this + bottom nav
+import '../features/dashboard/dashboard_main.dart';// for admin -> this + bottom nav
 
 // Profile page body
 import '../features/profile/profile_page.dart';
@@ -41,11 +40,16 @@ class _DashboardShellState extends State<DashboardShell> {
     super.initState();
 
     if (widget.role == UserRole.user) {
-      _pages = const [
-        DashboardAdmin(),
-        ProcessingPage(),
-        EmployeeDetailsPage(),
-        PolicyPage(),
+      _pages = [
+        MainDashboard(
+          empName: widget.empName,
+          empId: widget.empId,
+          empMail: widget.empMail,
+          role: widget.role,
+        ),
+        const ProcessingPage(),
+        const EmployeeDetailsPage(),
+        const PolicyPage(),
       ];
 
       _navItems = const [
@@ -67,10 +71,15 @@ class _DashboardShellState extends State<DashboardShell> {
         ),
       ];
     } else {
-      _pages = const [
-        DashboardUser(),
-        EmployeeDetailsPage(),
-        PolicyPage(),
+      _pages = [
+        MainDashboard(
+          empName: widget.empName,
+          empId: widget.empId,
+          empMail: widget.empMail,
+          role: widget.role,
+        ),
+        const EmployeeDetailsPage(),
+        const PolicyPage(),
       ];
 
       _navItems = const [
