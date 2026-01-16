@@ -176,7 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const Text(
                     'Welcome',
                     style: TextStyle(fontSize: 24, letterSpacing: -0.4, color: Color(
-                        0xFF505050)),
+                        0xFF000000)),
                   ),
                   const SizedBox(width: 4),
                   Text(

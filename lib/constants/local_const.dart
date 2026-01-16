@@ -1,47 +1,50 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalPreferences {
-  static const int preftypeInt = 0;
-  static const int preftypeString = 1;
-  static const int preftypeBool = 2;
+  static const _keyEmpId = 'emp_id';
+  static const _keyRoleIds = 'role_ids';
+  static const _keyIsLoggedIn = 'is_logged_in';
 
-  static saveValues(type, key, value) async {
+  // ---------- SAVE ----------
+
+  static Future<void> saveEmpId(String empId) async {
     final prefs = await SharedPreferences.getInstance();
-    if (type == preftypeInt) {
-      await prefs.setInt(key, value);
-    } else if (type == preftypeString) {
-      await prefs.setString(key, value);
-    } else if (type == preftypeBool) {
-      await prefs.setBool(key, value);
-    }
+    await prefs.setString(_keyEmpId, empId);
   }
 
-  static Future<bool> getBoolValues(key) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool boolValue = prefs.getBool(key) ?? false;
-    return boolValue;
+  static Future<void> saveRoleIds(List<int> roleIds) async {
+    final prefs = await SharedPreferences.getInstance();
+    final stringList = roleIds.map((e) => e.toString()).toList();
+    await prefs.setStringList(_keyRoleIds, stringList);
   }
 
-  static Future<int> getIntValues(type, key) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int intValue = prefs.getInt(key) ?? 0;
-    return intValue;
+  static Future<void> setLoggedIn(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyIsLoggedIn, value);
   }
 
-  static Future<String> getStringValues(key) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String stringValue = prefs.getString(key) ?? "";
-    return stringValue;
+  // ---------- GET ----------
+
+  static Future<String?> getEmpId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyEmpId);
   }
 
-  static Future<String> getStringValuesNew(key) {
-    return SharedPreferences.getInstance().then((prefs) {
-      String stringValue = prefs.getString(key) ?? "";
-      return stringValue;
-    });
+  static Future<List<int>> getRoleIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_keyRoleIds) ?? [];
+    return list.map(int.parse).toList();
   }
 
-  void saveEmployeeCode(String? sAPEMPNO) {
-    saveValues(1, "empCode", sAPEMPNO);
+  static Future<bool> isLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyIsLoggedIn) ?? false;
+  }
+
+  // ---------- CLEAR ----------
+
+  static Future<void> clearAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }
