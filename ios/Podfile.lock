@@ -45,12 +45,6 @@ PODS:
     - Flutter
   - flutter_web_auth_2 (3.0.0):
     - Flutter
-  - MSAL (1.2.5):
-    - MSAL/app-lib (= 1.2.5)
-  - MSAL/app-lib (1.2.5)
-  - msal_flutter (1.0.2):
-    - Flutter
-    - MSAL (~> 1.2.0)
   - open_file_ios (0.0.1):
     - Flutter
   - path_provider_foundation (0.0.1):
@@ -73,7 +67,6 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_appauth (from `.symlinks/plugins/flutter_appauth/ios`)
   - flutter_web_auth_2 (from `.symlinks/plugins/flutter_web_auth_2/ios`)
-  - msal_flutter (from `.symlinks/plugins/msal_flutter/ios`)
   - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
@@ -85,7 +78,6 @@ SPEC REPOS:
     - AppAuth
     - DKImagePickerController
     - DKPhotoGallery
-    - MSAL
     - SDWebImage
     - SwiftyGif
 
@@ -98,8 +90,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_appauth/ios"
   flutter_web_auth_2:
     :path: ".symlinks/plugins/flutter_web_auth_2/ios"
-  msal_flutter:
-    :path: ".symlinks/plugins/msal_flutter/ios"
   open_file_ios:
     :path: ".symlinks/plugins/open_file_ios/ios"
   path_provider_foundation:
@@ -119,8 +109,6 @@ SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_appauth: 273bf736e38f7d85000b1a9ac15ace5800c277f2
   flutter_web_auth_2: 5c8d9dcd7848b5a9efb086d24e7a9adcae979c80
-  MSAL: 5149daaa19228c2c27d81987634da15b50981cef
-  msal_flutter: c2d87b15d5176b31f495fb7ae632c56299dbdc96
   open_file_ios: 5ff7526df64e4394b4fe207636b67a95e83078bb
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d

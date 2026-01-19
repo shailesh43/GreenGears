@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
-import '../config/app_config.dart';
+import '../network/api_constants.dart';
 import '../constants/local_const.dart';
 import 'package:logger/logger.dart';
 
@@ -12,12 +12,12 @@ class AuthenticationService {
     try {
       // 1️⃣ Build authorization URL
       final authUrl =
-          '${AppConfig.authorizationEndpoint}?'
-          'client_id=${AppConfig.clientId}'
+          '${ApiConstants.authorizationEndpoint}?'
+          'client_id=${ApiConstants.clientId}'
           '&response_type=code'
-          '&redirect_uri=${Uri.encodeComponent(AppConfig.redirectUri)}'
+          '&redirect_uri=${Uri.encodeComponent(ApiConstants.redirectUri)}'
           '&response_mode=query'
-          '&scope=${Uri.encodeComponent(AppConfig.scope)}';
+          '&scope=${Uri.encodeComponent(ApiConstants.scope)}';
           '&prompt=select_account';
 
       // Microsoft login page
@@ -43,15 +43,15 @@ class AuthenticationService {
 
       // Exchange code for token
       final tokenResponse = await http.post(
-        Uri.parse(AppConfig.tokenEndpoint),
+        Uri.parse(ApiConstants.tokenEndpoint),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: {
-          'client_id': AppConfig.clientId,
-          'scope': AppConfig.scope,
+          'client_id': ApiConstants.clientId,
+          'scope': ApiConstants.scope,
           'code': code,
-          'redirect_uri': AppConfig.redirectUri,
+          'redirect_uri': ApiConstants.redirectUri,
           'grant_type': 'authorization_code',
         },
       );
@@ -63,7 +63,7 @@ class AuthenticationService {
         "Authorization": 'Bearer $accessToken',
         'Content-Type': 'application/json'
       };
-      var url = Uri.parse(AppConfig.userGraphUrl);
+      var url = Uri.parse(ApiConstants.userGraphUrl);
       var response = await http.get(url, headers: headers);
       final userData = jsonDecode(response.body);
 
@@ -97,8 +97,8 @@ class AuthenticationService {
   }
 
   static Future<void> logout() async {
-    final logoutUrl = '${AppConfig.authorizationEndpoint.replaceAll('/authorize', '/logout')}?'
-        'post_logout_redirect_uri=${Uri.encodeComponent(AppConfig.redirectUri)}';
+    final logoutUrl = '${ApiConstants.authorizationEndpoint.replaceAll('/authorize', '/logout')}?'
+        'post_logout_redirect_uri=${Uri.encodeComponent(ApiConstants.redirectUri)}';
 
     await FlutterWebAuth2.authenticate(
       url: logoutUrl,
