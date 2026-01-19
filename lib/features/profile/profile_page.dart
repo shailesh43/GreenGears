@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../network/api_client.dart';
 import '../../network/api_models/role_by_employee.dart';
+import '../../network/api_models/employee_profile_data.dart';
 import '../request/request_vehicle.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -16,11 +17,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
   int? roleId;
   bool isLoading = true;
+  String? employeeName;
+  String? employeeEmail;
+
 
   @override
   void initState() {
     super.initState();
     _fetchRole();
+    _fetchEmployeeProfile();
   }
 
   Future<void> _fetchRole() async {
@@ -37,6 +42,42 @@ class _ProfilePageState extends State<ProfilePage> {
       debugPrint('roleId: $roleId');
     } catch (e) {
       debugPrint('Error fetching role: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _fetchEmployeeProfile() async {
+    try {
+      final result = await _client.getEmployeeProfile('209164');
+      if (result != null) {
+        setState(() {
+          // Use the employee profile data directly
+          // Since you don't have an employeeProfile state variable,
+          // you can either create one or use the data directly here
+          isLoading = false;
+          employeeName = result.sapShortNameModify;
+          employeeEmail = result.sapEmail;
+        });
+
+        debugPrint('POST 200 OK : "employees"');
+        debugPrint('Employee Name: ${result
+            .sapShortNameModify}'); // Adjust field names as needed
+        debugPrint('Employee Email: ${result
+            .sapEmail}'); // Adjust field names as needed
+
+        // If you need to store specific fields, do it here
+        // For example:
+        // setState(() {
+        //
+        // });
+      }
+        else {
+          debugPrint('Employee profile not found');
+          setState(() => isLoading = false);
+        }
+    }
+    catch (e) {
+      debugPrint('Error fetching employee profile: $e');
       setState(() => isLoading = false);
     }
   }

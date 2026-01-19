@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import './api_constants.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import '../core/decrypt.dart';
+import 'dart:math';        // for Random.secure()
+import 'dart:typed_data'; // for Uint8List
+
 import 'dart:async';
 import 'package:logger/logger.dart';
 import './api_models/role_by_employee.dart'; // 1
@@ -85,8 +88,11 @@ class ApiClient {
   // API Endpoint: /employees (POST request with encrypted empId)
   Future<EmployeeProfileData?> getEmployeeProfile(String empId) async {
     try {
+      logger.d('Starting getEmployeeProfile for empId: $empId');
+
       // Encrypt the empId before sending
-      final encryptedEmpId = _encryptData(empId);
+      final encryptedEmpId = encryptData(empId);
+      logger.d('Encrypted empId: $encryptedEmpId');
 
       if (encryptedEmpId == null) {
         throw Exception('Failed to encrypt employee ID');
@@ -98,45 +104,88 @@ class ApiClient {
         'sap_emp_no': encryptedEmpId,
       };
       final requestBody = jsonEncode(map);
+      logger.d('Request body: $requestBody');
 
-      final fullUrl = await ApiConstants.getEndPointUrl("employees");
+      final fullUrl = await ApiConstants.getEndPointUrl("employeeProfile");
       final url = Uri.parse(fullUrl);
+      logger.d('Request URL: $url');
 
       final response = await _client.post(
         url,
         body: requestBody,
         headers: headers,
+        encoding: utf8,
       );
+
+      logger.d('Response status code: ${response.statusCode}');
+      logger.d('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        logger.d('Decoded data: $data');
         EmployeeProfileData employeeProfile = EmployeeProfileData.fromJson(data);
+        logger.d('Parsed employee profile successfully');
         return employeeProfile;
+      } else {
+        logger.d('Non-200 status code received: ${response.statusCode}');
+        return null;
       }
     } catch (e) {
-      logger.d(e.toString());
-    }
-    return null;
-  }
-
-  // Helper method to encrypt data (should match your frontend encryption)
-  String? _encryptData(String data) {
-    try {
-      const secretKey = "testTestTest@1122";
-
-      // Create key from the secret string
-      final key = encrypt.Key.fromUtf8(secretKey.padRight(32, '\x00').substring(0, 32));
-
-      // Create encrypter with AES algorithm in CBC mode
-      final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
-
-      // Encrypt the data
-      final encrypted = encrypter.encrypt(data, iv: encrypt.IV.fromLength(16));
-
-      return encrypted.base64;
-    } catch (error) {
-      logger.d("Encryption error: $error");
+      logger.d('Exception in getEmployeeProfile: $e');
       return null;
     }
   }
+
+  // Helper method to encrypt data (should match your frontend encryption)
+  // String? _encryptData(String data) {
+  //   try {
+  //     const secretKey = "testTestTest@1122";
+  //
+  //     // Create key from the secret string
+  //     final key = encrypt.Key.fromUtf8(secretKey.padRight(32, '\x00').substring(0, 32));
+  //
+  //     // Create encrypter with AES algorithm in CBC mode
+  //     final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
+  //
+  //     // Encrypt the data
+  //     final encrypted = encrypter.encrypt(data, iv: encrypt.IV.fromLength(16));
+  //
+  //     return encrypted.base64;
+  //   } catch (error) {
+  //     logger.d("Encryption error: $error");
+  //     return null;
+  //   }
+  // }
+  String encryptData(String data) {
+    const secretKey = 'testTestTest@1122';
+
+    // CryptoJS uses random 8-byte salt
+    final salt = List<int>.generate(8, (_) => Random.secure().nextInt(256));
+
+    // Derive key + IV using EVP_BytesToKey (MD5)
+    final keyIv = evpBytesToKey(
+      utf8.encode(secretKey),
+      salt,
+      keySize: 32,
+      ivSize: 16,
+    );
+
+    final key = encrypt.Key(Uint8List.fromList(keyIv.sublist(0, 32)));
+    final iv = encrypt.IV(Uint8List.fromList(keyIv.sublist(32, 48)));
+
+    final encrypter =
+    encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
+
+    final encrypted = encrypter.encrypt(data, iv: iv);
+
+    // CryptoJS output format: "Salted__" + salt + ciphertext
+    final result = base64Encode([
+      ...utf8.encode('Salted__'),
+      ...salt,
+      ...encrypted.bytes,
+    ]);
+
+    return result;
+  }
+
 }

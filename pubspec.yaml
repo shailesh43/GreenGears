@@ -38,6 +38,7 @@ dev_dependencies:
   jwt_decoder: ^2.0.1
   logger: ^2.6.2
   encrypt: ^5.0.3
+  crypto: ^3.0.7
 
 #  testing above
 
