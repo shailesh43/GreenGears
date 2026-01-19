@@ -3,17 +3,18 @@ import 'package:http/http.dart' as http;
 import './api_constants.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import '../core/decrypt.dart';
-import 'dart:convert';
 import 'dart:async';
-
+import 'package:logger/logger.dart';
 import './api_models/role_by_employee.dart'; // 1
 import './api_models/employee_profile_data.dart'; // 2
 
 class ApiClient {
   final http.Client _client = http.Client();
+  final Logger logger = Logger();
+
   // ---------------- GET ----------------
   Future<Map<String, dynamic>> get(String endpoint) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    final url = Uri.parse('${ApiConstants.baseURl}$endpoint');
 
     final response = await _client.get(
       url,
@@ -27,12 +28,13 @@ class ApiClient {
   Future<Map<String, dynamic>> post(
       String endpoint, {
         required Map<String, dynamic> body,
+        required Map<String, String>? headers,
       }) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    final url = Uri.parse('${ApiConstants.baseURl}$endpoint');
 
     final response = await _client.post(
       url,
-      headers: _defaultHeaders(),
+      headers: headers ?? _defaultHeaders(),
       body: jsonEncode(body),
     );
 
@@ -40,7 +42,7 @@ class ApiClient {
   }
 
   // ---------------- COMMON HEADERS ----------------
-  Map<String, String> defaultHeaders() {
+  Map<String, String> _defaultHeaders() {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -48,8 +50,7 @@ class ApiClient {
   }
 
   // ---------------- RESPONSE HANDLER ----------------
-  Map<String, dynamic> handleResponse(http.Response response,
-      String method,) {
+  Map<String, dynamic> _handleResponse(http.Response response, String method) {
     final statusCode = response.statusCode;
 
     if (statusCode >= 200 && statusCode < 300) {
@@ -64,13 +65,20 @@ class ApiClient {
     }
   }
 
-
   // 1. Fetch Employee Role on LoginPage (empId)
   // API Endpoint: /role-by-employee/:empId
   Future<RoleByEmployeeModel> getRoleByEmployee(String empId) async {
-    final endpoint = '${ApiConstants.getEndPointUrl('roleByEmployee')}/$empId';
-    final response = await _client.get(endpoint);
-    return RoleByEmployeeModel.fromJson(response);
+    final endpointUrl = await ApiConstants.getEndPointUrl('roleByEmployee');
+    final fullUrl = '$endpointUrl/$empId';
+    final url = Uri.parse(fullUrl);
+
+    final response = await _client.get(
+      url,
+      headers: _defaultHeaders(),
+    );
+
+    final data = _handleResponse(response, 'GET');
+    return RoleByEmployeeModel.fromJson(data);
   }
 
   // 2. Fetch Employee Details on ProfilePage (empId)
@@ -84,23 +92,29 @@ class ApiClient {
         throw Exception('Failed to encrypt employee ID');
       }
 
-      var headers = await _client.defaultHeaders();
+      final headers = _defaultHeaders();
 
-      Map map = {
+      final map = {
         'sap_emp_no': encryptedEmpId,
       };
-      String requestBody = jsonEncode(map);
+      final requestBody = jsonEncode(map);
 
-      var url = Uri.parse(await ApiConstants.getEndPointUrl("employees"));
-      var response = await _client?.post(url, headers: headers, body: requestBody);
+      final fullUrl = await ApiConstants.getEndPointUrl("employees");
+      final url = Uri.parse(fullUrl);
 
-      if (response?.statusCode == 200) {
-        var data = jsonDecode(response?.body ?? "");
+      final response = await _client.post(
+        url,
+        body: requestBody,
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
         EmployeeProfileData employeeProfile = EmployeeProfileData.fromJson(data);
         return employeeProfile;
       }
     } catch (e) {
-      log(e.toString());
+      logger.d(e.toString());
     }
     return null;
   }
@@ -121,9 +135,8 @@ class ApiClient {
 
       return encrypted.base64;
     } catch (error) {
-      log("Encryption error: $error");
+      logger.d("Encryption error: $error");
       return null;
     }
   }
 }
-
