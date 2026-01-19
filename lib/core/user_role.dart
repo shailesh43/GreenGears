@@ -9,6 +9,11 @@ import '../features/policy/policy_page.dart';
 // Processing page body - for admin only
 import '../features/processing/processing_page.dart';
 
+// Fetch role to get Started
+
+import '../../network/repositories/employee_repository.dart';
+import '../../network/api_models/role_by_employee.dart';
+
 enum UserRole { admin, user }
 
 class DashboardShell extends StatefulWidget {
@@ -48,7 +53,7 @@ class _DashboardShellState extends State<DashboardShell> {
           role: widget.role,
         ),
         const ProcessingPage(),
-        const EmployeeDetailsPage(),
+        const ProfilePage(),
         const PolicyPage(),
       ];
 
@@ -78,7 +83,7 @@ class _DashboardShellState extends State<DashboardShell> {
           empMail: widget.empMail,
           role: widget.role,
         ),
-        const EmployeeDetailsPage(),
+        const ProfilePage(),
         const PolicyPage(),
       ];
 
