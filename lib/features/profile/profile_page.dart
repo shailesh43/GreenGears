@@ -1,21 +1,59 @@
 import 'package:flutter/material.dart';
+import '../../network/api_client.dart';
+import '../../network/api_models/role_by_employee.dart';
 import '../request/request_vehicle.dart';
 
-// Employee Details Page
-class EmployeeDetailsPage extends StatelessWidget {
-  const EmployeeDetailsPage({Key? key}) : super(key: key);
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+// Employee Profile Page
+class _ProfilePageState extends State<ProfilePage> {
+  final ApiClient _client = ApiClient();
+
+  int? roleId;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRole();
+  }
+
+  Future<void> _fetchRole() async {
+    try {
+      final RoleByEmployeeModel result =
+      await _client.getRoleByEmployee('209164');
+
+      setState(() {
+        roleId = result.roleIds.isNotEmpty ? result.roleIds.first : null;
+        isLoading = false;
+      });
+
+      debugPrint('GET 200 OK : "role-by-employee/:empId"');
+      debugPrint('roleId: $roleId');
+    } catch (e) {
+      debugPrint('Error fetching role: $e');
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // leading: IconButton(
-        //   // icon: const Icon(Icons.arrow_back, color: Colors.black),
-        //   // onPressed: () => Navigator.pop(context),
-        // ),
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -280,24 +318,6 @@ class VehicleDetailsPage extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Profile UI',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Inter',
-        primarySwatch: Colors.blue,
-      ),
-      home: const EmployeeDetailsPage(),
     );
   }
 }
