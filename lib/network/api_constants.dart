@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class ApiConstants {
-  static String baseURl = "http://loclaho:3010/api/";
+  static String baseURl = "http://localhost:3010/api/";
 
   // SAMAL auth credentials
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
@@ -18,8 +18,8 @@ class ApiConstants {
 
 
   // Employee Details
-  static const String roleByEmployee = '/role-by-employee';
-  static const String employeeProfile = '/employees';
+  static const String roleByEmployee = 'role-by-employee';
+  static const String employeeProfile = 'employees';
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
