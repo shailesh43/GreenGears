@@ -21,10 +21,6 @@ dependencies:
   path_provider: ^2.1.5
   open_file: ^3.5.10
 
-  # msauth
-  msal_flutter: ^2.0.1
-
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -41,6 +37,7 @@ dev_dependencies:
   flutter_web_auth_2: ^4.1.0
   jwt_decoder: ^2.0.1
   logger: ^2.6.2
+  encrypt: ^5.0.3
 
 #  testing above
 
