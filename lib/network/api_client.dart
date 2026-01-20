@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import './api_constants.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
-import '../core/decrypt.dart';
+import '../core/encrypt.dart';
 import 'dart:math';        // for Random.secure()
 import 'dart:typed_data'; // for Uint8List
 
@@ -136,26 +136,7 @@ class ApiClient {
     }
   }
 
-  // Helper method to encrypt data (should match your frontend encryption)
-  // String? _encryptData(String data) {
-  //   try {
-  //     const secretKey = "testTestTest@1122";
-  //
-  //     // Create key from the secret string
-  //     final key = encrypt.Key.fromUtf8(secretKey.padRight(32, '\x00').substring(0, 32));
-  //
-  //     // Create encrypter with AES algorithm in CBC mode
-  //     final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
-  //
-  //     // Encrypt the data
-  //     final encrypted = encrypter.encrypt(data, iv: encrypt.IV.fromLength(16));
-  //
-  //     return encrypted.base64;
-  //   } catch (error) {
-  //     logger.d("Encryption error: $error");
-  //     return null;
-  //   }
-  // }
+  // Helper method for encrypting empId before making POST request
   String encryptData(String data) {
     const secretKey = 'testTestTest@1122';
 
@@ -187,5 +168,8 @@ class ApiClient {
 
     return result;
   }
+
+  // 3. Fetch Employee Details on ProfilePage (empId)
+  // API Endpoint: /employees (POST request with encrypted empId)
 
 }
