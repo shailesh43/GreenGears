@@ -3,7 +3,7 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../network/api_constants.dart';
-import '../constants/local_const.dart';
+import '../constants/local_prefs.dart';
 import 'package:logger/logger.dart';
 
 class AuthenticationService {
@@ -71,15 +71,11 @@ class AuthenticationService {
       final empMail = userData['mail'];
       final empId = userData['extension_6d1109881ca84719973dbff443d7b820_employeeNumber'];
 
-      print('Employee ID: $empId');
-      print('Employee Name: $empName');
-      print('Employee Email: $empMail');
+      print('Employee ID from SAMAL: $empId');
 
       // Return user info as a map
       return {
         'empId': empId,
-        'empName': empName,
-        'empMail': empMail,
         'accessToken': accessToken,
       };
     } catch (err) {
