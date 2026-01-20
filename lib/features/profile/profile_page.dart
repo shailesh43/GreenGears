@@ -3,6 +3,7 @@ import '../../network/api_client.dart';
 import '../../network/api_models/role_by_employee.dart';
 import '../../network/api_models/employee_profile_data.dart';
 import '../request/request_vehicle.dart';
+import '../../constants/local_prefs.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -15,61 +16,76 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final ApiClient _client = ApiClient();
 
-  int? roleId;
+  // int? roleId;
   bool isLoading = true;
   String? employeeName;
+  String? employeeCode;
+  String? employeeMobileNo;
   String? employeeEmail;
-
+  String? employeeCompany;
+  String? employeeGrade;
+  String? employeeEligibility;
+  String? employeeCostCenter;
+  String? employeeAddress;
+  String? employeeCluster;
 
   @override
   void initState() {
     super.initState();
-    _fetchRole();
+    // _fetchRole();
     _fetchEmployeeProfile();
   }
 
-  Future<void> _fetchRole() async {
-    try {
-      final RoleByEmployeeModel result =
-      await _client.getRoleByEmployee('209164');
-
-      setState(() {
-        roleId = result.roleIds.isNotEmpty ? result.roleIds.first : null;
-        isLoading = false;
-      });
-
-      debugPrint('GET 200 OK : "role-by-employee/:empId"');
-      debugPrint('roleId: $roleId');
-    } catch (e) {
-      debugPrint('Error fetching role: $e');
-      setState(() => isLoading = false);
-    }
-  }
-
+  // Employee Details
   Future<void> _fetchEmployeeProfile() async {
     try {
       final result = await _client.getEmployeeProfile('209164');
       if (result != null) {
+
         setState(() {
           // Use the employee profile data directly
           // Since you don't have an employeeProfile state variable,
           // you can either create one or use the data directly here
           isLoading = false;
           employeeName = result.sapShortNameModify;
+          employeeCode = result.sapEmpNo;
+          employeeMobileNo = result.sapMobileNo;
           employeeEmail = result.sapEmail;
+          employeeCompany = result.sapCompanyDesc;
+          employeeGrade = result.sapCurrGradeDesc;
+          employeeEligibility = result.sapBasic.toString();
+          employeeCostCenter = result.sapCostCenter;
+          employeeAddress = result.workLongTxt;
+          employeeCluster = result.omclText;
         });
+
+        await LocalPrefs.saveEmployeeProfile(
+          empCode: employeeCode ?? '',
+          empName: employeeName ?? '',
+          empEmail: employeeEmail?.toLowerCase()?? '',
+          empMobile: employeeMobileNo ?? '',
+          empGrade: employeeGrade,
+          empEligibility: employeeEligibility?.toString(),
+        );
+
 
         debugPrint('POST 200 OK : "employees"');
         debugPrint('Employee Name: ${result
             .sapShortNameModify}'); // Adjust field names as needed
         debugPrint('Employee Email: ${result
-            .sapEmail}'); // Adjust field names as needed
-
-        // If you need to store specific fields, do it here
-        // For example:
-        // setState(() {
-        //
-        // });
+            .sapEmail}');
+        debugPrint('Employee Company: ${result
+            .sapCompanyDesc}');
+        debugPrint('Employee Grade: ${result
+            .sapCurrGradeDesc}');
+        debugPrint('Employee Eligibility: ${result
+            .sapBasic}');
+        debugPrint('Employee Cost Center: ${result
+            .sapCostCenter}');
+        debugPrint('Employee Address: ${result
+            .workLongTxt}');
+        debugPrint('Employee Cluster: ${result
+            .omclText}');
       }
         else {
           debugPrint('Employee profile not found');
@@ -152,27 +168,27 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     ProfileField(
                       label: 'Name',
-                      value: 'Rahil Bopche',
+                      value: employeeName,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
                       label: 'Employee code',
-                      value: '209164',
+                      value: employeeCode,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
                       label: 'Mobile Name',
-                      value: '+8435265646',
+                      value: employeeMobileNo,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
                       label: 'Email',
-                      value: 'rahil.bopche@tatapower.com',
+                      value: employeeEmail?.toLowerCase(),
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
                       label: 'Company',
-                      value: 'The Tata Power Co. Ltd.',
+                      value: employeeCompany,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
@@ -182,22 +198,22 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
                       label: 'Eligibility',
-                      value: '₹ 4300.50',
+                      value: employeeEligibility,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
                       label: 'Cost Center',
-                      value: '1900022041',
+                      value: employeeCostCenter,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
-                    ProfileField(
+                    ExpandableAddressField(
                       label: 'Address',
-                      value: 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
+                      value: employeeAddress,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
                       label: 'Cluster',
-                      value: 'Corporate Functions\n& International',
+                      value: employeeCluster,
                       isLast: true,
                     ),
                   ],
@@ -214,7 +230,7 @@ class _ProfilePageState extends State<ProfilePage> {
 // Reusable Profile Field Widget
 class ProfileField extends StatelessWidget {
   final String label;
-  final String value;
+  final String? value;
   final bool isLast;
 
   const ProfileField({
@@ -252,7 +268,7 @@ class ProfileField extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Text(
-              value,
+              (value == null || value!.isEmpty) ? '-' : value!,
               textAlign: TextAlign.right,
               style: const TextStyle(
                 color: Color.fromRGBO(17, 24, 39, 1),
@@ -260,6 +276,115 @@ class ProfileField extends StatelessWidget {
                 fontWeight: FontWeight.w500,
                 fontFamily: 'Inter',
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Reusable Address Field Widget
+class ExpandableAddressField extends StatefulWidget {
+  final String label;
+  final String? value;
+  final int collapsedLines;
+
+  const ExpandableAddressField({
+    Key? key,
+    required this.label,
+    required this.value,
+    this.collapsedLines = 2,
+  }) : super(key: key);
+
+  @override
+  State<ExpandableAddressField> createState() =>
+      _ExpandableAddressFieldState();
+}
+class _ExpandableAddressFieldState extends State<ExpandableAddressField> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayValue =
+    (widget.value == null || widget.value!.isEmpty)
+        ? '-'
+        : widget.value!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// Label
+          Expanded(
+            flex: 2,
+            child: Text(
+              widget.label,
+              style: const TextStyle(
+                color: Color.fromRGBO(156, 163, 175, 1),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Inter',
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          /// Address + View More
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  child: Text(
+                    displayValue,
+                    maxLines:
+                    _expanded ? null : widget.collapsedLines,
+                    overflow:
+                    _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    softWrap: true,
+                    style: const TextStyle(
+                      color: Color.fromRGBO(17, 24, 39, 1),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Inter',
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+
+                /// View more / less
+                if (displayValue != '-' &&
+                    displayValue.length > 60)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _expanded = !_expanded;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                      child: Text(
+                        _expanded ? 'View less' : 'View more',
+                        style: const TextStyle(
+                          color: Color.fromRGBO(37, 99, 235, 1), // blue-600
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
