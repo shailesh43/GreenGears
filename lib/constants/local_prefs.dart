@@ -4,8 +4,10 @@ class LocalPrefs {
   static const _empCode = 'emp_code';
   static const _empName = 'emp_name';
   static const _empEmail = 'emp_email';
-  static const _empMobile = 'emp_mobile'; = 'emp_email';
+  static const _empMobile = 'emp_mobile';
   static const _roleId = 'role_id';
+  static const _empGrade = 'emp_grade';
+  static const _empEligibility = 'emp_eligibility';
 
   // SAVE Employee Profile
   static Future<void> saveEmployeeProfile({
@@ -13,7 +15,9 @@ class LocalPrefs {
     required String empName,
     required String empEmail,
     required String empMobile,
-    required int roleId,
+    // required int roleId,
+    String? empGrade,
+    String? empEligibility,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -22,8 +26,14 @@ class LocalPrefs {
     await prefs.setString(_empName, empName);
     await prefs.setString(_empEmail, empEmail);
     await prefs.setString(_empMobile, empMobile);
-    await prefs.setInt(_roleId, roleId);
+    // await prefs.setInt(_roleId, roleId);
 
+    if (empGrade != null) {
+      await prefs.setString(_empGrade, empGrade);
+    }
+    if (empEligibility != null) {
+      await prefs.setString(_empEligibility, empEligibility);
+    }
   }
 
   // GETTERS
@@ -42,9 +52,24 @@ class LocalPrefs {
     return prefs.getString(_empEmail);
   }
 
+  static Future<String?> getEmpMobile() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_empMobile);
+  }
+
   static Future<int?> getRoleId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_roleId);
+  }
+
+  static Future<String?> getEmpGrade() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_empGrade);
+  }
+
+  static Future<String?> getEmpEligibility() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_empEligibility);
   }
 
   static Future<void> clear() async {
