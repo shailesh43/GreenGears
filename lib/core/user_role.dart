@@ -1,33 +1,27 @@
 import 'package:flutter/material.dart';
 //Home dashboard body
-import '../features/dashboard/dashboard_main.dart';// for admin -> this + bottom nav
+import '../features/dashboard/dashboard_main.dart';
 
 // Profile page body
 import '../features/profile/profile_page.dart';
 //Policy page body
 import '../features/policy/policy_page.dart';
-// Processing page body - for admin only
+// Processing page body
 import '../features/processing/processing_page.dart';
 
 // Fetch role to get Started
-
 import '../../network/api_client.dart';
 import '../../network/api_models/role_by_employee.dart';
-
-enum UserRole { admin, user }
+import '../../constants/local_prefs.dart';
+import '../constants/utils.dart';
+import '../network/api_client.dart';
 
 class DashboardShell extends StatefulWidget {
   final UserRole role;
-  final String empName;
-  final String empId;
-  final String empMail;
 
   const DashboardShell({
     super.key,
     required this.role,
-    required this.empName,
-    required this.empId,
-    required this.empMail,
   });
 
   @override
@@ -36,76 +30,171 @@ class DashboardShell extends StatefulWidget {
 
 class _DashboardShellState extends State<DashboardShell> {
   int _selectedIndex = 0;
+  final ApiClient _client = ApiClient();
 
-  late final List<Widget> _pages;
-  late final List<BottomNavigationBarItem> _navItems;
+  bool isLoading = true;
+  String empId = '';
+  int roleId = 0;
+
+  late List<Widget> _pages;
+  late List<BottomNavigationBarItem> _navItems;
 
   @override
   void initState() {
     super.initState();
+    _initializeData();
+  }
 
-    if (widget.role == UserRole.user) {
-      _pages = [
-        MainDashboard(
-          empName: widget.empName,
-          empId: widget.empId,
-          empMail: widget.empMail,
-          role: widget.role,
-        ),
-        const ProcessingPage(),
-        const ProfilePage(),
-        const PolicyPage(),
-      ];
+  Future<void> _initializeData() async {
+    await _loadEmpId();
+    await _fetchRole();
+    _setupPagesAndNav();
+  }
 
-      _navItems = const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: 'Processing',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.policy),
-          label: 'Policy',
-        ),
-      ];
-    } else {
-      _pages = [
-        MainDashboard(
-          empName: widget.empName,
-          empId: widget.empId,
-          empMail: widget.empMail,
-          role: widget.role,
-        ),
-        const ProfilePage(),
-        const PolicyPage(),
-      ];
+  Future<void> _loadEmpId() async {
+    final code = await LocalPrefs.getEmpCode();
+    setState(() {
+      empId = code ?? '';
+    });
+  }
 
-      _navItems = const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.policy),
-          label: 'Policy',
-        ),
-      ];
+  Future<void> _fetchRole() async {
+    if (empId.isEmpty) {
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      final result = await _client.getRoleByEmployee(empId);
+      setState(() {
+        roleId = result.roleIds.isNotEmpty ? result.roleIds.first : 0;
+        isLoading = false;
+      });
+      debugPrint('GET 200 OK : "role-by-employee/:empId"');
+      debugPrint('roleId: $roleId');
+    } catch (e) {
+      debugPrint('Error fetching role: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _setupPagesAndNav() {
+    switch (widget.role) {
+      case UserRole.admin:
+        _pages = [
+          MainDashboard(role: widget.role),
+          ProcessingPage(role: UserRole.admin),
+          const ProfilePage(),
+          const PolicyPage(),
+        ];
+        _navItems = const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Processing',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.policy),
+            label: 'Policy',
+          ),
+        ];
+        break;
+
+      case UserRole.esna:
+        _pages = [
+          MainDashboard(role: widget.role),
+          ProcessingPage(role: UserRole.esna),
+          const ProfilePage(),
+          const PolicyPage(),
+        ];
+        _navItems = const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Processing',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.policy),
+            label: 'Policy',
+          ),
+        ];
+        break;
+
+      case UserRole.insurance:
+        _pages = [
+          MainDashboard(role: widget.role),
+          ProcessingPage(role: UserRole.insurance),
+          const ProfilePage(),
+          const PolicyPage(),
+        ];
+        _navItems = const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Processing',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.policy),
+            label: 'Policy',
+          ),
+        ];
+        break;
+
+      case UserRole.user:
+        _pages = [
+          MainDashboard(role: widget.role),
+          const ProfilePage(),
+          const PolicyPage(),
+        ];
+        _navItems = const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.policy),
+            label: 'Policy',
+          ),
+        ];
+        break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
@@ -118,8 +207,8 @@ class _DashboardShellState extends State<DashboardShell> {
         type: BottomNavigationBarType.fixed,
         showSelectedLabels: true,
         showUnselectedLabels: false,
-        backgroundColor: Color.fromRGBO(248, 248, 248, 0.75),
-        selectedItemColor: Color.fromRGBO(0, 0, 0, 0.75),
+        backgroundColor: const Color.fromRGBO(248, 248, 248, 0.75),
+        selectedItemColor: const Color.fromRGBO(0, 0, 0, 0.75),
       ),
     );
   }
