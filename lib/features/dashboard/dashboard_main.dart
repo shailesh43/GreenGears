@@ -4,39 +4,78 @@ import '../request/user_approval.dart';
 import '../../features/profile/profile_page.dart';
 import '../request/search_request_vehicle.dart';
 import '../docs/uploaded_quotations.dart';
-import '../../core/user_role.dart';
+import '../../constants/utils.dart';
+import '../../network/api_client.dart';
+import '../../constants/local_prefs.dart';
 
-class MainDashboard extends StatelessWidget {
-  final String empName;
-  final String empId;
-  final String empMail;
+class MainDashboard extends StatefulWidget {
   final UserRole role;
 
   const MainDashboard({
     super.key,
-    required this.empName,
-    required this.empId,
-    required this.empMail,
     required this.role,
   });
 
   @override
+  State<MainDashboard> createState() => _MainDashboard();
+}
+
+class _MainDashboard extends State<MainDashboard> {
+  final ApiClient _client = ApiClient();
+
+  // Employee data from local preferences
+  String empName = '';
+  String empEmail = '';
+  String empCode = '';
+  String empGrade = '';
+  String empRole = '';
+  String empEligibility = '';
+  String empMobileNo = '';
+
+  int roleId = 0;
+  // bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLocalPrefs();
+  }
+
+  Future<void> _fetchLocalPrefs() async {
+    await _loadEmployeeData();
+  }
+
+  Future<void> _loadEmployeeData() async {
+    final name = await LocalPrefs.getEmpName();
+    final email = await LocalPrefs.getEmpEmail();
+    final code = await LocalPrefs.getEmpCode();
+    final grade = await LocalPrefs.getEmpGrade();
+    final eligibility = await LocalPrefs.getEmpEligibility();
+    final mobile = await LocalPrefs.getEmpMobile();
+
+    setState(() {
+      empName = name ?? '';
+      empEmail = email ?? '';
+      empCode = code ?? '';
+      empGrade = grade ?? 'N/A';
+      empEligibility = eligibility ?? '₹0';
+      empMobileNo = mobile ?? '';
+      empRole = widget.role.label;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GreenGears',
-      theme: ThemeData(
-        primaryColor: const Color(0xFF2ECC71),
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-        fontFamily: 'Inter',
-        useMaterial3: true,
-      ),
-      home: DashboardScreen(
-        empName: empName,
-        empId: empId,
-        empMail: empMail,
-        role: role,
-      ),
-      debugShowCheckedModeBanner: false,
+    return DashboardScreen(
+      empName: empName,
+      empId: empCode,
+      empMail: empEmail,
+      empGrade: empGrade,
+      empRole: empRole,
+      empEligibility: empEligibility,
+      empMobileNo: empMobileNo,
+      role: widget.role,
+      // isLoading: isLoading,
     );
   }
 }
@@ -45,14 +84,24 @@ class DashboardScreen extends StatefulWidget {
   final String empName;
   final String empId;
   final String empMail;
+  final String empGrade;
+  final String empRole;
+  final String empEligibility;
+  final String empMobileNo;
   final UserRole role;
+  // final bool isLoading;
 
   const DashboardScreen({
     super.key,
     required this.empName,
     required this.empId,
     required this.empMail,
+    required this.empGrade,
+    required this.empRole,
+    required this.empEligibility,
+    required this.empMobileNo,
     required this.role,
+    // required this.isLoading,
   });
 
   @override
@@ -60,8 +109,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 0;
-
+  // used for testing
   final Map<String, String> mainRequest = {
     // Basic Request Info
     'requestId': 'CAR2025204',
@@ -87,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Financial Details
     'eligibility': '₹ 40,000',
     'baseAmount': '₹ 40,500',
-    'basePremium': '36,460', // For stage 23
+    'basePremium': '36,460',
     'cessPercentage': '10 %',
     'corporateRegistration': '₹ 2000',
     'quotation': '5 %',
@@ -111,6 +159,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // if (widget.isLoading) {
+    //   return const Scaffold(
+    //     backgroundColor: Color(0xFFF5F5F5),
+    //     body: Center(
+    //       child: CircularProgressIndicator(
+    //         color: Color.fromRGBO(41, 183, 69, 1),
+    //       ),
+    //     ),
+    //   );
+    // }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       extendBodyBehindAppBar: true,
@@ -124,7 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               margin: const EdgeInsets.only(bottom: 20),
               padding: const EdgeInsets.only(top: 30, bottom: 0),
               decoration: BoxDecoration(
-                color: Color.fromRGBO(41, 183, 69, 1),  //PrimaryGreen
+                color: const Color.fromRGBO(41, 183, 69, 1),
                 border: Border.all(color: Colors.black, width: 0.1),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(0),
@@ -133,9 +192,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   bottomRight: Radius.circular(18),
                 ),
               ),
-
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 24),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -158,37 +216,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-
               ),
             ),
 
             // Content
             Expanded(
-
               child: SingleChildScrollView(
-                padding: const EdgeInsetsGeometry.fromLTRB(24, 4, 24, 16),
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Welcome Section
                     Row(
-                children: [
-                  const Text(
-                    'Welcome',
-                    style: TextStyle(fontSize: 24, letterSpacing: -0.4, color: Color(
-                        0xFF000000)),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    widget.empName,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.4,
-                      color: Color(0xFF000000),
-                    ),
-                  ),
-                ]
+                      children: [
+                        const Text(
+                          'Welcome',
+                          style: TextStyle(
+                            fontSize: 24,
+                            letterSpacing: -0.4,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.empName,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.4,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -212,9 +271,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.20),
-                            offset: const Offset(3, 3), // right & bottom
+                            offset: const Offset(3, 3),
                             blurRadius: 6,
-                            spreadRadius: -1, // prevents shadow on top/left
+                            spreadRadius: -1,
                           ),
                         ],
                       ),
@@ -225,12 +284,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Expanded(
                                 child: _buildInfoItem('EMP code', widget.empId),
                               ),
-                              Expanded(child: _buildInfoItem('Grade', 'ME03')),
                               Expanded(
-                                child: _buildInfoItem(
-                                  'Role',
-                                  widget.role == UserRole.admin ? 'Admin' : 'User',
-                                ),
+                                child: _buildInfoItem('Grade', widget.empGrade),
+                              ),
+                              Expanded(
+                                child: _buildInfoItem('Role', widget.empRole),
                               ),
                             ],
                           ),
@@ -240,11 +298,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Expanded(
                                 child: _buildInfoItem(
                                   'Eligibility',
-                                  '₹5,00,000',
+                                  widget.empEligibility,
                                 ),
                               ),
                               Expanded(
-                                child: _buildInfoItem('Phone', '+8498475876'),
+                                child: _buildInfoItem('Phone', widget.empMobileNo),
                               ),
                             ],
                           ),
@@ -271,10 +329,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: _buildActionCard(
                             icon: Icons.edit,
                             title: 'Create Request\nfor your Vehicle',
-                            color: Color.fromRGBO(41, 183, 69, 0.55),
-                            titleColor: Color.fromRGBO(
-                                248, 248, 248, 1.0),
-                            iconColor: Color.fromRGBO(248, 248, 248, 1.0),
+                            color: const Color.fromRGBO(41, 183, 69, 0.55),
+                            titleColor: const Color.fromRGBO(248, 248, 248, 1.0),
+                            iconColor: const Color.fromRGBO(248, 248, 248, 1.0),
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -290,14 +347,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: _buildActionCard(
                             icon: Icons.check_circle_outline,
                             title: 'Approve/Reject\nRequests',
-                            color: Color.fromRGBO(242, 241, 249, 1.0),
-                            titleColor: Color.fromRGBO(152, 152, 152, 1.0),
-                            iconColor: Color.fromRGBO(152, 152, 152, 1.0),
+                            color: const Color.fromRGBO(242, 241, 249, 1.0),
+                            titleColor: const Color.fromRGBO(152, 152, 152, 1.0),
+                            iconColor: const Color.fromRGBO(152, 152, 152, 1.0),
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => UserApproval(stage: 25, request: mainRequest,),
+                                  builder: (context) => UserApproval(
+                                    stage: 25,
+                                    request: mainRequest,
+                                  ),
                                 ),
                               );
                             },
@@ -307,10 +367,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 18),
 
-                    // Quotation docs
+                    // Search Requests
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsetsGeometry.fromLTRB(4, 0, 4, 8),
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -329,16 +389,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SearchScreen(),
-                                ),
-                              );
-                            },
-                            child: Expanded(
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SearchScreen(),
+                                  ),
+                                );
+                              },
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -362,11 +422,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                           ),
-
                         ],
                       ),
                     ),
-                    const Divider(height: 0.5, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                    const Divider(
+                      height: 0.5,
+                      thickness: 1,
+                      color: Color.fromRGBO(229, 231, 235, 1),
+                    ),
+
+                    // Quotation docs
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
@@ -388,16 +453,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const UploadedQuotations(),
-                                ),
-                              );
-                            },
-                            child: Expanded(
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const UploadedQuotations(),
+                                  ),
+                                );
+                              },
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -441,10 +506,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Text(
           label,
           style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-              fontFamily: 'Inter',
-              letterSpacing: -0.2
+            fontSize: 14,
+            color: Colors.grey[500],
+            fontFamily: 'Inter',
+            letterSpacing: -0.2,
           ),
         ),
         const SizedBox(height: 4),

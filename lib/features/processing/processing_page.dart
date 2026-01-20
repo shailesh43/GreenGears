@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'esna_assign_screen.dart';
 import 'esna_spoc_screen.dart';
 import 'insurance_screen.dart';
+import '../../constants/utils.dart';
 
 class ProcessingPage extends StatefulWidget {
-  const ProcessingPage({Key? key}) : super(key: key);
+  final UserRole role;
+
+  const ProcessingPage({
+    Key? key,
+    required this.role,
+  }) : super(key: key);
 
   @override
   State<ProcessingPage> createState() => _ProcessingPageState();
@@ -12,6 +18,13 @@ class ProcessingPage extends StatefulWidget {
 
 class _ProcessingPageState extends State<ProcessingPage> {
   @override
+  void initState() {
+    super.initState();
+    // You can start API calls / logic here
+    // debugPrint('EmpId: ${widget.empId}');
+    debugPrint('Role: ${widget.role}');
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
