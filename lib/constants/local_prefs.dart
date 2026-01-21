@@ -9,25 +9,37 @@ class LocalPrefs {
   static const _empGrade = 'emp_grade';
   static const _empEligibility = 'emp_eligibility';
 
+  static Future<void> saveEmpId({
+    required String empCode,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // SETTER
+    await prefs.setString(_empCode, empCode);
+  }
+
+
+  // SAVE Employee Profile
   // SAVE Employee Profile
   static Future<void> saveEmployeeProfile({
-    required String empCode,
-    required String empName,
-    required String empEmail,
-    required String empMobile,
-    // required int roleId,
+    String? empName,        // ← Changed from required String
+    String? empEmail,       // ← Changed from required String
+    String? empMobile,      // ← Changed from required String
     String? empGrade,
     String? empEligibility,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // SETTERS
-    await prefs.setString(_empCode, empCode);
-    await prefs.setString(_empName, empName);
-    await prefs.setString(_empEmail, empEmail);
-    await prefs.setString(_empMobile, empMobile);
-    // await prefs.setInt(_roleId, roleId);
-
+    // SETTERS - only save non-null values
+    if (empName != null) {
+      await prefs.setString(_empName, empName);
+    }
+    if (empEmail != null) {
+      await prefs.setString(_empEmail, empEmail);
+    }
+    if (empMobile != null) {
+      await prefs.setString(_empMobile, empMobile);
+    }
     if (empGrade != null) {
       await prefs.setString(_empGrade, empGrade);
     }

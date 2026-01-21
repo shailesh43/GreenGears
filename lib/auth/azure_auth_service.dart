@@ -7,39 +7,27 @@ import '../constants/local_prefs.dart';
 import 'package:logger/logger.dart';
 
 class AuthenticationService {
-  /// 🔐 LOGIN - Returns user info map
-  static Future<Map<String, dynamic>?> login() async {
+  /// 🔐 LOGIN - Returns empId only
+  static Future<String?> login() async {
     try {
-      // 1️⃣ Build authorization URL
       final authUrl =
           '${ApiConstants.authorizationEndpoint}?'
           'client_id=${ApiConstants.clientId}'
           '&response_type=code'
           '&redirect_uri=${Uri.encodeComponent(ApiConstants.redirectUri)}'
           '&response_mode=query'
-          '&scope=${Uri.encodeComponent(ApiConstants.scope)}';
+          '&scope=${Uri.encodeComponent(ApiConstants.scope)}'
           '&prompt=select_account';
 
-      // Microsoft login page
       final result = await FlutterWebAuth2.authenticate(
         url: authUrl,
         callbackUrlScheme: 'msauth',
       );
 
-      // Extract authorization code
       final code = Uri.parse(result).queryParameters['code'];
       if (code == null) {
         throw Exception('Authorization failed');
       }
-
-      var logger = Logger(
-        printer: PrettyPrinter(
-          methodCount: 2,
-          errorMethodCount: 8,
-          lineLength: 120,
-          dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
-        ),
-      );
 
       // Exchange code for token
       final tokenResponse = await http.post(
@@ -59,41 +47,49 @@ class AuthenticationService {
       final tokenData = jsonDecode(tokenResponse.body);
       final accessToken = tokenData['access_token'];
 
-      Map<String, String> headers = {
-        "Authorization": 'Bearer $accessToken',
-        'Content-Type': 'application/json'
-      };
-      var url = Uri.parse(ApiConstants.userGraphUrl);
-      var response = await http.get(url, headers: headers);
+      if (accessToken == null) {
+        throw Exception('Access token missing');
+      }
+
+      // Fetch user info from Graph
+      final response = await http.get(
+        Uri.parse(ApiConstants.userGraphUrl),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
       final userData = jsonDecode(response.body);
 
-      final empName = userData['givenName'];
-      final empMail = userData['mail'];
-      final empId = userData['extension_6d1109881ca84719973dbff443d7b820_employeeNumber'];
+      final empId = userData[
+      'extension_6d1109881ca84719973dbff443d7b820_employeeNumber'
+      ]?.toString();
+
+      if (empId == null || empId.isEmpty) {
+        throw Exception('Employee ID not found');
+      }
 
       print('Employee ID from SAMAL: $empId');
 
-      // Return user info as a map
-      return {
-        'empId': empId,
-        'accessToken': accessToken,
-      };
+      return empId;
     } catch (err) {
-      var logger = Logger(
+      Logger(
         printer: PrettyPrinter(
           methodCount: 2,
           errorMethodCount: 8,
           lineLength: 120,
           dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
         ),
-      );
-      logger.e('Error fetching user info: $err');
+      ).e('Login failed: $err');
+
       return null;
     }
   }
 
   static Future<void> logout() async {
-    final logoutUrl = '${ApiConstants.authorizationEndpoint.replaceAll('/authorize', '/logout')}?'
+    final logoutUrl =
+        '${ApiConstants.authorizationEndpoint.replaceAll('/authorize', '/logout')}?'
         'post_logout_redirect_uri=${Uri.encodeComponent(ApiConstants.redirectUri)}';
 
     await FlutterWebAuth2.authenticate(

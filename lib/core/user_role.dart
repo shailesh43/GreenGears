@@ -14,6 +14,7 @@ import '../../network/api_client.dart';
 import '../../network/api_models/role_by_employee.dart';
 import '../../constants/local_prefs.dart';
 import '../constants/utils.dart';
+import '../constants/local_prefs.dart';
 import '../network/api_client.dart';
 
 class DashboardShell extends StatefulWidget {
@@ -39,6 +40,11 @@ class _DashboardShellState extends State<DashboardShell> {
   late List<Widget> _pages;
   late List<BottomNavigationBarItem> _navItems;
 
+  Future<int> getUserRole() async {
+    int? rId = await LocalPrefs.getRoleId();
+    return rId ?? 0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -46,37 +52,53 @@ class _DashboardShellState extends State<DashboardShell> {
   }
 
   Future<void> _initializeData() async {
-    await _loadEmpId();
-    await _fetchRole();
-    _setupPagesAndNav();
-  }
-
-  Future<void> _loadEmpId() async {
+    // load empId
     final code = await LocalPrefs.getEmpCode();
     setState(() {
       empId = code ?? '';
     });
+
+    // load roleId
+    int rId = await getUserRole();
+    setState(() {
+      roleId = rId;
+    });
+
+    // setup pages
+    _setupPagesAndNav();
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
-  Future<void> _fetchRole() async {
-    if (empId.isEmpty) {
-      setState(() => isLoading = false);
-      return;
-    }
 
-    try {
-      final result = await _client.getRoleByEmployee(empId);
-      setState(() {
-        roleId = result.roleIds.isNotEmpty ? result.roleIds.first : 0;
-        isLoading = false;
-      });
-      debugPrint('GET 200 OK : "role-by-employee/:empId"');
-      debugPrint('roleId: $roleId');
-    } catch (e) {
-      debugPrint('Error fetching role: $e');
-      setState(() => isLoading = false);
-    }
-  }
+  // Future<void> _loadEmpId() async {
+  //   final code = await LocalPrefs.getEmpCode();
+  //   setState(() {
+  //     empId = code ?? '';
+  //   });
+  // }
+
+  // Future<void> _fetchRole() async {
+  //   if (empId.isEmpty) {
+  //     setState(() => isLoading = false);
+  //     return;
+  //   }
+  //
+  //   try {
+  //     final result = await _client.getRoleByEmployee(empId);
+  //     setState(() {
+  //       roleId = result.roleIds.isNotEmpty ? result.roleIds.first : 0;
+  //       isLoading = false;
+  //     });
+  //     debugPrint('GET 200 OK : "role-by-employee/:empId"');
+  //     debugPrint('roleId: $roleId');
+  //   } catch (e) {
+  //     debugPrint('Error fetching role: $e');
+  //     setState(() => isLoading = false);
+  //   }
+  // }
 
   void _setupPagesAndNav() {
     switch (widget.role) {

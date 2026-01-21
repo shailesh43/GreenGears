@@ -4,6 +4,8 @@ import '../../network/api_models/role_by_employee.dart';
 import '../../network/api_models/employee_profile_data.dart';
 import '../request/request_vehicle.dart';
 import '../../constants/local_prefs.dart';
+import 'dart:async';
+import 'dart:core';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -33,22 +35,34 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     // _fetchRole();
-    _fetchEmployeeProfile();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _loadEmpCode();          // ✅ wait for empCode
+    await _fetchEmployeeProfile(); // ✅ now safe to call
+  }
+  // Load Employee Code
+  Future<void> _loadEmpCode() async {
+    employeeCode = await LocalPrefs.getEmpCode();
+    debugPrint('Employee code loaded: $employeeCode');
   }
 
   // Employee Details
   Future<void> _fetchEmployeeProfile() async {
-    try {
-      final result = await _client.getEmployeeProfile('209164');
-      if (result != null) {
+    if (employeeCode == null || employeeCode!.isEmpty) {
+      debugPrint('Employee code is null or empty');
+      setState(() => isLoading = false);
+      return;
+    }
 
+    try {
+      final result = await _client.getEmployeeProfile(employeeCode!);
+
+      if (result != null) {
         setState(() {
-          // Use the employee profile data directly
-          // Since you don't have an employeeProfile state variable,
-          // you can either create one or use the data directly here
           isLoading = false;
           employeeName = result.sapShortNameModify;
-          employeeCode = result.sapEmpNo;
           employeeMobileNo = result.sapMobileNo;
           employeeEmail = result.sapEmail;
           employeeCompany = result.sapCompanyDesc;
@@ -60,39 +74,19 @@ class _ProfilePageState extends State<ProfilePage> {
         });
 
         await LocalPrefs.saveEmployeeProfile(
-          empCode: employeeCode ?? '',
-          empName: employeeName ?? '',
-          empEmail: employeeEmail?.toLowerCase()?? '',
-          empMobile: employeeMobileNo ?? '',
+          empName: employeeName,
+          empEmail: employeeEmail?.toLowerCase(),
+          empMobile: employeeMobileNo,
           empGrade: employeeGrade,
           empEligibility: employeeEligibility?.toString(),
         );
 
-
-        debugPrint('POST 200 OK : "employees"');
-        debugPrint('Employee Name: ${result
-            .sapShortNameModify}'); // Adjust field names as needed
-        debugPrint('Employee Email: ${result
-            .sapEmail}');
-        debugPrint('Employee Company: ${result
-            .sapCompanyDesc}');
-        debugPrint('Employee Grade: ${result
-            .sapCurrGradeDesc}');
-        debugPrint('Employee Eligibility: ${result
-            .sapBasic}');
-        debugPrint('Employee Cost Center: ${result
-            .sapCostCenter}');
-        debugPrint('Employee Address: ${result
-            .workLongTxt}');
-        debugPrint('Employee Cluster: ${result
-            .omclText}');
+        debugPrint('POST 200 OK : "/employees"');
+      } else {
+        debugPrint('Employee profile not found');
+        setState(() => isLoading = false);
       }
-        else {
-          debugPrint('Employee profile not found');
-          setState(() => isLoading = false);
-        }
-    }
-    catch (e) {
+    } catch (e) {
       debugPrint('Error fetching employee profile: $e');
       setState(() => isLoading = false);
     }
@@ -177,7 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
-                      label: 'Mobile Name',
+                      label: 'Mobile No',
                       value: employeeMobileNo,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
@@ -193,7 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
                       label: 'Grade',
-                      value: 'ME03',
+                      value: employeeGrade,
                     ),
                     const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
                     ProfileField(
