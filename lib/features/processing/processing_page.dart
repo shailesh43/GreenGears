@@ -45,49 +45,59 @@ class _ProcessingPageState extends State<ProcessingPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildCard(
-              title: 'Assign ES&A spoc',
-              subtitle: 'List of ES&As spoc assignment requests',
-              imagePath: 'assets/images/assign_esna.png',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EsnaAssignScreen(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildCard(
-              title: 'ES&A spoc',
-              subtitle:
-              'List of requests which has to be assigned to insurance',
-              imagePath: 'assets/images/esna_spoc.png',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EsnaSpocScreen(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildCard(
-              title: 'Insurance',
-              subtitle:
-              'List of requests which has to provide insurance statements',
-              imagePath: 'assets/images/insurance.png',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => InsuranceScreen(),
-                  ),
-                );
-              },
-            ),
+            // Show "Assign ES&A spoc" only for Admin
+            if (widget.role?.label == "Admin")
+              _buildCard(
+                title: 'Assign ES&A spoc',
+                subtitle: 'List of ES&As spoc assignment requests',
+                imagePath: 'assets/images/assign_esna.png',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EsnaAssignScreen(),
+                    ),
+                  );
+                },
+              ),
+
+            if (widget.role?.label == "Admin")
+              const SizedBox(height: 16),
+
+            // Show "ES&A spoc" for Admin and ES&A roles
+            if (widget.role?.label == "Admin" || widget.role?.label == "ES&A")
+              _buildCard(
+                title: 'ES&A spoc',
+                subtitle: 'List of requests which has to be assigned to insurance',
+                imagePath: 'assets/images/esna_spoc.png',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EsnaSpocScreen(),
+                    ),
+                  );
+                },
+              ),
+
+            if (widget.role?.label == "Admin" || widget.role?.label == "ES&A")
+              const SizedBox(height: 16),
+
+            // Show "Insurance" for Admin and Insurance roles
+            if (widget.role?.label == "Admin" || widget.role?.label == "Insurance")
+              _buildCard(
+                title: 'Insurance',
+                subtitle: 'List of requests which has to provide insurance statements',
+                imagePath: 'assets/images/insurance.png',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InsuranceScreen(),
+                    ),
+                  );
+                },
+              ),
           ],
         ),
       ),

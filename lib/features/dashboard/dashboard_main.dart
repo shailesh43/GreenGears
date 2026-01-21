@@ -11,7 +11,7 @@ import '../../constants/local_prefs.dart';
 class MainDashboard extends StatefulWidget {
   final UserRole role;
 
-  const MainDashboard({
+  const   MainDashboard({
     super.key,
     required this.role,
   });
@@ -24,71 +24,97 @@ class _MainDashboard extends State<MainDashboard> {
   final ApiClient _client = ApiClient();
 
   // Employee data from local preferences
-  String empName = '';
-  String empEmail = '';
-  String empCode = '';
-  String empGrade = '';
-  String empRole = '';
-  String empEligibility = '';
-  String empMobileNo = '';
+  String? empName;
+  String? empEmail;
+  String? empCode;
+  String? empGrade;
+  String? empRole;
+  String? empCostCenter;
+  String? empMobileNo;
+  String? empEligibility;
 
   int roleId = 0;
-  // bool isLoading = true;
-
+  bool isLoading = true;
   @override
   void initState() {
     super.initState();
-    _fetchLocalPrefs();
+    _init();
   }
 
-  Future<void> _fetchLocalPrefs() async {
-    await _loadEmployeeData();
+  Future<void> _init() async {
+    await _loadEmpCode();
+    await _fetchEmployeeProfile();
+  }
+  // Load Employee Code
+  Future<void> _loadEmpCode() async {
+    empCode = await LocalPrefs.getEmpCode();
+    debugPrint('Employee code loaded: $empCode');
   }
 
-  Future<void> _loadEmployeeData() async {
-    final name = await LocalPrefs.getEmpName();
-    final email = await LocalPrefs.getEmpEmail();
-    final code = await LocalPrefs.getEmpCode();
-    final grade = await LocalPrefs.getEmpGrade();
-    final eligibility = await LocalPrefs.getEmpEligibility();
-    final mobile = await LocalPrefs.getEmpMobile();
+  Future<void> _fetchEmployeeProfile() async {
+    if (empCode == null || empCode!.isEmpty) {
+      debugPrint('Employee code is null or empty');
+      setState(() => isLoading = false);
+      return;
+    }
 
-    setState(() {
-      empName = name ?? '';
-      empEmail = email ?? '';
-      empCode = code ?? '';
-      empGrade = grade ?? 'N/A';
-      empEligibility = eligibility ?? '₹0';
-      empMobileNo = mobile ?? '';
-      empRole = widget.role.label;
-    });
+    try {
+      final result = await _client.getEmployeeProfile(empCode!);
+
+      if (result != null) {
+        setState(() {
+          isLoading = false;
+          empName = result.sapShortNameModify;
+          empMobileNo = result.sapMobileNo;
+          empEmail = result.sapEmail;
+          empGrade = result.sapCurrGradeDesc;
+          empEligibility = result.sapBasic.toString();
+          empCostCenter = result.sapCostCenterDesc;
+        });
+
+        await LocalPrefs.saveEmployeeProfile(
+          empName: empName,
+          empEmail: empEmail?.toLowerCase(),
+          empMobile: empMobileNo,
+          empGrade: empGrade,
+          empEligibility: "0",
+        );
+
+        debugPrint('POST 200 OK : "/employees"');
+      } else {
+        debugPrint('Employee profile not found');
+        setState(() => isLoading = false); //
+      }
+    } catch (e) {
+      debugPrint('Error fetching employee profile: $e');
+      setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return DashboardScreen(
-      empName: empName,
-      empId: empCode,
-      empMail: empEmail,
-      empGrade: empGrade,
-      empRole: empRole,
-      empEligibility: empEligibility,
-      empMobileNo: empMobileNo,
+      empName: empName ?? '',
+      empId: empCode ?? '',
+      empMail: empEmail ?? '',
+      empGrade: empGrade ?? '',
+      empRole: empRole ?? '',
+      empEligibility: empEligibility ?? '',
+      empMobileNo: empMobileNo ?? '',
       role: widget.role,
-      // isLoading: isLoading,
     );
   }
 }
 
 class DashboardScreen extends StatefulWidget {
-  final String empName;
-  final String empId;
-  final String empMail;
-  final String empGrade;
-  final String empRole;
-  final String empEligibility;
-  final String empMobileNo;
-  final UserRole role;
+  final String? empName;
+  final String? empId;
+  final String? empMail;
+  final String? empGrade;
+  final String? empRole;
+  final String? empEligibility;
+  final String? empMobileNo;
+  final UserRole? role;
   // final bool isLoading;
 
   const DashboardScreen({
@@ -159,17 +185,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // if (widget.isLoading) {
-    //   return const Scaffold(
-    //     backgroundColor: Color(0xFFF5F5F5),
-    //     body: Center(
-    //       child: CircularProgressIndicator(
-    //         color: Color.fromRGBO(41, 183, 69, 1),
-    //       ),
-    //     ),
-    //   );
-    // }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       extendBodyBehindAppBar: true,
@@ -239,7 +254,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.empName,
+                          widget.empName ?? '',
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -251,7 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      widget.empMail,
+                      (widget.empMail ?? '').toLowerCase(),
                       style: TextStyle(
                         fontSize: 14,
                         letterSpacing: -0.2,
@@ -282,13 +297,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildInfoItem('EMP code', widget.empId),
+                                child: _buildInfoItem('EMP code', widget.empId ?? ''),
                               ),
                               Expanded(
-                                child: _buildInfoItem('Grade', widget.empGrade),
+                                child: _buildInfoItem('Grade', widget.empGrade ?? ''),
                               ),
                               Expanded(
-                                child: _buildInfoItem('Role', widget.empRole),
+                                child: _buildInfoItem('Role', widget.role?.label ?? '',),
                               ),
                             ],
                           ),
@@ -298,11 +313,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Expanded(
                                 child: _buildInfoItem(
                                   'Eligibility',
-                                  widget.empEligibility,
+                                  widget.empEligibility ?? '',
                                 ),
                               ),
                               Expanded(
-                                child: _buildInfoItem('Phone', widget.empMobileNo),
+                                child: _buildInfoItem('Phone', widget.empMobileNo ?? ''),
                               ),
                             ],
                           ),
@@ -368,68 +383,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 18),
 
                     // Search Requests
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.search_rounded,
-                              size: 28,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SearchScreen(),
-                                  ),
-                                );
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Search Requests',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color.fromRGBO(0, 0, 0, 0.80),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Browse through the requested vehicles',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                ],
+                    if (widget.role?.label != "User") ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.search_rounded,
+                                size: 28,
+                                color: Colors.grey.shade600,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const SearchScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Search Requests',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color.fromRGBO(0, 0, 0, 0.80),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Browse through the requested vehicles',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Divider(
-                      height: 0.5,
-                      thickness: 1,
-                      color: Color.fromRGBO(229, 231, 235, 1),
-                    ),
+                      const Divider(
+                        height: 0.5,
+                        thickness: 1,
+                        color: Color.fromRGBO(229, 231, 235, 1),
+                      ),
+                    ],
 
                     // Quotation docs
                     Container(
