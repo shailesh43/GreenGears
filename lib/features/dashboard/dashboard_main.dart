@@ -7,6 +7,8 @@ import '../docs/uploaded_quotations.dart';
 import '../../constants/utils.dart';
 import '../../network/api_client.dart';
 import '../../constants/local_prefs.dart';
+import '../../custom/widgets/action_card.dart';
+import '../../custom/widgets/action_card_wide.dart';
 
 class MainDashboard extends StatefulWidget {
   final UserRole role;
@@ -23,7 +25,7 @@ class MainDashboard extends StatefulWidget {
 class _MainDashboard extends State<MainDashboard> {
   final ApiClient _client = ApiClient();
 
-  // Employee data from local preferences
+  // Employee data
   String? empName;
   String? empEmail;
   String? empCode;
@@ -32,7 +34,6 @@ class _MainDashboard extends State<MainDashboard> {
   String? empCostCenter;
   String? empMobileNo;
   String? empEligibility;
-  String? empEligibilityNotes;
 
 
   int roleId = 0;
@@ -71,8 +72,7 @@ class _MainDashboard extends State<MainDashboard> {
           empMobileNo = result.sapMobileNo;
           empEmail = result.sapEmail;
           empGrade = result.sapCurrGradeDesc;
-          // empEligibility = result.sapBasic.toString();
-          empCostCenter = result.sapCostCenterDesc;
+          empCostCenter = result.sapCostCenter;
         });
 
         await LocalPrefs.saveEmployeeProfile(
@@ -80,7 +80,7 @@ class _MainDashboard extends State<MainDashboard> {
           empEmail: empEmail?.toLowerCase(),
           empMobile: empMobileNo,
           empGrade: empGrade,
-          // empEligibility: empEligibility?.toString(),
+          empCostCenter: empCostCenter?.toString(),
         );
         debugPrint('POST 200 OK : "/employees"');
       } else {
@@ -135,6 +135,7 @@ class _MainDashboard extends State<MainDashboard> {
       empGrade: empGrade ?? '',
       empRole: empRole ?? '',
       empEligibility: empEligibility ?? '',
+      empCostCenter: empCostCenter?? '',
       empMobileNo: empMobileNo ?? '',
       role: widget.role,
     );
@@ -148,6 +149,7 @@ class DashboardScreen extends StatefulWidget {
   final String? empGrade;
   final String? empRole;
   final String? empEligibility;
+  final String? empCostCenter;
   final String? empMobileNo;
   final UserRole? role;
   // final bool isLoading;
@@ -160,6 +162,7 @@ class DashboardScreen extends StatefulWidget {
     required this.empGrade,
     required this.empRole,
     required this.empEligibility,
+    required this.empCostCenter,
     required this.empMobileNo,
     required this.role,
     // required this.isLoading,
@@ -280,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Row(
                       children: [
                         const Text(
-                          'Welcome',
+                          'Welcome,',
                           style: TextStyle(
                             fontSize: 24,
                             letterSpacing: -0.4,
@@ -289,14 +292,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.empName ?? '',
+                          (widget.empName ?? '').split(' ').first,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.4,
                             color: Color(0xFF000000),
                           ),
-                        ),
+                        )
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -346,13 +349,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildInfoItem(
-                                  'Eligibility',
-                                  widget.empEligibility ?? '',
-                                ),
+                                child: _buildInfoItem('Phone', widget.empMobileNo ?? ''),
                               ),
                               Expanded(
-                                child: _buildInfoItem('Phone', widget.empMobileNo ?? ''),
+                                child: _buildInfoItem(
+                                  'Cost Center',
+                                  widget.empCostCenter ?? '',
+                                ),
                               ),
                             ],
                           ),
@@ -376,7 +379,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildActionCard(
+                          child: ActionCard(
                             icon: Icons.edit,
                             title: 'Create Request\nfor your Vehicle',
                             color: const Color.fromRGBO(41, 183, 69, 0.55),
@@ -394,7 +397,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: _buildActionCard(
+                          child: ActionCard(
                             icon: Icons.check_circle_outline,
                             title: 'Approve/Reject\nRequests',
                             color: const Color.fromRGBO(242, 241, 249, 1.0),
@@ -419,62 +422,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     // Search Requests
                     if (widget.role?.label != "User") ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                Icons.search_rounded,
-                                size: 28,
-                                color: Colors.grey.shade600,
-                              ),
+                      ActionCardWide(
+                        icon: Icons.description_outlined,
+                        title: 'Quotation docs',
+                        subtitle: 'List of uploaded quotation docs till now',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const UploadedQuotations(),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const SearchScreen(),
-                                    ),
-                                  );
-                                },
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Search Requests',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color.fromRGBO(0, 0, 0, 0.80),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Browse through the requested vehicles',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[500],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                       const Divider(
                         height: 0.5,
@@ -484,63 +443,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
 
                     // Quotation docs
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.description_outlined,
-                              size: 28,
-                              color: Colors.grey.shade600,
-                            ),
+                    ActionCardWide(
+                      icon: Icons.description_outlined,
+                      title: 'Quotation docs',
+                      subtitle: 'List of uploaded quotation docs till now',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UploadedQuotations(),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const UploadedQuotations(),
-                                  ),
-                                );
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Quotation docs',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color.fromRGBO(0, 0, 0, 0.80),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'List of uploaded quotation docs till now',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
+
                   ],
                 ),
               ),
@@ -578,40 +494,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildActionCard({
-    required IconData icon,
-    required String title,
-    required Color color,
-    required VoidCallback onTap,
-    Color? titleColor,
-    Color? iconColor,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 100,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Icon(icon, color: iconColor ?? Colors.grey, size: 28),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: titleColor ?? Colors.grey,
-                height: 1.3,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
