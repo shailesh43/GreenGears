@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:logger/logger.dart';
 import './api_models/role_by_employee.dart'; // 1
 import './api_models/employee_profile_data.dart'; // 2
+import './api_models/car_eligibility_data.dart'; // 3
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -169,7 +170,55 @@ class ApiClient {
     return result;
   }
 
-  // 3. Fetch Employee Details on ProfilePage (empId)
+  // 3. Fetch Car Eligibility Details on ProfilePage, MainDashboard (empId)
   // API Endpoint: /employees (POST request with encrypted empId)
+  Future<String?> getCarEligibilityExShowroomPrice(String workLevel) async {
+    try {
+      logger.d('Starting getCarEligibilityExShowroomPrice for workLevel: $workLevel');
+
+      final headers = _defaultHeaders();
+
+      final map = {
+        'work_level': workLevel,
+      };
+
+      final requestBody = jsonEncode(map);
+      logger.d('Request body: $requestBody');
+
+      final fullUrl = await ApiConstants.getEndPointUrl("getCarEligibility"); // endpoint key
+      final url = Uri.parse(fullUrl);
+      logger.d('Request URL: $url');
+
+      final response = await _client.post(
+        url,
+        body: requestBody,
+        headers: headers,
+        encoding: utf8,
+      );
+
+      logger.d('Response status code: ${response.statusCode}');
+      logger.d('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        logger.d('Decoded data: $data');
+
+        final eligibility = CarEligibilityData.fromJson(data);
+
+        logger.d(
+          'Parsed car eligibility price: ${eligibility.carEligibilityExShowroomPrice}',
+        );
+
+        // ✅ MOST IMPORTANT: returning String
+        return eligibility.carEligibilityExShowroomPrice;
+      } else {
+        logger.d('Non-200 status code received: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      logger.d('Exception in getCarEligibilityExShowroomPrice: $e');
+      return null;
+    }
+  }
 
 }

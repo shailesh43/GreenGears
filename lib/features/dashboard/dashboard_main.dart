@@ -32,6 +32,8 @@ class _MainDashboard extends State<MainDashboard> {
   String? empCostCenter;
   String? empMobileNo;
   String? empEligibility;
+  String? empEligibilityNotes;
+
 
   int roleId = 0;
   bool isLoading = true;
@@ -44,13 +46,14 @@ class _MainDashboard extends State<MainDashboard> {
   Future<void> _init() async {
     await _loadEmpCode();
     await _fetchEmployeeProfile();
+    await _fetchCarEligibility();
   }
-  // Load Employee Code
+  // 1. Load Employee Code
   Future<void> _loadEmpCode() async {
     empCode = await LocalPrefs.getEmpCode();
     debugPrint('Employee code loaded: $empCode');
   }
-
+  // 2. Fetch Employee Profile
   Future<void> _fetchEmployeeProfile() async {
     if (empCode == null || empCode!.isEmpty) {
       debugPrint('Employee code is null or empty');
@@ -68,7 +71,7 @@ class _MainDashboard extends State<MainDashboard> {
           empMobileNo = result.sapMobileNo;
           empEmail = result.sapEmail;
           empGrade = result.sapCurrGradeDesc;
-          empEligibility = result.sapBasic.toString();
+          // empEligibility = result.sapBasic.toString();
           empCostCenter = result.sapCostCenterDesc;
         });
 
@@ -77,9 +80,8 @@ class _MainDashboard extends State<MainDashboard> {
           empEmail: empEmail?.toLowerCase(),
           empMobile: empMobileNo,
           empGrade: empGrade,
-          empEligibility: "0",
+          // empEligibility: empEligibility?.toString(),
         );
-
         debugPrint('POST 200 OK : "/employees"');
       } else {
         debugPrint('Employee profile not found');
@@ -88,6 +90,39 @@ class _MainDashboard extends State<MainDashboard> {
     } catch (e) {
       debugPrint('Error fetching employee profile: $e');
       setState(() => isLoading = false);
+    }
+  }
+  // 3. Fetch Car Eligibility
+  Future<void> _fetchCarEligibility() async {
+    // You can also load from LocalPrefs if needed
+    final workLevel = empGrade ?? await LocalPrefs.getEmpGrade();
+
+    if (workLevel == null || workLevel.isEmpty) {
+      debugPrint('Work level (empGrade) is null or empty');
+      return;
+    }
+
+    try {
+      final price =
+      await _client.getCarEligibilityExShowroomPrice(workLevel);
+
+      if (price != null) {
+        setState(() {
+          empEligibility = price;
+        });
+
+        // Optional: save for later use
+        await LocalPrefs.saveCarEligibilityPrice(
+          price: empEligibility ?? '69',
+        );
+        debugPrint(
+          'Car eligibility ex-showroom price fetched: $price',
+        );
+      } else {
+        debugPrint('Car eligibility not found');
+      }
+    } catch (e) {
+      debugPrint('Error fetching car eligibility: $e');
     }
   }
 

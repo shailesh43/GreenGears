@@ -1,7 +1,6 @@
+// API response: POST "/employees" - req body: Encrypted sap_emp_no
 class EmployeeProfileData {
-  // =========================
   // Core Employee Info
-  // =========================
   String? sapEmpNo;
   String? sapEmpSalutation;
   String? sapEmpSalutationDesc;
@@ -19,9 +18,7 @@ class EmployeeProfileData {
 
   DateTime? sapDob;
 
-  // =========================
   // Dates of Joining
-  // =========================
   DateTime? sapDojTemp;
   DateTime? sapDojTrainee;
   DateTime? sapDojWc;
@@ -30,9 +27,7 @@ class EmployeeProfileData {
   DateTime? sapDojTpgr;
   DateTime? sapDojTatagr;
 
-  // =========================
   // Org / Business
-  // =========================
   String? sapBusinessArea;
   String? sapBusinessAreaDesc;
   String? sapOrgUnit;
@@ -55,42 +50,32 @@ class EmployeeProfileData {
   String? sapCurrJob;
   String? sapCurrJobDesc;
 
-  // =========================
   // Payroll / Finance
-  // =========================
   String? sapControllingArea;
   String? sapControllingAreaDesc;
   double? sapBasic;
   String? sapPayrollArea;
 
-  // =========================
   // Contact
-  // =========================
   String? sapEmail;
   String? sapMobileNo;
   String? sapIsdCode;
   String? pcell;
   String? exten;
 
-  // =========================
   // Separation
-  // =========================
   DateTime? sapSeperationDate;
   String? sapSeperationReason;
   DateTime? sapRetirementDate;
 
-  // =========================
   // Manager / HR
-  // =========================
   String? sapEmpMgr;
   String? sapEmpMgrEmailid;
   String? sapEmpFunMgr;
   String? sapFunMgrEmailid;
   String? sapFunMgrName;
 
-  // =========================
   // Status / Actions
-  // =========================
   String? sapActionType;
   String? sapActionTypeText;
   String? sapActionReason;
@@ -98,9 +83,7 @@ class EmployeeProfileData {
   String? sapEmployeeStatusCode;
   String? sapEmployeeStatusText;
 
-  // =========================
   // Division / Section
-  // =========================
   String? sapDivisionCode;
   String? sapDivisionText;
   String? sapSectionCode;
@@ -108,16 +91,12 @@ class EmployeeProfileData {
   String? sapFunctionArea;
   String? sapFunctionAreaText;
 
-  // =========================
   // Location
-  // =========================
   String? workLocationCode;
   String? workLocationDescription;
   String? workLongTxt;
 
-  // =========================
   // HR / Misc
-  // =========================
   String? sapChangedBy;
   DateTime? sapChangedOn;
   String? sapSedEmpNo;
@@ -144,14 +123,9 @@ class EmployeeProfileData {
   String? cluHeadHrId;
   String? cluHeadHrName;
 
-  // =========================
-  // Constructor
-  // =========================
   EmployeeProfileData();
 
-  // =========================
   // Safe Parsers
-  // =========================
   static String? _str(dynamic v) {
     if (v == null) return null;
     return v.toString();
@@ -170,9 +144,7 @@ class EmployeeProfileData {
     return null;
   }
 
-  // =========================
   // fromJson
-  // =========================
   EmployeeProfileData.fromJson(Map<String, dynamic> json) {
     sapEmpNo = _str(json['sap_emp_no']);
     sapEmpSalutation = _str(json['sap_emp_salutation']);

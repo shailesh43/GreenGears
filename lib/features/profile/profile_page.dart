@@ -39,8 +39,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _init() async {
-    await _loadEmpCode();          // ✅ wait for empCode
-    await _fetchEmployeeProfile(); // ✅ now safe to call
+    await _loadEmpCode();
+    await _fetchEmployeeProfile();
+    await _loadEmpEligibility();
   }
   // Load Employee Code
   Future<void> _loadEmpCode() async {
@@ -67,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
           employeeEmail = result.sapEmail;
           employeeCompany = result.sapCompanyDesc;
           employeeGrade = result.sapCurrGradeDesc;
-          employeeEligibility = result.sapBasic.toString();
+          // employeeEligibility = result.sapBasic.toString();
           employeeCostCenter = result.sapCostCenter;
           employeeAddress = result.workLongTxt;
           employeeCluster = result.omclText;
@@ -78,7 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
           empEmail: employeeEmail?.toLowerCase(),
           empMobile: employeeMobileNo,
           empGrade: employeeGrade,
-          empEligibility: employeeEligibility?.toString(),
+          // empEligibility: employeeEligibility?.toString(),
         );
 
         debugPrint('POST 200 OK : "/employees"');
@@ -90,6 +91,11 @@ class _ProfilePageState extends State<ProfilePage> {
       debugPrint('Error fetching employee profile: $e');
       setState(() => isLoading = false);
     }
+  }
+  // Load Eligibility from Local Prefs
+  Future<void> _loadEmpEligibility() async {
+    employeeEligibility = await LocalPrefs.getEmpEligibility();
+    setState(() {});
   }
 
   @override

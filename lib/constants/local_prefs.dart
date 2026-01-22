@@ -18,15 +18,13 @@ class LocalPrefs {
     await prefs.setString(_empCode, empCode);
   }
 
-
-  // SAVE Employee Profile
   // SAVE Employee Profile
   static Future<void> saveEmployeeProfile({
     String? empName,        // ← Changed from required String
     String? empEmail,       // ← Changed from required String
     String? empMobile,      // ← Changed from required String
     String? empGrade,
-    String? empEligibility,
+    // String? empEligibility,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -43,10 +41,22 @@ class LocalPrefs {
     if (empGrade != null) {
       await prefs.setString(_empGrade, empGrade);
     }
-    if (empEligibility != null) {
-      await prefs.setString(_empEligibility, empEligibility);
-    }
+    // if (empEligibility != null) {
+    //   await prefs.setString(_empEligibility, empEligibility);
+    // }
   }
+
+
+  static Future<void> saveCarEligibilityPrice({
+    required String price,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // SETTER
+    await prefs.setString(_empEligibility, price);
+  }
+
+
 
   // GETTERS
   static Future<String?> getEmpCode() async {
