@@ -8,6 +8,7 @@ class LocalPrefs {
   static const _roleId = 'role_id';
   static const _empGrade = 'emp_grade';
   static const _empEligibility = 'emp_eligibility';
+  static const _empCostCenter = 'emp_cost_center';
 
   static Future<void> saveEmpId({
     required String empCode,
@@ -24,7 +25,7 @@ class LocalPrefs {
     String? empEmail,       // ← Changed from required String
     String? empMobile,      // ← Changed from required String
     String? empGrade,
-    // String? empEligibility,
+    String? empCostCenter,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -41,12 +42,12 @@ class LocalPrefs {
     if (empGrade != null) {
       await prefs.setString(_empGrade, empGrade);
     }
-    // if (empEligibility != null) {
-    //   await prefs.setString(_empEligibility, empEligibility);
-    // }
+    if (empCostCenter != null) {
+      await prefs.setString(_empCostCenter, empCostCenter);
+    }
   }
 
-
+  // Called after fetching employee Car Eligibility
   static Future<void> saveCarEligibilityPrice({
     required String price,
   }) async {
@@ -92,6 +93,11 @@ class LocalPrefs {
   static Future<String?> getEmpEligibility() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_empEligibility);
+  }
+
+  static Future<String?> getEmpCostCenter() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_empCostCenter);
   }
 
   static Future<void> clear() async {

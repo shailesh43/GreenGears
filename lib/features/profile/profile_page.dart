@@ -79,7 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
           empEmail: employeeEmail?.toLowerCase(),
           empMobile: employeeMobileNo,
           empGrade: employeeGrade,
-          // empEligibility: employeeEligibility?.toString(),
+          empCostCenter: employeeCostCenter?.toString(),
         );
 
         debugPrint('POST 200 OK : "/employees"');
