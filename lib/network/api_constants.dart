@@ -17,11 +17,12 @@ class ApiConstants {
       'https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token';
 
 
-  // Employee Details
+  // API Endpoints
   static const String roleByEmployee = 'role-by-employee';
   static const String employeeProfile = 'employees';
   static const String carEligibility = 'getCarEligibility';
-  static const String createVehicleRequest = 'car-requests';
+  static const String createVehicleRequest = 'car-requests'; // to be continued
+  static const String getAllRequests = 'AdminPage';
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -37,6 +38,9 @@ class ApiConstants {
         endPointUrl = "$baseURl$carEligibility";
         break;
       case "createVehicleRequest":
+        endPointUrl = "$baseURl$createVehicleRequest";
+        break;
+      case "getAllRequests":
         endPointUrl = "$baseURl$createVehicleRequest";
         break;
     }

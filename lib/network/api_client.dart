@@ -11,6 +11,10 @@ import 'package:logger/logger.dart';
 import './api_models/role_by_employee.dart'; // 1
 import './api_models/employee_profile_data.dart'; // 2
 import './api_models/car_eligibility_data.dart'; // 3
+import './api_models/admin_page_response.dart'; // 5
+import './api_models/stage_bucket.dart'; // 5
+import './api_models/role_stage_policy.dart'; // 5
+import './api_models/car_request.dart'; // 5
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -219,6 +223,32 @@ class ApiClient {
       logger.d('Exception in getCarEligibilityExShowroomPrice: $e');
       return null;
     }
+  }
+
+  // 4.
+  // 5. Fetch All Requests - ROLES: User, Admin, ES&A, Insurance based on ENUMS: UserRole, Stage
+  Future<AdminPageResponse> getAdminPageData({
+    required String empId,
+    required List<int> roleIds,
+  }) async {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('getAllRequests');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'role_ids': roleIds,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    final data = _handleResponse(response, 'POST');
+    return AdminPageResponse.fromJson(data);
   }
 
 }
