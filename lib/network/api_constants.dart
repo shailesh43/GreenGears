@@ -41,7 +41,7 @@ class ApiConstants {
         endPointUrl = "$baseURl$createVehicleRequest";
         break;
       case "getAllRequests":
-        endPointUrl = "$baseURl$createVehicleRequest";
+        endPointUrl = "$baseURl$getAllRequests";
         break;
     }
     return endPointUrl;

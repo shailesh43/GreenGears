@@ -52,8 +52,10 @@ class _MainDashboard extends State<MainDashboard> {
 
   Future<void> _init() async {
     await _loadEmpCode();
+    await LocalPrefs.saveRoleId(roleId: widget.role.id);
     await _fetchEmployeeProfile();
     await _fetchCarEligibility();
+    await _fetchAdminPageData();
   }
   // 1. Load Employee Code
   Future<void> _loadEmpCode() async {
@@ -123,6 +125,46 @@ class _MainDashboard extends State<MainDashboard> {
       }
     } catch (e) {
       debugPrint('Error fetching car eligibility: $e');
+    }
+  }
+
+  // 4. Fetch all requests
+  Future<void> _fetchAdminPageData() async {
+    // Get empId and roleId from LocalPrefs
+    final empId = await LocalPrefs.getEmpCode();
+    final roleId = await LocalPrefs.getRoleId();
+
+    debugPrint('Fetching admin page data - empId: $empId, roleId: $roleId');
+
+    if (empId == null || empId.isEmpty) {
+      debugPrint('Employee ID is null or empty');
+      return;
+    }
+
+    if (roleId == null) {
+      debugPrint('Role ID is null - check if it was saved to LocalPrefs');
+      return;
+    }
+
+    try {
+      final adminPageResponse = await _client.getAdminPageData(
+        empId: empId,
+        roleIds: [roleId],
+      );
+
+      if (adminPageResponse != null) {
+        setState(() {
+          // Update your state variables with the response data
+          // For example:
+          // requests = adminPageResponse.requests;
+          // pendingCount = adminPageResponse.pendingCount;
+          // etc.
+        });
+      } else {
+        debugPrint('Admin page data not found');
+      }
+    } catch (e) {
+      debugPrint('Error fetching admin page data: $e');
     }
   }
 
@@ -421,7 +463,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Search Requests
                     if (widget.role?.label != "User") ...[
                       ActionCardWide(
-                        icon: Icons.description_outlined,
+                        icon: Icons.search,
                         title: 'Search Requests',
                         subtitle: 'Browse through all the requests',
                         onTap: () {

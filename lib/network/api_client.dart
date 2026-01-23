@@ -213,8 +213,7 @@ class ApiClient {
     required String empId,
     required List<int> roleIds,
   }) async {
-    final endpointUrl =
-    await ApiConstants.getEndPointUrl('getAllRequests');
+    final endpointUrl = await ApiConstants.getEndPointUrl('getAllRequests');
 
     final url = Uri.parse(endpointUrl);
 

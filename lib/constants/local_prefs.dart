@@ -19,11 +19,19 @@ class LocalPrefs {
     await prefs.setString(_empCode, empCode);
   }
 
+  // ADD THIS METHOD
+  static Future<void> saveRoleId({
+    required int roleId,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_roleId, roleId);
+  }
+
   // SAVE Employee Profile
   static Future<void> saveEmployeeProfile({
-    String? empName,        // ← Changed from required String
-    String? empEmail,       // ← Changed from required String
-    String? empMobile,      // ← Changed from required String
+    String? empName,
+    String? empEmail,
+    String? empMobile,
     String? empGrade,
     String? empCostCenter,
   }) async {
@@ -56,8 +64,6 @@ class LocalPrefs {
     // SETTER
     await prefs.setString(_empEligibility, price);
   }
-
-
 
   // GETTERS
   static Future<String?> getEmpCode() async {
