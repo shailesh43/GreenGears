@@ -1,12 +1,17 @@
-import 'package:flutter/material.dart';
-import 'core/user_role.dart';
-import './auth/azure_auth_service.dart';
-import './constants/utils.dart';
-import './network/api_client.dart';
-import './constants/local_prefs.dart';
 import 'dart:async';
 import 'dart:core';
 import 'dart:ui';
+import 'package:flutter/material.dart';
+
+// Construct pages through shell
+import 'core/dashboard_shell.dart';
+// SAMAL(msauth) Login & logout function
+import './auth/azure_auth_service.dart';
+// Local storage
+import './constants/local_prefs.dart';
+import './network/api_client.dart';
+import './core/utils/enum.dart';
+
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -47,10 +52,6 @@ class _MyAppState extends State<MyApp> {
     try {
       final result = await _client.getRoleByEmployee(empCode);
       final roleId = result.roleIds.isNotEmpty ? result.roleIds.first : 1;
-
-      debugPrint('GET 200 OK : "role-by-employee/:empId"');
-      debugPrint('roleId: $roleId');
-
       return UserRole.fromId(roleId) ?? UserRole.user;
     } catch (e) {
       debugPrint('Error fetching role: $e');
@@ -105,12 +106,12 @@ class _MyAppState extends State<MyApp> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    '404',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.2, color: Colors.red),
+                    '404 :(',
+                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, letterSpacing: -0.8, color: Colors.redAccent),
                   ),
                   const Text(
-                    'Login failed',
-                    style: TextStyle(fontSize: 20, color: Colors.black),
+                    'Error! Login failed Please try again.',
+                    style: TextStyle(fontSize: 18, letterSpacing: -0.2, color: Colors.redAccent),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -120,21 +121,21 @@ class _MyAppState extends State<MyApp> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.85), // glass effect
+                      backgroundColor: Colors.white.withOpacity(0.80), // glass effect
                       foregroundColor: Colors.black,
                       elevation: 6,
-                      shadowColor: Colors.black.withOpacity(0.15),
+                      shadowColor: Colors.black.withOpacity(0.20),
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(30),
                       ),
                     ),
                     child: const Text(
                       'Retry',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Color.fromRGBO(80, 80, 80, 1.0),
                         fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

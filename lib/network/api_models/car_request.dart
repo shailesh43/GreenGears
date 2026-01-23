@@ -1,3 +1,5 @@
+import '../../core/utils/enum.dart';
+
 class CarRequest {
   String? requestId;
   String? manufacturer;

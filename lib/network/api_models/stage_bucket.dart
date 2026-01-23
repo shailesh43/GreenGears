@@ -1,3 +1,5 @@
+import './car_request.dart';
+
 class StageBucket {
   final String key;
   final List<CarRequest> requests;

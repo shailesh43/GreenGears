@@ -1,3 +1,5 @@
+import '../../core/utils/enum.dart';
+
 class RoleStagePolicy {
   static const Map<UserRole, List<Stage>> allowedStages = {
     UserRole.user: [

@@ -7,7 +7,7 @@ class UploadedQuotations extends StatefulWidget {
   State<UploadedQuotations> createState() => _UploadedQuotationsState();
 }
 
-class _UploadedQuotationsState extends State<UploadedQuotations> {
+class _UploadedQuotationsState extends State<UploadedQuotations>  {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../custom/file_uploader.dart';
+import '../../custom/widgets/file_uploader.dart';
 import '../../custom/modals/quotation_form_modal.dart';
 
 class VehicleRequestPage extends StatefulWidget {
@@ -154,14 +154,6 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                     FileUploadField(
                       label: 'File Type Allowed: .pdf/.txt/.docx',
                       allowedExtensions: ['pdf', 'txt', 'doc', 'docx'],
-                      onFileSelected: (file) {
-                        if (file != null) {
-                          print('Selected file: ${file.name}');
-                          print('File path: ${file.path}');
-                          print('File size: ${file.size}');
-                          // Do something with the file
-                        }
-                      },
                     ),
                     const SizedBox(height: 24),
 

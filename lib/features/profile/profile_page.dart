@@ -34,7 +34,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // _fetchRole();
     _init();
   }
 
@@ -46,7 +45,6 @@ class _ProfilePageState extends State<ProfilePage> {
   // Load Employee Code
   Future<void> _loadEmpCode() async {
     employeeCode = await LocalPrefs.getEmpCode();
-    debugPrint('Employee code loaded: $employeeCode');
   }
 
   // Employee Details
@@ -68,7 +66,6 @@ class _ProfilePageState extends State<ProfilePage> {
           employeeEmail = result.sapEmail;
           employeeCompany = result.sapCompanyDesc;
           employeeGrade = result.sapCurrGradeDesc;
-          // employeeEligibility = result.sapBasic.toString();
           employeeCostCenter = result.sapCostCenter;
           employeeAddress = result.workLongTxt;
           employeeCluster = result.omclText;
@@ -81,8 +78,6 @@ class _ProfilePageState extends State<ProfilePage> {
           empGrade: employeeGrade,
           empCostCenter: employeeCostCenter?.toString(),
         );
-
-        debugPrint('POST 200 OK : "/employees"');
       } else {
         debugPrint('Employee profile not found');
         setState(() => isLoading = false);

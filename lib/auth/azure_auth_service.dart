@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
+
 import '../network/api_constants.dart';
 import '../constants/local_prefs.dart';
 import 'package:logger/logger.dart';
 
 class AuthenticationService {
-  /// 🔐 LOGIN - Returns empId only
+  // LOGIN - Returns empId only
   static Future<String?> login() async {
     try {
       final authUrl =

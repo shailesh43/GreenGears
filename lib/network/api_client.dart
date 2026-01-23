@@ -85,6 +85,8 @@ class ApiClient {
       headers: _defaultHeaders(),
     );
 
+    logger.d('${response.statusCode} > URL: $url');
+
     final data = _handleResponse(response, 'GET');
     return RoleByEmployeeModel.fromJson(data);
   }
@@ -93,12 +95,8 @@ class ApiClient {
   // API Endpoint: /employees (POST request with encrypted empId)
   Future<EmployeeProfileData?> getEmployeeProfile(String empId) async {
     try {
-      logger.d('Starting getEmployeeProfile for empId: $empId');
-
       // Encrypt the empId before sending
       final encryptedEmpId = encryptData(empId);
-      logger.d('Encrypted empId: $encryptedEmpId');
-
       if (encryptedEmpId == null) {
         throw Exception('Failed to encrypt employee ID');
       }
@@ -108,12 +106,10 @@ class ApiClient {
       final map = {
         'sap_emp_no': encryptedEmpId,
       };
-      final requestBody = jsonEncode(map);
-      logger.d('Request body: $requestBody');
 
+      final requestBody = jsonEncode(map);
       final fullUrl = await ApiConstants.getEndPointUrl("employeeProfile");
       final url = Uri.parse(fullUrl);
-      logger.d('Request URL: $url');
 
       final response = await _client.post(
         url,
@@ -122,14 +118,11 @@ class ApiClient {
         encoding: utf8,
       );
 
-      logger.d('Response status code: ${response.statusCode}');
-      logger.d('Response body: ${response.body}');
+      logger.d('${response.statusCode} > URL: $url');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        logger.d('Decoded data: $data');
         EmployeeProfileData employeeProfile = EmployeeProfileData.fromJson(data);
-        logger.d('Parsed employee profile successfully');
         return employeeProfile;
       } else {
         logger.d('Non-200 status code received: ${response.statusCode}');
@@ -178,8 +171,6 @@ class ApiClient {
   // API Endpoint: /employees (POST request with encrypted empId)
   Future<String?> getCarEligibilityExShowroomPrice(String workLevel) async {
     try {
-      logger.d('Starting getCarEligibilityExShowroomPrice for workLevel: $workLevel');
-
       final headers = _defaultHeaders();
 
       final map = {
@@ -187,11 +178,8 @@ class ApiClient {
       };
 
       final requestBody = jsonEncode(map);
-      logger.d('Request body: $requestBody');
-
       final fullUrl = await ApiConstants.getEndPointUrl("getCarEligibility"); // endpoint key
       final url = Uri.parse(fullUrl);
-      logger.d('Request URL: $url');
 
       final response = await _client.post(
         url,
@@ -200,20 +188,13 @@ class ApiClient {
         encoding: utf8,
       );
 
-      logger.d('Response status code: ${response.statusCode}');
-      logger.d('Response body: ${response.body}');
+      logger.d('${response.statusCode} > URL: $url');
+
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        logger.d('Decoded data: $data');
-
         final eligibility = CarEligibilityData.fromJson(data);
 
-        logger.d(
-          'Parsed car eligibility price: ${eligibility.carEligibilityExShowroomPrice}',
-        );
-
-        // ✅ MOST IMPORTANT: returning String
         return eligibility.carEligibilityExShowroomPrice;
       } else {
         logger.d('Non-200 status code received: ${response.statusCode}');
@@ -226,6 +207,7 @@ class ApiClient {
   }
 
   // 4.
+
   // 5. Fetch All Requests - ROLES: User, Admin, ES&A, Insurance based on ENUMS: UserRole, Stage
   Future<AdminPageResponse> getAdminPageData({
     required String empId,
@@ -246,6 +228,8 @@ class ApiClient {
       headers: _defaultHeaders(),
       body: jsonEncode(body),
     );
+
+    logger.d('${response.statusCode} > URL: $url');
 
     final data = _handleResponse(response, 'POST');
     return AdminPageResponse.fromJson(data);

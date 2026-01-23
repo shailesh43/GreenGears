@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
-//Home dashboard body
-import '../features/dashboard/dashboard_main.dart';
 
+//Home Page body
+import '../features/dashboard/dashboard_main.dart';
+// Processing page body
+import '../features/processing/processing_page.dart';
 // Profile page body
 import '../features/profile/profile_page.dart';
 //Policy page body
 import '../features/policy/policy_page.dart';
-// Processing page body
-import '../features/processing/processing_page.dart';
 
-// Fetch role to get Started
-import '../../network/api_client.dart';
-import '../../network/api_models/role_by_employee.dart';
-import '../../constants/local_prefs.dart';
-import '../constants/utils.dart';
+// Import UserRole enum & Fetch role from Local prefs
+import '../core/utils/enum.dart';
 import '../constants/local_prefs.dart';
-import '../network/api_client.dart';
 
 class DashboardShell extends StatefulWidget {
   final UserRole role;
@@ -31,8 +27,6 @@ class DashboardShell extends StatefulWidget {
 
 class _DashboardShellState extends State<DashboardShell> {
   int _selectedIndex = 0;
-  final ApiClient _client = ApiClient();
-
   bool isLoading = true;
   String empId = '';
   int roleId = 0;
@@ -51,6 +45,7 @@ class _DashboardShellState extends State<DashboardShell> {
     _initializeData();
   }
 
+  // Load role-based pages
   Future<void> _initializeData() async {
     // load empId
     final code = await LocalPrefs.getEmpCode();
@@ -72,34 +67,7 @@ class _DashboardShellState extends State<DashboardShell> {
     });
   }
 
-
-  // Future<void> _loadEmpId() async {
-  //   final code = await LocalPrefs.getEmpCode();
-  //   setState(() {
-  //     empId = code ?? '';
-  //   });
-  // }
-
-  // Future<void> _fetchRole() async {
-  //   if (empId.isEmpty) {
-  //     setState(() => isLoading = false);
-  //     return;
-  //   }
-  //
-  //   try {
-  //     final result = await _client.getRoleByEmployee(empId);
-  //     setState(() {
-  //       roleId = result.roleIds.isNotEmpty ? result.roleIds.first : 0;
-  //       isLoading = false;
-  //     });
-  //     debugPrint('GET 200 OK : "role-by-employee/:empId"');
-  //     debugPrint('roleId: $roleId');
-  //   } catch (e) {
-  //     debugPrint('Error fetching role: $e');
-  //     setState(() => isLoading = false);
-  //   }
-  // }
-
+  // Sets up the pages & bottom nav-items based on the role
   void _setupPagesAndNav() {
     switch (widget.role) {
       case UserRole.admin:

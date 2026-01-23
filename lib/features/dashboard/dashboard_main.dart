@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+
+// Pages
 import '../request/request_vehicle.dart';
 import '../request/user_approval.dart';
-import '../../features/profile/profile_page.dart';
 import '../request/search_request_vehicle.dart';
+
+// Widgets
 import '../docs/uploaded_quotations.dart';
-import '../../constants/utils.dart';
-import '../../network/api_client.dart';
-import '../../constants/local_prefs.dart';
 import '../../custom/widgets/action_card.dart';
 import '../../custom/widgets/action_card_wide.dart';
+
+// Constants
+import '../../core/utils/enum.dart';
+import '../../network/api_client.dart';
+import '../../constants/local_prefs.dart';
+
 
 class MainDashboard extends StatefulWidget {
   final UserRole role;
@@ -52,8 +58,8 @@ class _MainDashboard extends State<MainDashboard> {
   // 1. Load Employee Code
   Future<void> _loadEmpCode() async {
     empCode = await LocalPrefs.getEmpCode();
-    debugPrint('Employee code loaded: $empCode');
   }
+
   // 2. Fetch Employee Profile
   Future<void> _fetchEmployeeProfile() async {
     if (empCode == null || empCode!.isEmpty) {
@@ -82,7 +88,6 @@ class _MainDashboard extends State<MainDashboard> {
           empGrade: empGrade,
           empCostCenter: empCostCenter?.toString(),
         );
-        debugPrint('POST 200 OK : "/employees"');
       } else {
         debugPrint('Employee profile not found');
         setState(() => isLoading = false); //
@@ -110,13 +115,8 @@ class _MainDashboard extends State<MainDashboard> {
         setState(() {
           empEligibility = price;
         });
-
-        // Optional: save for later use
         await LocalPrefs.saveCarEligibilityPrice(
           price: empEligibility ?? '69',
-        );
-        debugPrint(
-          'Car eligibility ex-showroom price fetched: $price',
         );
       } else {
         debugPrint('Car eligibility not found');
@@ -152,7 +152,6 @@ class DashboardScreen extends StatefulWidget {
   final String? empCostCenter;
   final String? empMobileNo;
   final UserRole? role;
-  // final bool isLoading;
 
   const DashboardScreen({
     super.key,
@@ -165,7 +164,6 @@ class DashboardScreen extends StatefulWidget {
     required this.empCostCenter,
     required this.empMobileNo,
     required this.role,
-    // required this.isLoading,
   });
 
   @override
@@ -424,13 +422,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     if (widget.role?.label != "User") ...[
                       ActionCardWide(
                         icon: Icons.description_outlined,
-                        title: 'Quotation docs',
-                        subtitle: 'List of uploaded quotation docs till now',
+                        title: 'Search Requests',
+                        subtitle: 'Browse through all the requests',
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const UploadedQuotations(),
+                              builder: (context) => const SearchScreen(),
                             ),
                           );
                         },

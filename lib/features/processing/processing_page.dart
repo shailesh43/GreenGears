@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'esna_assign_screen.dart';
-import 'esna_spoc_screen.dart';
-import 'insurance_screen.dart';
-import '../../constants/utils.dart';
+
+//Screens
+import './esna_assign_screen.dart';
+import './esna_spoc_screen.dart';
+import './insurance_screen.dart';
+
+// Constants
+import '../../core/utils/enum.dart';
 
 class ProcessingPage extends StatefulWidget {
   final UserRole role;
