@@ -45,6 +45,7 @@ class RequestVerificationModal extends StatelessWidget {
           const SizedBox(height: 16),
           DropdownField(
             label: 'View Document',
+            hints: 'Select Document',
             items: ['Document 1', 'Document 2', 'Document 3'],
           ),
           const SizedBox(height: 24),

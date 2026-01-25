@@ -47,6 +47,7 @@ class RtoTaxReceiptModal extends StatelessWidget {
           const SizedBox(height: 16),
           DropdownField(
             label: 'View Document',
+            hints: 'Select Document',
             items: ['RTO Certificate', 'Tax Receipt', 'Insurance Copy'],
           ),
           const SizedBox(height: 24),

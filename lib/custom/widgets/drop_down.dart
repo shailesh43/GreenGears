@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 class DropdownField extends StatefulWidget {
   final String label;
+  final String hints;
   final List<String> items;
 
-  const DropdownField({
+  DropdownField({
     super.key,
     required this.label,
+    required this.hints,
     required this.items,
   });
 
@@ -45,7 +47,7 @@ class DropdownFieldState extends State<DropdownField> {
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
-          hint: const Text('Select document'),
+          hint: Text(widget.hints),
           items: widget.items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
