@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import './api_constants.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
-import '../core/encrypt.dart';
+import '../core/helpers/encrypt.dart';
 import 'dart:math';        // for Random.secure()
-import 'dart:typed_data'; // for Uint8List
+import 'dart:typed_data';
+import '../../core/utils/enum.dart';
+import '../../core/utils/role_stage_policy.dart';
 
 import 'dart:async';
 import 'package:logger/logger.dart';
@@ -13,7 +15,6 @@ import './api_models/employee_profile_data.dart'; // 2
 import './api_models/car_eligibility_data.dart'; // 3
 import './api_models/admin_page_response.dart'; // 5
 import './api_models/stage_bucket.dart'; // 5
-import './api_models/role_stage_policy.dart'; // 5
 import './api_models/car_request.dart'; // 5
 
 class ApiClient {

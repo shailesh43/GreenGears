@@ -1,4 +1,4 @@
-import './utils.dart';
+import './enum.dart';
 
 class RoleStagePolicy {
   static const Map<UserRole, List<Stage>> allowedStages = {
