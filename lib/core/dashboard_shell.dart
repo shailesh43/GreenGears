@@ -30,6 +30,7 @@ class _DashboardShellState extends State<DashboardShell> {
   bool isLoading = true;
   String empId = '';
   int roleId = 0;
+  late final UserRole role;
 
   late List<Widget> _pages;
   late List<BottomNavigationBarItem> _navItems;
@@ -41,6 +42,7 @@ class _DashboardShellState extends State<DashboardShell> {
 
   @override
   void initState() {
+    role = widget.role;
     super.initState();
     _initializeData();
   }
@@ -69,141 +71,72 @@ class _DashboardShellState extends State<DashboardShell> {
 
   // Sets up the pages & bottom nav-items based on the role
   void _setupPagesAndNav() {
-    switch (UserRole.fromId(roleId)) {
+
+    const _fourTabNav = [
+      BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+      BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Processing'),
+      BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      BottomNavigationBarItem(icon: Icon(Icons.policy), label: 'Policy'),
+    ];
+
+    const _threeTabNav = [
+      BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+      BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      BottomNavigationBarItem(icon: Icon(Icons.policy), label: 'Policy'),
+    ];
+
+
+    switch (role) {
       case UserRole.admin:
         _pages = [
-          // Single source of truth
-          MainDashboard(role: widget.role),
-          ProcessingPage(role: UserRole.admin),
+          MainDashboard(role: role),
+          ProcessingPage(role: role),
           const ProfilePage(),
           const PolicyPage(),
-        ];
-        _navItems = const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Processing',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.policy),
-            label: 'Policy',
-          ),
         ];
         break;
 
       case UserRole.esna:
         _pages = [
-          MainDashboard(role: widget.role),
-          ProcessingPage(role: UserRole.esna),
+          MainDashboard(role: role),
+          ProcessingPage(role: role),
           const ProfilePage(),
           const PolicyPage(),
-        ];
-        _navItems = const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Processing',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.policy),
-            label: 'Policy',
-          ),
         ];
         break;
 
       case UserRole.insurance:
         _pages = [
-          MainDashboard(role: widget.role),
-          ProcessingPage(role: UserRole.insurance),
+          MainDashboard(role: role),
+          ProcessingPage(role: role),
           const ProfilePage(),
           const PolicyPage(),
-        ];
-        _navItems = const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Processing',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.policy),
-            label: 'Policy',
-          ),
         ];
         break;
 
       case UserRole.centralAdmin:
-      // Add central admin case
         _pages = [
-          MainDashboard(role: widget.role),
-          ProcessingPage(role: UserRole.centralAdmin),
+          MainDashboard(role: role),
+          ProcessingPage(role: role),
           const ProfilePage(),
           const PolicyPage(),
-        ];
-        _navItems = const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Processing',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.policy),
-            label: 'Policy',
-          ),
         ];
         break;
 
       case UserRole.user:
-      case null: // ✅ Handle null case
         _pages = [
-          MainDashboard(role: widget.role),
+          MainDashboard(role: role),
           const ProfilePage(),
           const PolicyPage(),
         ];
-        _navItems = const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.policy),
-            label: 'Policy',
-          ),
-        ];
         break;
     }
+
+    _navItems = _pages.length == 4
+        ?  _fourTabNav
+        : _threeTabNav;
   }
+
 
   @override
   Widget build(BuildContext context) {
