@@ -193,7 +193,7 @@ class DashboardScreen extends StatefulWidget {
   final String? empEligibility;
   final String? empCostCenter;
   final String? empMobileNo;
-  final UserRole? role;
+  final UserRole role;
 
   const DashboardScreen({
     super.key,
@@ -470,7 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SearchScreen(),
+                              builder: (context) => SearchScreen(role: widget.role),
                             ),
                           );
                         },

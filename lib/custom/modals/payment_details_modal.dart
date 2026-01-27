@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../network/api_models/car_request.dart';
 // Custom
 import '../widgets/form_detail_row.dart';
 import '../widgets/form_text_field.dart';
@@ -9,7 +9,7 @@ import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
 
 class PaymentDetailsModal extends StatelessWidget {
-  final Map<String, dynamic> request;
+  final CarRequest request;
 
   const PaymentDetailsModal({
     super.key,
@@ -24,19 +24,21 @@ class PaymentDetailsModal extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DetailRow(label: 'EMP ID', value: '208829'),
+          // ES&A Data fields
+          DetailRow(label: 'EMP ID', value: request.empId ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'Request ID', value: 'CAR2025241'),
+          DetailRow(label: 'Request ID', value: request.requestId ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'EMP name', value: 'Rahil Bopche'),
+          DetailRow(label: 'EMP name', value: request.employeeName ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'Grade', value: 'ME03'),
+          DetailRow(label: 'Grade', value: request.grade ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'Eligibility (RS)', value: '50,000'),
+          DetailRow(label: 'Eligibility (RS)', value: request.eligibility.toString() ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'EMI approval comments', value: 'Approved'),
+          DetailRow(label: 'EMI approval status', value: 'Approved'),
           const SizedBox(height: 16),
 
+          // ES&A Input fields
           const FormTextField(label: 'PO Number', required: true,),
           const SizedBox(height: 16),
           const DatePickerField(label: 'PO Date'),

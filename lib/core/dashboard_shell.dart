@@ -69,9 +69,10 @@ class _DashboardShellState extends State<DashboardShell> {
 
   // Sets up the pages & bottom nav-items based on the role
   void _setupPagesAndNav() {
-    switch (widget.role) {
+    switch (UserRole.fromId(roleId)) {
       case UserRole.admin:
         _pages = [
+          // Single source of truth
           MainDashboard(role: widget.role),
           ProcessingPage(role: UserRole.admin),
           const ProfilePage(),
@@ -151,7 +152,36 @@ class _DashboardShellState extends State<DashboardShell> {
         ];
         break;
 
+      case UserRole.centralAdmin:
+      // Add central admin case
+        _pages = [
+          MainDashboard(role: widget.role),
+          ProcessingPage(role: UserRole.centralAdmin),
+          const ProfilePage(),
+          const PolicyPage(),
+        ];
+        _navItems = const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Processing',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.policy),
+            label: 'Policy',
+          ),
+        ];
+        break;
+
       case UserRole.user:
+      case null: // ✅ Handle null case
         _pages = [
           MainDashboard(role: widget.role),
           const ProfilePage(),

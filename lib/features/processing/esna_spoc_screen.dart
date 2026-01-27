@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/utils/enum.dart';
+import '../../constants/local_prefs.dart';
+import '../../core/helpers/normalize.dart';
+import '../../network/api_client.dart';
+import '../../network/api_models/car_request.dart';
+import '../../network/api_models/admin_page_response.dart';
 // Customs
 import '../../custom/widgets/request_card.dart';
 import '../../custom/modals/request_verification_modal.dart';
@@ -15,8 +21,22 @@ class EsnaSpocScreen extends StatefulWidget {
 }
 
 class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
-  int _selectedTabIndex = 0;
+  final ApiClient _client = ApiClient();
 
+  int _selectedTabIndex = 0;
+  AdminPageResponse? adminPageResponse;
+  Map<Stage, List<CarRequest>> stageRequests = {};
+
+  List<CarRequest> get assignedToEsnaRequests =>
+      stageRequests[Stage.assignedToEsna] ?? [];
+  List<CarRequest> get emiCalculationRequests =>
+      stageRequests[Stage.emiCalculation] ?? [];
+  List<CarRequest> get paymentDetailsRequests =>
+      stageRequests[Stage.paymentDetails] ?? [];
+  List<CarRequest> get rtoTaxReceiptRequests =>
+      stageRequests[Stage.rtoTaxReceipt] ?? [];
+
+  bool isLoading = true;
   final List<String> _tabs = [
     'Request Verification',
     'Monthly deduction',
@@ -24,237 +44,146 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
     'RTO tax receipt',
   ];
 
-  final List<Map<String, dynamic>> allRequests = [
-    {
-      'requestId': 'CAR2025204',
-      'vehicleName': 'Himalayan',
-      'dateOfRequest': '02/11/2020',
-      'contact': '8600957261',
-      'status': 'ACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'email': 'rahil.bopche@tatapower.com',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 40,000',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-      'category': 'Request Verification',
-    },
-    {
-      'requestId': 'CAR2025205',
-      'vehicleName': 'RE Guerilla',
-      'dateOfRequest': '23/05/2020',
-      'contact': '8600957261',
-      'status': 'ACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'email': 'rahil.bopche@tatapower.com',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 40,000',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-      'category': 'Request Verification',
-    },
-    {
-      'requestId': 'CAR2025206',
-      'vehicleName': 'Triumph Scrambler 400X',
-      'dateOfRequest': '18/02/2020',
-      'contact': '8600957261',
-      'status': 'ACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'email': 'rahil.bopche@tatapower.com',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 40,000',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-      'category': 'Monthly deduction',
-    },
-    {
-      'requestId': 'CAR2025207',
-      'vehicleName': 'Honda CBR 650R',
-      'dateOfRequest': '15/08/2021',
-      'contact': '9876543210',
-      'status': 'ACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'email': 'rahil.bopche@tatapower.com',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 40,000',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-      'category': 'Payment Details',
-    },
-    {
-      'requestId': 'CAR2025004',
-      'vehicleName': 'Maruti Suzuki Swift',
-      'dateOfRequest': '18/11/2016',
-      'contact': '9140957261',
-      'status': 'INACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'email': 'rahil.bopche@tatapower.com',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 40,000',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-      'category': 'RTO tax receipt',
-    },
-    {
-      'requestId': 'CAR2025005',
-      'vehicleName': 'RE Standard 350',
-      'dateOfRequest': '28/04/2018',
-      'contact': '8450957261',
-      'status': 'INACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'email': 'rahil.bopche@tatapower.com',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 40,000',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-      'category': 'RTO tax receipt',
-    },
-    {
-      'requestId': 'CAR2025008',
-      'vehicleName': 'Yamaha MT-15',
-      'dateOfRequest': '12/09/2019',
-      'contact': '7890123456',
-      'status': 'INACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'email': 'rahil.bopche@tatapower.com',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 40,000',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-      'category': 'Payment details',
-    },
-  ];
-
-  List<Map<String, dynamic>> get filteredRequests {
-    return allRequests
-        .where((request) => request['category'] == _tabs[_selectedTabIndex])
-        .toList();
+  // ✅ Map tab index to Stage
+  Stage _getStageForTab(int tabIndex) {
+    switch (tabIndex) {
+      case 0:
+        return Stage.assignedToEsna; // 21
+      case 1:
+        return Stage.emiCalculation; // 24
+      case 2:
+        return Stage.paymentDetails; // 26
+      case 3:
+        return Stage.rtoTaxReceipt; // 27
+      default:
+        return Stage.assignedToEsna;
+    }
   }
 
-  void _showModal(BuildContext context, Map<String, dynamic> request) {
-    switch (_selectedTabIndex) {
-      case 0:
+  // ✅ Get filtered requests based on selected tab
+  List<CarRequest> get filteredRequests {
+    final stage = _getStageForTab(_selectedTabIndex);
+    return stageRequests[stage] ?? [];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEsnaSpocScreenRequests();
+  }
+
+  Future<void> _loadEsnaSpocScreenRequests() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // 1️⃣ Load from LocalPrefs
+    final empId = await LocalPrefs.getEmpCode();
+    final roleId = await LocalPrefs.getRoleId();
+
+    debugPrint('Fetching admin page data - empId: $empId, roleId: $roleId');
+
+    if (empId == null || empId.isEmpty) {
+      debugPrint('Employee ID is null or empty');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    if (roleId == null) {
+      debugPrint('Role ID is null - check LocalPrefs');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      // 2️⃣ API call
+      final response = await _client.getAdminPageData(
+        empId: empId,
+        roleIds: [roleId],
+      );
+
+      // 3️⃣ Process response
+      setState(() {
+        adminPageResponse = response;
+        stageRequests = filterRequestsByRole(
+          response: response,
+          role: UserRole.fromId(roleId) ?? UserRole.esna,
+        );
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching admin page data: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  // ✅ Show modal based on Stage
+  void _showModal(BuildContext context, CarRequest request) {
+    final stage = _getStageForTab(_selectedTabIndex);
+
+    switch (stage) {
+      case Stage.assignedToEsna:
         _showRequestVerificationModal(context, request);
         break;
-      case 1:
+      case Stage.emiCalculation:
         _showMonthlyDeductionModal(context, request);
         break;
-      case 2:
+      case Stage.paymentDetails:
         _showPaymentDetailsModal(context, request);
         break;
-      case 3:
+      case Stage.rtoTaxReceipt:
         _showRtoTaxReceiptModal(context, request);
+        break;
+      default:
         break;
     }
   }
 
   void _showRequestVerificationModal(
-      BuildContext context, Map<String, dynamic> request) {
+      BuildContext context,
+      CarRequest request,
+      ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => RequestVerificationModal(request: request),
+      builder: (_) => RequestVerificationModal(request: request),
     );
   }
 
   void _showMonthlyDeductionModal(
-      BuildContext context, Map<String, dynamic> request) {
+      BuildContext context,
+      CarRequest request,
+      ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => MonthlyDeductionModal(request: request),
+      builder: (_) => MonthlyDeductionModal(request: request),
     );
   }
 
   void _showPaymentDetailsModal(
-      BuildContext context, Map<String, dynamic> request) {
+      BuildContext context,
+      CarRequest request,
+      ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => PaymentDetailsModal(request: request),
+      builder: (_) => PaymentDetailsModal(request: request),
     );
   }
 
   void _showRtoTaxReceiptModal(
-      BuildContext context, Map<String, dynamic> request) {
+      BuildContext context,
+      CarRequest request,
+      ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => RtoTaxReceiptModal(request: request),
+      builder: (_) => RtoTaxReceiptModal(request: request),
     );
   }
 
@@ -345,7 +274,13 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
             ),
           ),
           Expanded(
-            child: AnimatedSwitcher(
+            child: isLoading
+                ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF59BF5C),
+              ),
+            )
+                : AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               switchInCurve: Curves.easeInOut,
               switchOutCurve: Curves.easeInOut,
@@ -379,10 +314,11 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: filteredRequests.length,
                 itemBuilder: (context, index) {
+                  final request = filteredRequests[index];
                   return RequestCard(
-                    request: filteredRequests[index],
+                    request: request,
                     onTap: () {
-                      _showModal(context, filteredRequests[index]);
+                      _showModal(context, request);
                     },
                   );
                 },

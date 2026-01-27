@@ -3,23 +3,27 @@ import './enum.dart';
 class RoleStagePolicy {
   static const Map<UserRole, List<Stage>> allowedStages = {
     UserRole.user: [
-      Stage.requested,
-      Stage.insuranceQuoteApproval,
-      Stage.emiApproval,
-      Stage.employeeFeedback,
-      Stage.declarationAcceptance,
+      Stage.insuranceQuoteApproval, // 23
+      Stage.emiApproval, // 25
+      Stage.employeeFeedback, // 28
+      Stage.declarationAcceptance, // 28
     ],
     UserRole.admin: [
-      Stage.assignedToEsna,
+      Stage.requested, // 20
+      Stage.assignedToEsna, // 21
+      Stage.emiCalculation, // 24
+      Stage.paymentDetails, // 26
+      Stage.rtoTaxReceipt, // 27
+      Stage.assignedToInsurance, // 22
     ],
     UserRole.esna: [
-      Stage.esnaProcessing,
-      Stage.emiCalculation,
-      Stage.paymentDetails,
-      Stage.rtoTaxReceipt,
+      Stage.assignedToEsna, // 21
+      Stage.emiCalculation, // 24
+      Stage.paymentDetails, // 26
+      Stage.rtoTaxReceipt, // 27
     ],
     UserRole.insurance: [
-      Stage.insuranceProcessing,
+      Stage.assignedToInsurance, // 22
     ],
   };
 

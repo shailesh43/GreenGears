@@ -3,10 +3,11 @@ import '../widgets/action_button_pair.dart';
 import '../widgets/request_card.dart';
 import '../widgets/form_detail_row.dart';
 import '../widgets/drop_down.dart';
+import '../../network/api_models/car_request.dart';
 
 
 class AssignEsnaCardModal extends StatelessWidget {
-  final Map<String, dynamic> request;
+  final CarRequest request;
 
   const AssignEsnaCardModal({
     super.key,
@@ -51,7 +52,7 @@ class AssignEsnaCardModal extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        request['employeeName'] ?? 'Rahil Bopche',
+                        request.employeeName ?? 'Rahil Bopche',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontFamily: 'Inter',
@@ -138,7 +139,7 @@ class AssignEsnaCardModal extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Map<String, dynamic> request) {
+  Widget _buildHeader(CarRequest request) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -152,7 +153,7 @@ class AssignEsnaCardModal extends StatelessWidget {
           ),
         ),
         Text(
-          request['requestId'] ?? 'CAR2025242',
+          request.requestId ?? 'CAR2025242',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,

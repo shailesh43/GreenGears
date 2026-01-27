@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 //Screens
-import './esna_assign_screen.dart';
+import './assign_esna_screen.dart';
 import './esna_spoc_screen.dart';
 import './insurance_screen.dart';
 
@@ -12,9 +12,9 @@ class ProcessingPage extends StatefulWidget {
   final UserRole role;
 
   const ProcessingPage({
-    Key? key,
+    super.key,
     required this.role,
-  }) : super(key: key);
+  });
 
   @override
   State<ProcessingPage> createState() => _ProcessingPageState();
@@ -24,8 +24,6 @@ class _ProcessingPageState extends State<ProcessingPage> {
   @override
   void initState() {
     super.initState();
-    // You can start API calls / logic here
-    // debugPrint('EmpId: ${widget.empId}');
     debugPrint('Role: ${widget.role}');
   }
 
@@ -50,7 +48,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
         child: Column(
           children: [
             // Show "Assign ES&A spoc" only for Admin
-            if (widget.role?.label == "Admin")
+            if (widget.role == UserRole.admin)
               _buildCard(
                 title: 'Assign ES&A spoc',
                 subtitle: 'List of ES&As spoc assignment requests',
@@ -59,17 +57,17 @@ class _ProcessingPageState extends State<ProcessingPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => EsnaAssignScreen(),
+                      builder: (context) => AssignEsnaScreen(),
                     ),
                   );
                 },
               ),
 
-            if (widget.role?.label == "Admin")
+            if (widget.role == UserRole.admin)
               const SizedBox(height: 16),
 
             // Show "ES&A spoc" for Admin and ES&A roles
-            if (widget.role?.label == "Admin" || widget.role?.label == "ES&A")
+            if (widget.role == UserRole.admin || widget.role == UserRole.esna)
               _buildCard(
                 title: 'ES&A spoc',
                 subtitle: 'List of requests which has to be assigned to insurance',
@@ -84,11 +82,11 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 },
               ),
 
-            if (widget.role?.label == "Admin" || widget.role?.label == "ES&A")
+            if (widget.role == UserRole.admin || widget.role == UserRole.esna)
               const SizedBox(height: 16),
 
             // Show "Insurance" for Admin and Insurance roles
-            if (widget.role?.label == "Admin" || widget.role?.label == "Insurance")
+            if (widget.role == UserRole.admin || widget.role == UserRole.insurance)
               _buildCard(
                 title: 'Insurance',
                 subtitle: 'List of requests which has to provide insurance statements',

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../widgets/form_detail_row.dart';
+import '../../network/api_models/car_request.dart';
 
 class DeleteRequestModal extends StatelessWidget {
-  final Map<String, dynamic> request;
+  final CarRequest request;
 
   DeleteRequestModal({
     super.key,
@@ -40,7 +41,7 @@ class DeleteRequestModal extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                final requestId = request['requestId'] ?? 'CAR2025242';
+                final requestId = request.requestId;
                 Navigator.of(context).pop();// Close dialog
 
                 // Show snackbar
@@ -110,7 +111,7 @@ class DeleteRequestModal extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        request['employeeName'] ?? 'Rahil Bopche',
+                        request.employeeName ?? '',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontFamily: 'Inter',
@@ -172,7 +173,7 @@ class DeleteRequestModal extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Map<String, dynamic> request) {
+  Widget _buildHeader(CarRequest request) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -186,7 +187,7 @@ class DeleteRequestModal extends StatelessWidget {
           ),
         ),
         Text(
-          request['requestId'] ?? 'CAR2025242',
+          request.requestId.toString() ?? 'CAR2025242',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
@@ -198,7 +199,7 @@ class DeleteRequestModal extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusRow(Map<String, dynamic> request) {
+  Widget _buildStatusRow(CarRequest request) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -212,7 +213,7 @@ class DeleteRequestModal extends StatelessWidget {
           ),
         ),
         Text(
-          request['requestStatus'] ?? 'Requested to ES&A',
+          request.stage.toString() ?? 'Requested to ES&A',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,

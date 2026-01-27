@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 // Custom
 import '../widgets/form_detail_row.dart';
-
+import '../../network/api_models/car_request.dart';
 
 class RequestCard extends StatelessWidget {
-  final Map<String, dynamic> request;
+  // final Map<String, dynamic> request;
+  final CarRequest request;
   final VoidCallback onTap;
 
   const RequestCard({
@@ -31,7 +32,7 @@ class RequestCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  request['requestId'] ?? '',
+                  request.requestId.toString() ?? '',
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -47,10 +48,14 @@ class RequestCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            DetailRow(label: 'EMP ID', value: request['vehicleName']),
-            DetailRow(label: 'EMP name', value: request['employeeName']),
-            DetailRow(label: 'Contact', value: request['contact']),
-            DetailRow(label: 'Date of request', value: request['dateOfRequest']),
+
+            DetailRow(label: 'Vehicle Name', value: request.carModel?.toString() ?? ''),
+            DetailRow(label: 'EMP ID', value: request.empId?.toString() ?? ''),
+            DetailRow(label: 'EMP Name', value: request.employeeName.toString() ?? ''),
+            DetailRow(
+              label: 'Contact',
+              value: request.contact?.toString() ?? '',
+            ),
           ],
         ),
       ),

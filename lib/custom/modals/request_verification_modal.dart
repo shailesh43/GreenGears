@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../network/api_models/car_request.dart';
 // Customs
 import '../widgets/form_detail_row.dart';
 import '../widgets/form_text_field.dart';
@@ -9,7 +9,7 @@ import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
 
 class RequestVerificationModal extends StatelessWidget {
-  final Map<String, dynamic> request;
+  final CarRequest request;
 
   const RequestVerificationModal({
     super.key,
@@ -24,17 +24,19 @@ class RequestVerificationModal extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DetailRow(label: 'Employee Name', value: 'Rahil Bopche'),
-          DetailRow(label: 'Employee ID', value: '209164'),
-          DetailRow(label: 'Grade',value: 'ME03'),
-          DetailRow(label: 'Manufactured by', value: 'Honda'),
-          DetailRow(label: 'Vehicle Type', value: 'Diesel'),
-          DetailRow(label: 'Vehicle Model', value: 'fourseater'),
-          DetailRow(label: 'Email', value: 'rahil.bopche@tatapower.com'),
-          DetailRow(label: 'Color', value: 'white'),
-          DetailRow(label: 'Comments by Employee', value: 'String'),
+          // ES&A Info fields
+          DetailRow(label: 'Employee Name', value: request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Employee ID', value: request.empId ?? 'NULL'),
+          DetailRow(label: 'Grade',value: request.grade ?? 'NULL'),
+          DetailRow(label: 'Manufactured by', value: request.manufacturer ?? 'NULL'),
+          DetailRow(label: 'Vehicle Type', value: request.vehicleType ?? 'NULL'),
+          DetailRow(label: 'Vehicle Model', value: request.carModel ?? 'NULL'),
+          DetailRow(label: 'Email', value: request.email ?? 'NULL'),
+          DetailRow(label: 'Color', value: request.colorChoice ?? 'NULL'),
+          // DetailRow(label: 'Comments by Employee', value: 'Approved' ?? 'NULL'),
           const SizedBox(height: 24),
 
+          // ES&A Input fields
           const FormTextField(label: 'ES&A Comments', maxLines: 3, required: true,),
           const SizedBox(height: 16),
           _buildLabel("Upload Document"),

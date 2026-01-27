@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../network/api_models/car_request.dart';
 
 // Customs
 import '../widgets/action_button_pair.dart';
@@ -10,7 +11,7 @@ import '../widgets/drop_down.dart';
 import './base_modal.dart';
 
 class RtoTaxReceiptModal extends StatelessWidget {
-  final Map<String, dynamic> request;
+  final CarRequest request;
 
   const RtoTaxReceiptModal({
     super.key,
@@ -25,13 +26,13 @@ class RtoTaxReceiptModal extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DetailRow(label: 'Request ID', value: request['request ID']),
+          DetailRow(label: 'Request ID', value: request.requestId ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'EMP ID',value: request['employeeId']),
+          DetailRow(label: 'EMP ID',value: request.empId ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'EMP name', value: request['employeeName']),
+          DetailRow(label: 'EMP name', value: request.employeeName ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'Vehicle model',value: request['vehicleModel']),
+          DetailRow(label: 'Vehicle model',value: request.carModel ?? 'NULL'),
           const SizedBox(height: 8),
           const FormTextField(label: 'Vehicle Number', required: true,),
           const SizedBox(height: 8),

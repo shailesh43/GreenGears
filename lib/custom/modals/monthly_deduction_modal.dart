@@ -5,6 +5,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../network/api_models/car_request.dart';
+
 //Customs
 import '../widgets/form_detail_row.dart';
 import '../widgets/excel_file_upload_field.dart';
@@ -13,7 +15,7 @@ import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
 
 class MonthlyDeductionModal extends StatefulWidget {
-  final Map<String, dynamic> request;
+  final CarRequest request;
 
   const MonthlyDeductionModal({
     super.key,
@@ -34,7 +36,6 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
 
   Future<void> _downloadExcelTemplate() async {
     try {
-      // Request storage permission
       if (Platform.isAndroid) {
         var status = await Permission.storage.status;
         if (!status.isGranted) {
@@ -108,8 +109,8 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
     }
   }
 
+  // Dummy data as of now
   void _handleExcelUpload() {
-    // Simulate excel data extraction
     setState(() {
       _excelUploaded = true;
       _total = '₹ 10,00,000';

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../network/api_models/car_request.dart';
 
 class BaseModal extends StatelessWidget {
-  final Map<String, dynamic> request;
+  final CarRequest request;
   final String title;
   final Widget content;
 

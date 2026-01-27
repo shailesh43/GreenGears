@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 
 enum UserRole {
   user(1, 'User'),
+  centralAdmin(2, 'Central Admin'),
   esna(3, 'ES&A'),
   insurance(4, 'Insurance'),
   admin(5, 'Admin');
@@ -20,13 +21,12 @@ enum UserRole {
 enum Stage {
   requested(20, 'Requested'),
   assignedToEsna(21, 'Assigned to ES&A'),
-  esnaProcessing(21, 'ES&A Processing'),
-  insuranceProcessing(22, 'Insurance Processing'),
+  assignedToInsurance(22, 'Assigned to Insurance'),
   insuranceQuoteApproval(23, 'Insurance Quote Approval'),
   emiCalculation(24, 'EMI Calculation'),
-  emiApproval(25, 'EMI Approval Letter'),
-  paymentDetails(26, 'Payment Details'),
-  rtoTaxReceipt(27, 'RTO Tax Receipt'),
+  emiApproval(25, 'EMI Approval user'),
+  paymentDetails(26, 'Payment Details ES&A'),
+  rtoTaxReceipt(27, 'RTO Tax Receipt ES&A'),
   employeeFeedback(28, 'Employee Feedback'),
   declarationAcceptance(29, 'Declaration Acceptance'),
   deletedByUser(110, 'Deleted by User'),

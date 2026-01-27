@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
-// import '/actions/actions_assign_esna.dart';
+
+import '../../network/api_models/car_request.dart';
+import '../../network/api_models/admin_page_response.dart';
+import '../../network/api_client.dart';
+import '../../constants/local_prefs.dart';
+
+import '../../core/utils/enum.dart';
+import '../../core/utils/role_stage_policy.dart';
+import '../../core/helpers/normalize.dart';
 import '../profile/profile_page.dart';
-// import 'search_request_result.dart';
 import '../../custom/widgets/custom_search_bar.dart';
 import '../../custom/widgets/request_card.dart';
 import '../../custom/modals/delete_request_modal.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+  final UserRole role;
+
+  SearchScreen({
+    Key? key,
+    required this.role,
+  }) : super(key: key);
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -15,177 +27,82 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   String selectedFilter = 'Active';
+  AdminPageResponse? adminPageResponse;
+  Map<Stage, List<CarRequest>> stageRequests = {};
+  final ApiClient _client = ApiClient();
+  bool isLoading = false; // ✅ Added missing variable
 
-  final List<Map<String, dynamic>> allRequests = [
-    {
-      'requestId': 'CAR2025204',
-      'vehicleName': 'Himalayan',
-      'dateOfRequest': '02/11/2020',
-      'contact': '8600957261',
-      'status': 'ACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-    },
-    {
-      'requestId': 'CAR2025205',
-      'vehicleName': 'RE Guerilla',
-      'dateOfRequest': '23/05/2020',
-      'contact': '8600957261',
-      'status': 'ACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-    },
-    {
-      'requestId': 'CAR2025206',
-      'vehicleName': 'Triumph Scrambler 400X',
-      'dateOfRequest': '18/02/2020',
-      'contact': '8600957261',
-      'status': 'ACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-    },
-    {
-      'requestId': 'CAR2025207',
-      'vehicleName': 'Honda CBR 650R',
-      'dateOfRequest': '15/08/2021',
-      'contact': '9876543210',
-      'status': 'ACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-    },
-    {
-      'requestId': 'CAR2025004',
-      'vehicleName': 'Maruti Suzuki Swift',
-      'dateOfRequest': '18/11/2016',
-      'contact': '9140957261',
-      'status': 'INACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-    },
-    {
-      'requestId': 'CAR2025005',
-      'vehicleName': 'RE Standard 350',
-      'dateOfRequest': '28/04/2018',
-      'contact': '8450957261',
-      'status': 'INACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-    },
-    {
-      'requestId': 'CAR2025008',
-      'vehicleName': 'Yamaha MT-15',
-      'dateOfRequest': '12/09/2019',
-      'contact': '7890123456',
-      'status': 'INACTIVE',
-      'employeeName': 'Rahil Bopche',
-      'employeeId': '209164',
-      'phone': '+84549721',
-      'company': 'The Tata Power Co. Ltd.',
-      'address': 'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-      'cluster': 'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-      'grade': 'ME03',
-      'costCenter': '1900022041',
-      'eligibility': '₹ 4300.50',
-      'baseAmount': '₹ 40, 500',
-      'cessPercentage': '10 %',
-      'corporateRegistration': '₹ 2000',
-      'quotation': '5 %',
-      'total': '₹ 10,00, 000',
-      'requestStatus': 'Requested to ES&A',
-    },
-  ];
-
-  List<Map<String, dynamic>> get filteredRequests {
-    return allRequests
-        .where((request) => request['status'] == selectedFilter.toUpperCase())
-        .toList();
+  @override
+  void initState() {
+    super.initState();
+    _loadAllRequestsForUserRole();
   }
 
-  void _showDeleteRequestModal(BuildContext context, Map<String, dynamic> request) {
+  Future<void> _loadAllRequestsForUserRole() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // 1️⃣ Load from LocalPrefs
+    final empId = await LocalPrefs.getEmpCode();
+    final roleId = await LocalPrefs.getRoleId();
+
+    if (empId == null || empId.isEmpty) {
+      debugPrint('Employee ID is null or empty');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    if (roleId == null) {
+      debugPrint('Role ID is null - check LocalPrefs');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      // 2️⃣ API call
+      final response = await _client.getAdminPageData(
+        empId: empId,
+        roleIds: [roleId],
+      );
+
+      // 3️⃣ Process response
+      setState(() {
+        adminPageResponse = response;
+        stageRequests = filterRequestsByRole(
+          response: response,
+          role: widget.role, // ✅ Use widget.role instead of calculating it
+        );
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching admin page data: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _showDeleteRequestModal(BuildContext context, CarRequest request) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DeleteRequestModal(request: request),
     );
+  }
+
+  // ✅ Get all requests for stages allowed for the current role
+  List<CarRequest> get allRequests {
+    List<CarRequest> requests = [];
+
+    // Get allowed stages for this role from RoleStagePolicy
+    final allowedStagesForRole = RoleStagePolicy.allowedStages[widget.role] ?? [];
+
+    // Collect requests from all allowed stages
+    for (var stage in allowedStagesForRole) {
+      requests.addAll(stageRequests[stage] ?? []);
+    }
+
+    return requests;
   }
 
   @override
@@ -241,14 +158,29 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           // Scrollable Request Cards
           Expanded(
-            child: ListView.builder(
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : allRequests.isEmpty
+                ? const Center(
+              child: Text(
+                'No Requests',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            )
+                : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: filteredRequests.length,
+              itemCount: allRequests.length,
               itemBuilder: (context, index) {
+                final request = allRequests[index];
                 return RequestCard(
-                  request: filteredRequests[index],
+                  request: request,
                   onTap: () {
-                    _showDeleteRequestModal(context, filteredRequests[index]);
+                    _showDeleteRequestModal(context, request);
                   },
                 );
               },
@@ -294,4 +226,3 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
 }
-
