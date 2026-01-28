@@ -138,28 +138,17 @@ class DeleteRequestModal extends StatelessWidget {
                     children: [
                       _buildHeader(request),
                       const SizedBox(height: 24),
-                      DetailRow(label: 'Vehicle Name', value:  'RE Guerilla'),
-                      DetailRow(label: 'Employee Name', value:  'Rahil Bopche'),
-                      DetailRow(label: 'Employee ID', value:  '209164'),
-                      DetailRow(label: 'Phone', value:  '+84549721'),
-                      DetailRow(label: 'Date of Request', value:  '01/11/2019'),
-                      DetailRow(label: 'Company', value:  'The Tata Power Co. Ltd.'),
-                      DetailRow(label:
-                        'Address', value:
-                        'Technopolis Knowledge Park\n4th floor, Andheri (E),\nMumbai 400093',
-                        isMultiline: true,
-                      ),
-                      const SizedBox(height: 8),
-                      DetailRow(label:
-                        'Cluster', value:
-                         'The Tata Power Co. Ltd.\nCorporate functions\n& International',
-                        isMultiline: true,
-                      ),
-                      DetailRow(label: 'Grade', value:  'ME03'),
-                      DetailRow(label: 'Cost center', value:  '1900022041'),
-                      DetailRow(label: 'Eligibility', value: '₹ 4300.50'),
-                      const SizedBox(height: 12),
-                      DetailRow(label: 'Total', value: '₹ 10,00, 000',),
+                      DetailRow(label: 'Employee ID', value: request.empId ?? 'NULL'),
+                      DetailRow(label: 'Contact', value: request.contact ?? 'NULL'),
+                      DetailRow(label: 'Email', value: request.email ?? 'NULL'),
+                      DetailRow(label: 'Vehicle Name', value: request.carModel ?? 'NULL'),
+                      DetailRow(label: 'Manufactured by', value: request.manufacturer ?? 'NULL'),
+                      DetailRow(label: 'Vehicle Type', value: request.vehicleType ?? 'NULL'),
+                      DetailRow(label: 'Vehicle Model', value: request.carModel ?? 'NULL'),
+                      DetailRow(label: 'Color', value: request.colorChoice ?? 'NULL'),
+                      DetailRow(label: 'Grade',value: request.grade ?? 'NULL'),
+                      DetailRow(label: 'Eligibility', value: request.eligibility.toString() ?? 'NULL'),
+                      DetailRow(label: 'Total', value: request.totalEmi.toString() ?? 'NULL',),
                       const SizedBox(height: 12),
                       _buildStatusRow(request),
                     ],
@@ -213,7 +202,7 @@ class DeleteRequestModal extends StatelessWidget {
           ),
         ),
         Text(
-          request.stage.toString() ?? 'Requested to ES&A',
+          request.stage?.label ?? 'NULL',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,

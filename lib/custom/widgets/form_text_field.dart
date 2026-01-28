@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 class FormTextField extends StatelessWidget {
   /// The label text displayed above the text field
   final String label;
-
+  final String hint;
   /// Whether this field is required (shows red asterisk)
   final bool required;
 
@@ -21,6 +21,7 @@ class FormTextField extends StatelessWidget {
   const FormTextField({
     super.key,
     required this.label,
+    this.hint = 'Enter Value',
     this.required = false,
     this.controller,
     this.maxLines = 1,
@@ -59,6 +60,13 @@ class FormTextField extends StatelessWidget {
           controller: controller,
           maxLines: maxLines,
           decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF757575),
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFE0E0E0)),

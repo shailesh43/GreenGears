@@ -8,13 +8,20 @@ import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import '../../network/api_models/car_request.dart';
 
-class InsuranceScreenModal extends StatelessWidget {
+class InsuranceScreenModal extends StatefulWidget {
   final CarRequest request;
 
-  const AssignEsnaCardModal({
+  const InsuranceScreenModal({
     super.key,
     required this.request
   });
+
+  @override
+  State<InsuranceScreenModal> createState() => _InsuranceScreenModalState();
+}
+
+class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
+  String? selectedDocumentName;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +61,7 @@ class InsuranceScreenModal extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        request.employeeName ?? '',
+                        widget.request.employeeName ?? '',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontFamily: 'Inter',
@@ -76,30 +83,35 @@ class InsuranceScreenModal extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(request: request),
+                      _buildHeader(widget.request),
                       const SizedBox(height: 24),
                       DetailRow(
-                          label: 'Vehicle Model', value: request.carModel ?? 'NULL'),
+                          label: 'Vehicle Model',
+                          value: widget.request.carModel ?? 'NULL'),
                       DetailRow(
-                          label: 'Manufactured by', value: request.manufacturer ?? 'NULL'),
+                          label: 'Manufactured by',
+                          value: widget.request.manufacturer ?? 'NULL'),
                       DetailRow(
-                          label: 'Color', value: request.colorChoice ?? 'NULL'),
+                          label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
                       DetailRow(
-                          label: 'Employee Name', value: request.employeeName ?? 'NULL'),
+                          label: 'Employee Name',
+                          value: widget.request.employeeName ?? 'NULL'),
                       DetailRow(
-                          label: 'Employee ID', value: request.empId ?? 'NULL'),
+                          label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
                       DetailRow(
-                          label: 'Phone', value: request.contact ?? 'NULL'),
+                          label: 'Phone', value: widget.request.contact ?? 'NULL'),
                       DetailRow(
-                          label: 'Company', value: request.company ?? 'NULL'),
+                          label: 'Company', value: widget.request.company ?? 'NULL'),
                       DetailRow(
-                          label: 'Grade', value: request.grade ?? 'NULL'),
+                          label: 'Grade', value: widget.request.grade ?? 'NULL'),
                       DetailRow(
-                          label: 'Email', value: request.email ?? 'NULL'),
+                          label: 'Email', value: widget.request.email ?? 'NULL'),
                       DetailRow(
-                          label: 'Eligibility', value: request.eligibility ?? 'NULL'),
+                          label: 'Eligibility',
+                          value: widget.request.eligibility.toString() ?? 'NULL'),
                       DetailRow(
-                          label: 'Quotation Amount', value: request.totalEmi ?? 'NULL'),
+                          label: 'Quotation Amount',
+                          value: widget.request.totalEmi.toString() ?? 'NULL'),
                       const SizedBox(height: 24),
 
                       // Base Insurance
@@ -143,6 +155,11 @@ class InsuranceScreenModal extends StatelessWidget {
                         label: 'View Document',
                         hints: 'Select Document',
                         items: ['User Quotation Document'],
+                        onChanged: (value) {
+                          setState(() {
+                            selectedDocumentName = value;
+                          });
+                        },
                       ),
                       const SizedBox(height: 24),
 
@@ -184,7 +201,7 @@ class InsuranceScreenModal extends StatelessWidget {
           ),
         ),
         Text(
-          request.requestId ?? 'CAR2025242',
+          widget.request.requestId ?? 'CAR2025242',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
@@ -196,3 +213,4 @@ class InsuranceScreenModal extends StatelessWidget {
     );
   }
 
+}

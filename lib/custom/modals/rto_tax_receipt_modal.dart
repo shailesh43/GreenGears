@@ -10,37 +10,45 @@ import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
 
-class RtoTaxReceiptModal extends StatelessWidget {
+class RtoTaxReceiptModal extends StatefulWidget {
   final CarRequest request;
 
-  const RtoTaxReceiptModal({
+  RtoTaxReceiptModal({
     super.key,
     required this.request
   });
 
   @override
+  State<RtoTaxReceiptModal> createState() => _RtoTaxReceiptModalState();
+
+}
+
+class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
+  String? selectedDocumentName;
+
+  @override
   Widget build(BuildContext context) {
     return BaseModal(
-      request: request,
+      request: widget.request,
       title: 'RTO Tax Receipt',
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DetailRow(label: 'Request ID', value: request.requestId ?? 'NULL'),
+          DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'EMP ID',value: request.empId ?? 'NULL'),
+          DetailRow(label: 'EMP ID',value: widget.request.empId ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'EMP name', value: request.employeeName ?? 'NULL'),
+          DetailRow(label: 'EMP name', value: widget.request.employeeName ?? 'NULL'),
           const SizedBox(height: 8),
-          DetailRow(label: 'Vehicle model',value: request.carModel ?? 'NULL'),
-          const SizedBox(height: 8),
-          const FormTextField(label: 'Vehicle Number', required: true,),
-          const SizedBox(height: 8),
-          const FormTextField(label: 'Chassis Number', required: true,),
+          DetailRow(label: 'Vehicle model',value: widget.request.carModel ?? 'NULL'),
           const SizedBox(height: 16),
-          const FormTextField(label: 'Engine Number', required: true,),
+          const FormTextField(label: 'Vehicle Number', hint: 'Enter Vehicle number', required: true,),
           const SizedBox(height: 16),
-          const FormTextField(label: 'Fastag Number', required: true,),
+          const FormTextField(label: 'Chassis Number', hint: 'Enter Chassis number', required: true,),
+          const SizedBox(height: 16),
+          const FormTextField(label: 'Engine Number', hint: 'Enter Engine number', required: true,),
+          const SizedBox(height: 16),
+          const FormTextField(label: 'Fastag Number', hint: 'Enter Fastag Number', required: true,),
           const SizedBox(height: 16),
           const DatePickerField(label: 'Vehicle Handover Date'),
           const SizedBox(height: 16),
@@ -50,6 +58,11 @@ class RtoTaxReceiptModal extends StatelessWidget {
             label: 'View Document',
             hints: 'Select Document',
             items: ['RTO Certificate', 'Tax Receipt', 'Insurance Copy'],
+            onChanged: (value) {
+              setState(() {
+                selectedDocumentName = value;
+              });
+            },
           ),
           const SizedBox(height: 24),
 

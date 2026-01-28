@@ -4,12 +4,14 @@ class DropdownField extends StatefulWidget {
   final String label;
   final String hints;
   final List<String> items;
+  final ValueChanged<String?> onChanged;
 
   DropdownField({
     super.key,
     required this.label,
     required this.hints,
     required this.items,
+    required this.onChanged,
   });
 
   @override
@@ -58,7 +60,9 @@ class DropdownFieldState extends State<DropdownField> {
             setState(() {
               _selectedValue = newValue;
             });
+            widget.onChanged(newValue);
           },
+
         ),
       ],
     );

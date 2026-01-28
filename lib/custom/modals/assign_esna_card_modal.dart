@@ -5,17 +5,28 @@ import '../widgets/form_detail_row.dart';
 import '../widgets/drop_down.dart';
 import '../../network/api_models/car_request.dart';
 
-
-class AssignEsnaCardModal extends StatelessWidget {
+class AssignEsnaCardModal extends StatefulWidget {
   final CarRequest request;
+  final List<String> esnaList;
 
   const AssignEsnaCardModal({
     super.key,
-    required this.request
+    required this.request,
+    required this.esnaList,
   });
 
   @override
+  State<AssignEsnaCardModal> createState() => _AssignEsnaCardModalState();
+}
+
+class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
+  String? selectedDocumentName;
+  String? selectedEsnaName;
+
+  @override
   Widget build(BuildContext context) {
+    final request = widget.request;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
@@ -33,8 +44,8 @@ class AssignEsnaCardModal extends StatelessWidget {
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 decoration: const BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -62,10 +73,11 @@ class AssignEsnaCardModal extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 40)
+                    const SizedBox(width: 40),
                   ],
                 ),
               ),
+
               // Scrollable Content
               Expanded(
                 child: SingleChildScrollView(
@@ -76,57 +88,71 @@ class AssignEsnaCardModal extends StatelessWidget {
                     children: [
                       _buildHeader(request),
                       const SizedBox(height: 24),
+
+                      DetailRow(label: 'Vehicle Model', value: request.carModel ?? '—'),
+                      DetailRow(label: 'Manufactured by', value: request.manufacturer ?? '—'),
+                      DetailRow(label: 'Color', value: request.colorChoice ?? '—'),
+                      DetailRow(label: 'Employee Name', value: request.employeeName ?? '—'),
+                      DetailRow(label: 'Employee ID', value: request.empId ?? '—'),
+                      DetailRow(label: 'Phone', value: request.contact ?? '—'),
+                      DetailRow(label: 'Company', value: request.company ?? '—'),
+                      DetailRow(label: 'Grade', value: request.grade ?? '—'),
+                      DetailRow(label: 'Email', value: request.email ?? '—'),
                       DetailRow(
-                          label: 'Vehicle Model', value: request.carModel ?? 'NULL'),
+                        label: 'Eligibility',
+                        value: request.eligibility?.toString() ?? '—',
+                      ),
                       DetailRow(
-                          label: 'Manufactured by', value: request.manufacturer 'NULL'),
-                      DetailRow(
-                          label: 'Color', value: request.colorChoice 'NULL'),
-                      DetailRow(
-                          label: 'Employee Name', value: request.employeeName ?? 'NULL'),
-                      DetailRow(
-                          label: 'Employee ID',value:  request.empId ?? 'NULL'),
-                      DetailRow(
-                          label: 'Phone', value: request.contact ??'NULL'),
-                      DetailRow(
-                          label: 'Company', value: request.company ?? 'NULL'),
-                      DetailRow(
-                          label: 'Grade',value: request.grade ?? 'NULL'),
-                      DetailRow(
-                          label: 'Email', value: request.eligibility ?? 'NULL'),
-                      DetailRow(
-                          label: 'Eligibility', value: request.eligibility ?? 'NULL'),
-                      DetailRow(
-                         label:  'Quotation Amount',  value: request.quotation ?? 'NULL'),
+                        label: 'Quotation Amount',
+                        value: request.quotation?.toString() ?? '—',
+                      ),
+
                       const SizedBox(height: 24),
 
-                      // Select ES&A Dropdown
+                      // ES&A Dropdown
                       DropdownField(
                         label: 'Assign ES&A to the Request',
                         hints: 'Select ES&A',
-                        items: ['Mr. Aditya Bakshi', 'Mrs. Naina Mukharjee', 'Mr. Samay Gupta'],
+                        items: widget.esnaList,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedEsnaName = value;
+                          });
+                        },
                       ),
+
                       const SizedBox(height: 16),
 
-                      // Action Buttons
+                      // Document Dropdown
                       DropdownField(
                         label: 'View Document',
                         hints: 'Select Document',
-                        items: ['User Quotation Document'],
+                        items: const ['User Quotation Document'],
+                        onChanged: (value) {
+                          setState(() {
+                            selectedDocumentName = value;
+                          });
+                        },
                       ),
+
                       const SizedBox(height: 24),
 
                       // Action Buttons
                       ActionButtonPair(
                         primaryText: 'Approve',
                         secondaryText: 'Reject',
-                        primaryMessage: 'Request Approved',
+                        primaryMessage:
+                        selectedEsnaName == null
+                            ? 'Please select ES&A'
+                            : '$selectedEsnaName has been assigned to ${request.requestId} Request ID.',
                         secondaryMessage: 'Request Rejected',
-                        onPrimaryAction: () {
-                          // Handle approve logic
+                        onPrimaryAction: selectedEsnaName == null
+                            ? null
+                            : () {
+                          // TODO: approve logic
                         },
                         onSecondaryAction: () {
-                          // Handle reject logic
+                          // TODO: reject logic
                         },
                       ),
                     ],
@@ -154,7 +180,7 @@ class AssignEsnaCardModal extends StatelessWidget {
           ),
         ),
         Text(
-          request.requestId ?? 'CAR2025242',
+          request.requestId ?? '',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
@@ -165,5 +191,4 @@ class AssignEsnaCardModal extends StatelessWidget {
       ],
     );
   }
-
 }

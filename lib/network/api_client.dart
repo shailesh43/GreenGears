@@ -16,6 +16,7 @@ import './api_models/car_eligibility_data.dart'; // 3
 import './api_models/admin_page_response.dart'; // 5
 import './api_models/stage_bucket.dart'; // 5
 import './api_models/car_request.dart'; // 5
+import './api_models/list_of_esna_model.dart'; // 6
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -59,20 +60,14 @@ class ApiClient {
   }
 
   // ---------------- RESPONSE HANDLER ----------------
-  Map<String, dynamic> _handleResponse(http.Response response, String method) {
-    final statusCode = response.statusCode;
-
-    if (statusCode >= 200 && statusCode < 300) {
-      if (response.body.isEmpty) {
-        return {};
-      }
+  dynamic _handleResponse(http.Response response, String method) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body);
     } else {
-      throw Exception(
-        '$method $statusCode: ${response.body}',
-      );
+      throw Exception('API Error: ${response.statusCode}');
     }
   }
+
 
   // 1. Fetch Employee Role on LoginPage (empId)
   // API Endpoint: /role-by-employee/:empId
@@ -169,7 +164,7 @@ class ApiClient {
   }
 
   // 3. Fetch Car Eligibility Details on ProfilePage, MainDashboard (empId)
-  // API Endpoint: /employees (POST request with encrypted empId)
+  // API Endpoint: /employees (POST request with reqBody : grade)
   Future<String?> getCarEligibilityExShowroomPrice(String workLevel) async {
     try {
       final headers = _defaultHeaders();
@@ -207,9 +202,12 @@ class ApiClient {
     }
   }
 
-  // 4.
+  // 4. Create New Request on CreateRequestScreen
+  // API Endpoint: /car-requests
+
 
   // 5. Fetch All Requests - ROLES: User, Admin, ES&A, Insurance based on ENUMS: UserRole, Stage
+  // API Endpoint: /employees (POST request with reqBody : empId, roleIds: [])
   Future<AdminPageResponse> getAdminPageData({
     required String empId,
     required List<int> roleIds,
@@ -234,5 +232,25 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return AdminPageResponse.fromJson(data);
   }
+
+  // 6. Get List of ES&As on AssignEsnaScreen
+  // API Endpoint: /getallEmployees
+  Future<List<GetListOfEsnaModel>> getListOfEsna() async {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('getListOfEsna');
+    final url = Uri.parse(endpointUrl);
+
+    final response = await _client.get(
+      url,
+      headers: _defaultHeaders(),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'GET');
+
+    return GetListOfEsnaModel.listFromJson(data as List);
+  }
+
 
 }

@@ -8,6 +8,7 @@ import '../../custom/modals/assign_esna_card_modal.dart';
 import '../../network/api_client.dart';
 import '../../network/api_models/car_request.dart';
 import '../../network/api_models/admin_page_response.dart';
+import '../../network/api_models/list_of_esna_model.dart';
 import '../../core/utils/enum.dart';
 import '../../constants/local_prefs.dart';
 import '../../core/helpers/normalize.dart';
@@ -26,10 +27,18 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
   Map<Stage, List<CarRequest>> stageRequests = {};
   bool isLoading = true;
 
+  List<GetListOfEsnaModel> esnaList = [];
+  List<String> esnaNames = [];
+
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  void _loadData() {
     _loadAssignEsnaScreenRequests();
+    _loadEsnaList();
   }
 
   Future<void> _loadAssignEsnaScreenRequests() async {
@@ -75,8 +84,33 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
     }
   }
 
+  Future<void> _loadEsnaList() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final response = await _client.getListOfEsna();
+
+      setState(() {
+        esnaList = response;
+
+        // Extract only sap_short_name for dropdown
+        esnaNames = response
+            .map((e) => e.shortName)
+            .toList();
+
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching ESNA list: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
   List<CarRequest> get requestedStageRequests =>
       stageRequests[Stage.requested] ?? [];
+
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +186,7 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => AssignEsnaCardModal(request: request),
+      builder: (context) => AssignEsnaCardModal(request: request, esnaList: esnaNames),
     );
   }
 }

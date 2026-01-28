@@ -39,19 +39,19 @@ class PaymentDetailsModal extends StatelessWidget {
           const SizedBox(height: 16),
 
           // ES&A Input fields
-          const FormTextField(label: 'PO Number', required: true,),
+          const FormTextField(label: 'PO Number', hint: 'Enter Purchase Order No', required: true,),
           const SizedBox(height: 16),
           const DatePickerField(label: 'PO Date'),
           const SizedBox(height: 16),
-          const FormTextField(label: 'Disbursement Amount', required: true,),
+          const FormTextField(label: 'Disbursement Amount', hint: 'Enter Disbursement amount', required: true,),
           const SizedBox(height: 16),
           const DatePickerField(label: 'Payment Date'),
           const SizedBox(height: 16),
-          const FormTextField(label: 'UTR', required: true,),
+          const FormTextField(label: 'UTR', hint: 'Enter UTR code', required: true,),
           const SizedBox(height: 16),
           const FileUploadField(label: 'Upload Document'),
           const SizedBox(height: 16),
-          const FormTextField(label: 'Comments', maxLines: 3, required: true,),
+          const FormTextField(label: 'Comments', hint: 'Your Comments', maxLines: 3, required: true,),
           const SizedBox(height: 24),
 
           ActionButtonPair(
