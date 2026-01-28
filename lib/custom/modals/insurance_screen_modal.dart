@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+
 import '../widgets/action_button_pair.dart';
 import '../widgets/request_card.dart';
 import '../widgets/form_detail_row.dart';
+import '../widgets/form_text_field.dart';
+import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import '../../network/api_models/car_request.dart';
 
-
-class AssignEsnaCardModal extends StatelessWidget {
+class InsuranceScreenModal extends StatelessWidget {
   final CarRequest request;
 
   const AssignEsnaCardModal({
@@ -74,41 +76,69 @@ class AssignEsnaCardModal extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(request),
+                      _buildHeader(request: request),
                       const SizedBox(height: 24),
                       DetailRow(
                           label: 'Vehicle Model', value: request.carModel ?? 'NULL'),
                       DetailRow(
-                          label: 'Manufactured by', value: request.manufacturer 'NULL'),
+                          label: 'Manufactured by', value: request.manufacturer ?? 'NULL'),
                       DetailRow(
-                          label: 'Color', value: request.colorChoice 'NULL'),
+                          label: 'Color', value: request.colorChoice ?? 'NULL'),
                       DetailRow(
                           label: 'Employee Name', value: request.employeeName ?? 'NULL'),
                       DetailRow(
-                          label: 'Employee ID',value:  request.empId ?? 'NULL'),
+                          label: 'Employee ID', value: request.empId ?? 'NULL'),
                       DetailRow(
-                          label: 'Phone', value: request.contact ??'NULL'),
+                          label: 'Phone', value: request.contact ?? 'NULL'),
                       DetailRow(
                           label: 'Company', value: request.company ?? 'NULL'),
                       DetailRow(
-                          label: 'Grade',value: request.grade ?? 'NULL'),
+                          label: 'Grade', value: request.grade ?? 'NULL'),
                       DetailRow(
-                          label: 'Email', value: request.eligibility ?? 'NULL'),
+                          label: 'Email', value: request.email ?? 'NULL'),
                       DetailRow(
                           label: 'Eligibility', value: request.eligibility ?? 'NULL'),
                       DetailRow(
-                         label:  'Quotation Amount',  value: request.quotation ?? 'NULL'),
+                          label: 'Quotation Amount', value: request.totalEmi ?? 'NULL'),
                       const SizedBox(height: 24),
 
-                      // Select ES&A Dropdown
-                      DropdownField(
-                        label: 'Assign ES&A to the Request',
-                        hints: 'Select ES&A',
-                        items: ['Mr. Aditya Bakshi', 'Mrs. Naina Mukharjee', 'Mr. Samay Gupta'],
+                      // Base Insurance
+                      FormTextField(
+                          label: 'Base Insurance',
+                          hint: 'Enter Base Insurance',
+                          required: true
                       ),
                       const SizedBox(height: 16),
 
-                      // Action Buttons
+                      // Addon Cover
+                      FormTextField(
+                          label: 'Addon Cover',
+                          hint: 'Enter Addon Cover',
+                          required: true
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Addon Saphire Plus
+                      FormTextField(
+                          label: 'Addon Saphire Plus',
+                          hint: 'Enter Addon Saphire Plus',
+                          required: true
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Upload Files
+                      const FileUploadField(label: 'Upload Document'),
+                      const SizedBox(height: 16),
+
+                      // Comments
+                      FormTextField(
+                        label: 'Comments',
+                        hint: 'Enter Comments',
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // View Document Dropdown
                       DropdownField(
                         label: 'View Document',
                         hints: 'Select Document',
@@ -166,4 +196,3 @@ class AssignEsnaCardModal extends StatelessWidget {
     );
   }
 
-}
