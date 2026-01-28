@@ -3,8 +3,6 @@ import './car_request.dart';
 
 class AdminPageResponse {
   String? message;
-
-  /// Key = REQUESTED / INSURANCE / EMI / etc
   Map<String, StageBucket> stageBuckets = {};
 
   AdminPageResponse.fromJson(Map<String, dynamic> json) {
@@ -19,7 +17,6 @@ class AdminPageResponse {
       });
     }
   }
-
   /// Flatten all requests (useful for search)
   List<CarRequest> get allRequests =>
       stageBuckets.values.expand((e) => e.requests).toList();

@@ -1,30 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// A custom form text field with label and optional required indicator.
-
-/// This widget displays a labeled text field with consistent styling
-/// and an optional red asterisk for required fields.
-
-class FormTextField extends StatelessWidget {
-  /// The label text displayed above the text field
+class IntegerRangeField extends StatelessWidget {
   final String label;
   final String hint;
-  /// Whether this field is required (shows red asterisk)
-  final bool required;
+  final double min;
+  final double max;
+  final TextEditingController controller;
+  final ValueChanged<double>? onChanged;
 
-  /// Optional controller for the text field
-  final TextEditingController? controller;
-
-  /// Maximum number of lines for the text field
-  final int maxLines;
-
-  const FormTextField({
+  const IntegerRangeField({
     super.key,
     required this.label,
-    this.hint = 'Enter Value',
-    this.required = false,
-    this.controller,
-    this.maxLines = 1,
+    required this.hint,
+    required this.min,
+    required this.max,
+    required this.controller,
+    this.onChanged,
   });
 
   @override
@@ -32,33 +24,21 @@ class FormTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: label,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF757575),
-                ),
-              ),
-              if (required)
-                const TextSpan(
-                  text: ' *',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-            ],
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF757575),
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
-          maxLines: maxLines,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+          ],
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(
@@ -84,6 +64,28 @@ class FormTextField extends StatelessWidget {
               vertical: 12,
             ),
           ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Required';
+            }
+
+            final number = double.tryParse(value);
+            if (number == null) {
+              return 'Invalid Decimal number';
+            }
+
+            if (number < min || number > max) {
+              return 'Enter value between $min and $max';
+            }
+
+            return null;
+          },
+          onChanged: (value) {
+            final parsed = double.tryParse(value);
+            if (parsed != null) {
+              onChanged?.call(parsed);
+            }
+          },
         ),
       ],
     );
