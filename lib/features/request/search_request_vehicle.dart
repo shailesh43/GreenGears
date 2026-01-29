@@ -105,6 +105,19 @@ class _SearchScreenState extends State<SearchScreen> {
     return requests;
   }
 
+  // ✅ Get filtered requests based on Active/Inactive filter
+  List<CarRequest> get filteredRequests {
+    if (selectedFilter == 'Active') {
+      // Active requests have status = 31
+      return allRequests.where((request) => request.status == 31).toList();
+    } else {
+      // Inactive requests have status = 82, 110, or 120
+      return allRequests.where((request) =>
+      request.status == 82 || request.status == 110
+      ).toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,30 +173,49 @@ class _SearchScreenState extends State<SearchScreen> {
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : allRequests.isEmpty
-                ? const Center(
-              child: Text(
-                'No Requests',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            )
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: allRequests.length,
-              itemBuilder: (context, index) {
-                final request = allRequests[index];
-                return RequestCard(
-                  request: request,
-                  onTap: () {
-                    _showDeleteRequestModal(context, request);
-                  },
+                : AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeInOut,
+              switchOutCurve: Curves.easeInOut,
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.0, 0.05),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
                 );
               },
+              child: filteredRequests.isEmpty
+                  ? Center(
+                key: ValueKey<String>('empty_$selectedFilter'),
+                child: const Text(
+                  'No Requests',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )
+                  : ListView.builder(
+                key: ValueKey<String>(selectedFilter),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: filteredRequests.length,
+                itemBuilder: (context, index) {
+                  final request = filteredRequests[index];
+                  return RequestCard(
+                    request: request,
+                    onTap: () {
+                      _showDeleteRequestModal(context, request);
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ],

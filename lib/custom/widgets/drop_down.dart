@@ -43,38 +43,35 @@ class DropdownFieldState extends State<DropdownField> {
           value: _selectedValue,
           icon: const Icon(
             Icons.keyboard_arrow_down,
-            color: Color(0xFF757575),
+            color: Color(0xF5323232),
           ),
 
           /// 👇 Limits dropdown window height
-          menuMaxHeight: 220,
+          menuMaxHeight: 400,
 
           decoration: InputDecoration(
-            contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            hintText: widget.hints,
             hintStyle: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 14,
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
               color: Color(0xFF757575),
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Color(0xFF848484),
-              ),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Color(0xFF848484),
-              ),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Color(0xFF848484),
-                width: 1.2,
-              ),
+              borderSide: const BorderSide(color: Color(0xFF848484)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
             ),
           ),
           dropdownColor: Colors.white,
@@ -83,7 +80,7 @@ class DropdownFieldState extends State<DropdownField> {
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
-            color: Color(0xFF757575),
+            color: Color(0xFFCECECE),
           ),
           items: widget.items.map((String item) {
             return DropdownMenuItem<String>(

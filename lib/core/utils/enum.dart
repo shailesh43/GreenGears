@@ -27,28 +27,26 @@ enum RequestStatus {
   active(1, 'Active'),
   inProcess(31, 'In Process'),
   terminatedByAdmin(82, 'Terminated by Admin'),
-  deletedByUser(110, 'Deleted by User'),
-  inactive(120, 'Inactive');
+  deletedByUser(110, 'Deleted by User');
 
   final int code;
   final String label;
 
   const RequestStatus(this.code, this.label);
 
-  static RequestStatus? fromCode(int code) {
-    return RequestStatus.values.firstWhereOrNull(
-          (e) => e.code == code,
-    );
+  static RequestStatus? fromCode(int? code) {
+    if (code == null) return null;
+    return RequestStatus.values
+        .firstWhereOrNull((e) => e.code == code);
   }
 
-  /// Convenience helpers
+  /// Only these are considered ACTIVE
   bool get isActive =>
-      this == RequestStatus.active || this == RequestStatus.inProcess;
+      this == RequestStatus.active ||
+          this == RequestStatus.inProcess;
 
-  bool get isInactive =>
-      this == RequestStatus.terminatedByAdmin ||
-          this == RequestStatus.deletedByUser ||
-          this == RequestStatus.inactive;
+  /// Everything else is INACTIVE
+  bool get isInactive => !isActive;
 }
 
 /// --------------------

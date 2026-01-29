@@ -125,7 +125,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   Widget build(BuildContext context) {
     return BaseModal(
       request: widget.request,
-      title: 'Monthly Deduction: ${widget.request.requestId?.toString()}',
+      title: 'Monthly Deduction',
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

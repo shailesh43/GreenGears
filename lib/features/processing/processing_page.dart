@@ -28,6 +28,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
   }
 
   Widget build(BuildContext context) {
+
+    UserRole role = widget.role;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -48,7 +51,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
         child: Column(
           children: [
             // Show "Assign ES&A spoc" only for Admin
-            if (widget.role == UserRole.admin)
+            if (role == UserRole.admin)
               _buildCard(
                 title: 'Assign ES&A spoc',
                 subtitle: 'List of ES&As spoc assignment requests',
@@ -63,11 +66,11 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 },
               ),
 
-            if (widget.role == UserRole.admin)
+            if (role == UserRole.admin)
               const SizedBox(height: 16),
 
             // Show "ES&A spoc" for Admin and ES&A roles
-            if (widget.role == UserRole.admin || widget.role == UserRole.esna)
+            if (role == UserRole.admin || role == UserRole.esna)
               _buildCard(
                 title: 'ES&A spoc',
                 subtitle: 'List of requests which has to be assigned to insurance',
@@ -82,11 +85,11 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 },
               ),
 
-            if (widget.role == UserRole.admin || widget.role == UserRole.esna)
+            if (role == UserRole.admin || role == UserRole.esna)
               const SizedBox(height: 16),
 
             // Show "Insurance" for Admin and Insurance roles
-            if (widget.role == UserRole.admin || widget.role == UserRole.insurance)
+            if (role == UserRole.admin || role == UserRole.insurance)
               _buildCard(
                 title: 'Insurance',
                 subtitle: 'List of requests which has to provide insurance statements',
