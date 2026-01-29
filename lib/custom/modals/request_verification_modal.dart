@@ -29,13 +29,14 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
     return BaseModal(
       request: widget.request,
       title: 'Request Verification',
+
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ES&A Info fields
           DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
           DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
-          DetailRow(label: 'Grade',value: widget.request.grade ?? 'NULL'),
+          DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
+          DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
           DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
           DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
           DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
@@ -43,14 +44,20 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
           const SizedBox(height: 24),
 
-          // ES&A Input fields
-          const FormTextField(label: 'ES&A Comments', hint: 'Enter Your Comments', maxLines: 3, required: true,),
+          const FormTextField(
+            label: 'ES&A Comments',
+            hint: 'Enter Your Comments',
+            maxLines: 3,
+            required: true,
+          ),
           const SizedBox(height: 16),
+
           FileUploadField(
             label: 'Upload Document - File Type Allowed: .pdf/.txt/.docx',
             allowedExtensions: ['pdf', 'txt', 'doc', 'docx'],
           ),
           const SizedBox(height: 16),
+
           DropdownField(
             label: 'View Document',
             hints: 'Select Document',
@@ -62,21 +69,23 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
             },
           ),
           const SizedBox(height: 24),
-          ActionButtonPair(
-            primaryText: 'Approve',
-            secondaryText: 'Reject',
-            primaryMessage: 'Request Approved',
-            secondaryMessage: 'Request Rejected',
-            onPrimaryAction: () {
-                // Handle approve logic
-            },
-            onSecondaryAction: () {
-                // Handle reject logic
-            },
-          ),
         ],
       ),
+
+      bottom: ActionButtonPair(
+        primaryText: 'Approve',
+        secondaryText: 'Reject',
+        primaryMessage: 'Request Approved',
+        secondaryMessage: 'Request Rejected',
+        onPrimaryAction: () {
+          // approve logic
+        },
+        onSecondaryAction: () {
+          // reject logic
+        },
+      ),
     );
+
   }
 
 }

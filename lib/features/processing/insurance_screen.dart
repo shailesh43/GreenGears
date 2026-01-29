@@ -27,6 +27,9 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
   Map<Stage, List<CarRequest>> stageRequests = {};
   bool isLoading = true;
 
+  List<CarRequest> get assignedToInsuranceStageRequests =>
+      stageRequests[Stage.assignedToInsurance] ?? [];
+
   @override
   void initState() {
     super.initState();
@@ -76,10 +79,17 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
     }
   }
 
-  List<CarRequest> get assignedToInsuranceStageRequests =>
-      stageRequests[Stage.assignedToInsurance] ?? [];
-
-
+  void _showInsuranceScreenModal(
+      BuildContext context,
+      CarRequest request
+      ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => InsuranceScreenModal(request: request),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,16 +155,4 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
       ),
     );
   }
-  void _showInsuranceScreenModal(
-      BuildContext context,
-      CarRequest request
-      ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => InsuranceScreenModal(request: request),
-    );
-  }
-
 }

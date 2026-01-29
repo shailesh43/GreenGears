@@ -94,6 +94,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                     FormTextField(
                       label: 'Colour',
                       hint: 'Enter Vehicle colour',
+                      required: true,
                     ),
                     const SizedBox(height: 20),
 
@@ -101,6 +102,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                     FormTextField(
                       label: 'Vehicle Type',
                       hint: 'Select Vehicle Type',
+                      required: true,
                     ),
                     const SizedBox(height: 20),
 

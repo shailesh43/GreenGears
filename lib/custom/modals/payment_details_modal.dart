@@ -53,20 +53,19 @@ class PaymentDetailsModal extends StatelessWidget {
           const SizedBox(height: 16),
           const FormTextField(label: 'Comments', hint: 'Your Comments', maxLines: 3, required: true,),
           const SizedBox(height: 24),
-
-          ActionButtonPair(
-            primaryText: 'Approve',
-            secondaryText: 'Reject',
-            primaryMessage: 'Request Approved',
-            secondaryMessage: 'Request Rejected',
-            onPrimaryAction: () {
-              // Handle approve logic
-            },
-            onSecondaryAction: () {
-              // Handle reject logic
-            },
-          ),
         ],
+      ),
+      bottom: ActionButtonPair(
+        primaryText: 'Approve',
+        secondaryText: 'Reject',
+        primaryMessage: 'Request Approved',
+        secondaryMessage: 'Request Rejected',
+        onPrimaryAction: () {
+          // Handle approve logic
+        },
+        onSecondaryAction: () {
+          // Handle reject logic
+        },
       ),
     );
   }

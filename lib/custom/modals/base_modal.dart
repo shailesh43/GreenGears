@@ -5,12 +5,14 @@ class BaseModal extends StatelessWidget {
   final CarRequest request;
   final String title;
   final Widget content;
+  final Widget? bottom; // 👈 NEW
 
   const BaseModal({
     super.key,
     required this.request,
     required this.title,
     required this.content,
+    this.bottom,
   });
 
   @override
@@ -26,6 +28,7 @@ class BaseModal extends StatelessWidget {
       ),
       child: Column(
         children: [
+          /// HEADER
           Container(
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
@@ -42,7 +45,6 @@ class BaseModal extends StatelessWidget {
                     fontFamily: 'Inter',
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
                   ),
                 ),
                 IconButton(
@@ -52,12 +54,26 @@ class BaseModal extends StatelessWidget {
               ],
             ),
           ),
+
+          /// BODY (SCROLLABLE)
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: content,
             ),
           ),
+
+          /// FIXED BOTTOM ACTIONS
+          if (bottom != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Color.fromRGBO(220, 220, 220, 1.0)),
+                ),
+              ),
+              child: bottom,
+            ),
         ],
       ),
     );

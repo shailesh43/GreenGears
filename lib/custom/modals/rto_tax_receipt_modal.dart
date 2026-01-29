@@ -65,20 +65,19 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
             },
           ),
           const SizedBox(height: 24),
-
-          ActionButtonPair(
-            primaryText: 'Approve',
-            secondaryText: 'Reject',
-            primaryMessage: 'Request Approved',
-            secondaryMessage: 'Request Rejected',
-            onPrimaryAction: () {
-              // Handle approve logic
-            },
-            onSecondaryAction: () {
-              // Handle reject logic
-            },
-          ),
         ],
+      ),
+      bottom: ActionButtonPair(
+        primaryText: 'Approve',
+        secondaryText: 'Reject',
+        primaryMessage: 'Request Approved',
+        secondaryMessage: 'Request Rejected',
+        onPrimaryAction: () {
+          // Handle approve logic
+        },
+        onSecondaryAction: () {
+          // Handle reject logic
+        },
       ),
     );
   }

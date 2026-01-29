@@ -44,7 +44,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
     'RTO tax receipt',
   ];
 
-  // ✅ Map tab index to Stage
+  // Map tab index to Stage
   Stage _getStageForTab(int tabIndex) {
     switch (tabIndex) {
       case 0:
@@ -60,7 +60,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
     }
   }
 
-  // ✅ Get filtered requests based on selected tab
+  // Get filtered requests based on selected tab
   List<CarRequest> get filteredRequests {
     final stage = _getStageForTab(_selectedTabIndex);
     return stageRequests[stage] ?? [];
@@ -117,7 +117,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
     }
   }
 
-  // ✅ Show modal based on Stage
+  // Show modal based on Stage
   void _showModal(BuildContext context, CarRequest request) {
     final stage = _getStageForTab(_selectedTabIndex);
 

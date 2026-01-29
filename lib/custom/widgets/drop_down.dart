@@ -6,7 +6,7 @@ class DropdownField extends StatefulWidget {
   final List<String> items;
   final ValueChanged<String?> onChanged;
 
-  DropdownField({
+  const DropdownField({
     super.key,
     required this.label,
     required this.hints,
@@ -26,34 +26,82 @@ class DropdownFieldState extends State<DropdownField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        /// Label
         Text(
           widget.label,
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF6C6C6C),
+            color: Color(0xFF757575),
           ),
         ),
         const SizedBox(height: 8),
+
+        /// Dropdown
         DropdownButtonFormField<String>(
           value: _selectedValue,
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            color: Color(0xFF757575),
+          ),
+
+          /// 👇 Limits dropdown window height
+          menuMaxHeight: 220,
+
           decoration: InputDecoration(
+            contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            hintStyle: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: Color(0xFF757575),
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+              borderSide: const BorderSide(
+                color: Color(0xFF848484),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+              borderSide: const BorderSide(
+                color: Color(0xFF848484),
+              ),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFF848484),
+                width: 1.2,
+              ),
+            ),
           ),
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(12),
           hint: Text(widget.hints),
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            color: Color(0xFF757575),
+          ),
           items: widget.items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(item),
+              child: SizedBox(
+                height: 40, // 👈 tighter item height
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    item,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: Color(0xFF757575),
+                    ),
+                  ),
+                ),
+              ),
             );
           }).toList(),
           onChanged: (String? newValue) {
@@ -62,7 +110,6 @@ class DropdownFieldState extends State<DropdownField> {
             });
             widget.onChanged(newValue);
           },
-
         ),
       ],
     );

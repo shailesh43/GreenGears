@@ -125,7 +125,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   Widget build(BuildContext context) {
     return BaseModal(
       request: widget.request,
-      title: 'Monthly Deduction',
+      title: 'Monthly Deduction: ${widget.request.requestId?.toString()}',
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -178,20 +178,19 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
 
           const FormTextField(label: 'ES&A Comments', maxLines: 3),
           const SizedBox(height: 24),
-
-          ActionButtonPair(
-            primaryText: 'Approve',
-            secondaryText: 'Reject',
-            primaryMessage: 'Request Approved',
-            secondaryMessage: 'Request Rejected',
-            onPrimaryAction: () {
-              // Handle approve logic
-            },
-            onSecondaryAction: () {
-              // Handle reject logic
-            },
-          ),
         ],
+      ),
+      bottom: ActionButtonPair(
+        primaryText: 'Approve',
+        secondaryText: 'Reject',
+        primaryMessage: 'Request Approved',
+        secondaryMessage: 'Request Rejected',
+        onPrimaryAction: () {
+          // Handle approve logic
+        },
+        onSecondaryAction: () {
+          // Handle reject logic
+        },
       ),
     );
   }
