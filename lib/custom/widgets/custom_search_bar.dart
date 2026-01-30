@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
 
-class CustomSearchBar extends StatefulWidget {
-  const CustomSearchBar({super.key});
+class CustomSearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
 
-  @override
-  State<CustomSearchBar> createState() => _CustomSearchBarState();
-}
-
-class _CustomSearchBarState extends State<CustomSearchBar> {
-  final TextEditingController _searchController = TextEditingController();
+  const CustomSearchBar({
+    super.key,
+    required this.controller,
+    required this.hintText,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         TextField(
-          controller: _searchController,
+          controller: controller,
           cursorColor: Colors.grey,
           decoration: InputDecoration(
-            hintText: 'Search Requests',
+            hintText: hintText,
             hintStyle: const TextStyle(
               fontFamily: 'Inter',
               color: Color.fromARGB(255, 158, 158, 158),
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.1,
             ),
@@ -32,7 +32,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
               borderSide: const BorderSide(
-                color: Color.fromRGBO(202, 202, 202, 0.5411764705882353),
+                color: Color.fromRGBO(202, 202, 202, 0.54),
                 width: 0.5,
               ),
             ),
@@ -52,11 +52,5 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
         const SizedBox(height: 12),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 }

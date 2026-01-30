@@ -26,19 +26,29 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  String selectedFilter = 'Active';
-  AdminPageResponse? adminPageResponse;
-  Map<Stage, List<CarRequest>> stageRequests = {};
+
   final ApiClient _client = ApiClient();
-  bool isLoading = false; // ✅ Added missing variable
+  bool isLoading = false;
+
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  String selectedFilter = 'Active';
+  final List<CarRequest> activeRequests = [];
+  final List<CarRequest> inactiveRequests = [];
 
   @override
   void initState() {
     super.initState();
-    _loadAllRequestsForUserRole();
+    _loadFilterBasedRequests();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
   }
 
-  Future<void> _loadAllRequestsForUserRole() async {
+  Future<void> _loadFilterBasedRequests() async {
     setState(() {
       isLoading = true;
     });
@@ -60,26 +70,30 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     try {
-      // 2️⃣ API call
-      final response = await _client.getAdminPageData(
+      // 2️⃣ API call (NEW endpoint)
+      final response = await _client.getStatusFilteredRequests(
         empId: empId,
-        roleIds: [roleId],
+        role: roleId,
       );
 
-      // 3️⃣ Process response
+      // 3️⃣ Update state
       setState(() {
-        adminPageResponse = response;
-        stageRequests = filterRequestsByRole(
-          response: response,
-          role: widget.role, // ✅ Use widget.role instead of calculating it
-        );
+        activeRequests
+          ..clear()
+          ..addAll(response.active);
+
+        inactiveRequests
+          ..clear()
+          ..addAll(response.inactive);
+
         isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error fetching admin page data: $e');
+      debugPrint('Error fetching status-filtered requests: $e');
       setState(() => isLoading = false);
     }
   }
+
 
   void _showDeleteRequestModal(BuildContext context, CarRequest request) {
     showModalBottomSheet(
@@ -90,36 +104,24 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // ✅ Get all requests for stages allowed for the current role
-  List<CarRequest> get allRequests {
-    List<CarRequest> requests = [];
-
-    // Get allowed stages for this role from RoleStagePolicy
-    final allowedStagesForRole = RoleStagePolicy.allowedStages[widget.role] ?? [];
-
-    // Collect requests from all allowed stages
-    for (var stage in allowedStagesForRole) {
-      requests.addAll(stageRequests[stage] ?? []);
-    }
-
-    return requests;
-  }
-
-  // ✅ Get filtered requests based on Active/Inactive filter
-  List<CarRequest> get filteredRequests {
-    if (selectedFilter == 'Active') {
-      // Active requests have status = 31
-      return allRequests.where((request) => request.status == 31).toList();
-    } else {
-      // Inactive requests have status = 82, 110, or 120
-      return allRequests.where((request) =>
-      request.status == 82 || request.status == 110
-      ).toList();
-    }
-  }
-
+  @override
   @override
   Widget build(BuildContext context) {
+
+    final List<CarRequest> baseList =
+    selectedFilter == 'Active'
+        ? activeRequests
+        : inactiveRequests;
+
+    final List<CarRequest> filteredRequests =
+    _searchQuery.isEmpty
+        ? baseList
+        : baseList.where((request) {
+      final name = request.employeeName?.toLowerCase() ?? '';
+      return name.contains(_searchQuery);
+    }).toList();
+
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -142,34 +144,49 @@ class _SearchScreenState extends State<SearchScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsetsGeometry.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Column(
               children: [
-                // Search Bar
-                CustomSearchBar(),
+                // 🔍 Search Bar
+                CustomSearchBar(
+                  controller: _searchController,
+                  hintText: 'Search by employee name',
+                ),
                 const SizedBox(height: 8),
-                // Filter Buttons
+
+                // 🔘 Filter Buttons
                 Row(
                   children: [
-                    _buildFilterButton(label: 'Active',isSelected: selectedFilter == 'Active', activeColor: Color.fromRGBO(
-                        215, 255, 216, 1.0), activeTextColor:  Color.fromRGBO(23, 86, 26, 1.0), onTap: () {
-                      setState(() {
-                        selectedFilter = 'Active';
-                      });
-                    },),
+                    _buildFilterButton(
+                      label: 'Active',
+                      isSelected: selectedFilter == 'Active',
+                      activeColor: const Color.fromRGBO(215, 255, 216, 1.0),
+                      activeTextColor: const Color.fromRGBO(23, 86, 26, 1.0),
+                      onTap: () {
+                        setState(() {
+                          selectedFilter = 'Active';
+                        });
+                      },
+                    ),
                     const SizedBox(width: 8),
-                    _buildFilterButton(label: 'Inactive', isSelected: selectedFilter == 'Inactive', activeColor:  Color.fromRGBO(
-                        255, 227, 227, 1.0), activeTextColor:  Color.fromRGBO(86, 23, 23, 1.0), onTap: () {
-                      setState(() {
-                        selectedFilter = 'Inactive';
-                      });
-                    },),
+                    _buildFilterButton(
+                      label: 'Inactive',
+                      isSelected: selectedFilter == 'Inactive',
+                      activeColor: const Color.fromRGBO(255, 227, 227, 1.0),
+                      activeTextColor: const Color.fromRGBO(86, 23, 23, 1.0),
+                      onTap: () {
+                        setState(() {
+                          selectedFilter = 'Inactive';
+                        });
+                      },
+                    ),
                   ],
                 ),
               ],
             ),
           ),
-          // Scrollable Request Cards
+
+          // 📜 Requests List
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -177,7 +194,8 @@ class _SearchScreenState extends State<SearchScreen> {
               duration: const Duration(milliseconds: 300),
               switchInCurve: Curves.easeInOut,
               switchOutCurve: Curves.easeInOut,
-              transitionBuilder: (Widget child, Animation<double> animation) {
+              transitionBuilder:
+                  (Widget child, Animation<double> animation) {
                 return FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
@@ -193,7 +211,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ? Center(
                 key: ValueKey<String>('empty_$selectedFilter'),
                 child: const Text(
-                  'No Requests',
+                  'No Such Requests',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -204,7 +222,8 @@ class _SearchScreenState extends State<SearchScreen> {
               )
                   : ListView.builder(
                 key: ValueKey<String>(selectedFilter),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: filteredRequests.length,
                 itemBuilder: (context, index) {
                   final request = filteredRequests[index];
@@ -222,6 +241,7 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
     );
   }
+
   Widget _buildFilterButton({
     required String label,
     required bool isSelected,
@@ -255,6 +275,12 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
 }

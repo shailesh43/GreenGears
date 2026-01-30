@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '';
+import '../../network/api_models/car_request.dart';
 
 class DeclarationAcceptanceModal extends StatelessWidget {
-  final Map<String, dynamic> request;
+  final CarRequest request;
   final VoidCallback onAccept;
 
   DeclarationAcceptanceModal({
@@ -84,22 +84,22 @@ class DeclarationAcceptanceModal extends StatelessWidget {
                         children: [
                           const TextSpan(text: 'I, '),
                           TextSpan(
-                            text: request['employeeName'] ?? 'Employee Name',
+                            text: request.employeeName ?? 'Employee Name',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(text: ', Employee Number '),
                           TextSpan(
-                            text: request['employeeId'] ?? 'Employee code',
+                            text: request.empId ?? 'Employee code',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(text: ', of '),
                           TextSpan(
-                            text: request['company'] ?? 'Company Name',
+                            text: request.company ?? 'Company Name',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(text: ' ('),
                           TextSpan(
-                            text: request['workLocation'] ?? 'Work Location',
+                            text: request. ?? 'Work Location',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(

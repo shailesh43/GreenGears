@@ -4,10 +4,11 @@ import '../../custom/widgets/file_uploader.dart';
 import '../../custom/widgets/form_text_field.dart';
 import '../../custom/widgets/form_detail_row.dart';
 import '../../custom/widgets/action_button_pair.dart';
+import '../../network/api_models/car_request.dart';
 
 class UserApproval extends StatefulWidget {
   final int stage; // 23 for first approval, 25 for second approval
-  final Map<String, dynamic> request;
+  final CarRequest request;
 
   const UserApproval({
     super.key,
@@ -98,13 +99,14 @@ class _UserApprovalState extends State<UserApproval> {
         const SizedBox(height: 16),
         DetailRow(label: 'Total EMI (in RS)', value:  '36,460'),
         DetailRow(label: 'Car Allowance', value:  '13,500'),
-        DetailRow(label: 'Company Contribution (RS)', value:  '3800'),
+        DetailRow(label: 'Company Contribution', value:  '3800'),
         DetailRow(label: 'EMI tenure (YRS)', value:  '3 years'),
         const SizedBox(height: 16),
         const FileUploadField(label: 'Upload Document'),
         const SizedBox(height: 16),
         FormTextField(
-          label: 'Employee Comments',
+          label: 'Comments',
+          hint: 'Your comments',
           maxLines: 3,
           required: true,
           // controller: _commentsController,
