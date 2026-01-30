@@ -18,6 +18,7 @@ import './api_models/stage_bucket.dart'; // 5
 import './api_models/car_request.dart'; // 5
 import './api_models/list_of_esna_model.dart'; // 6
 import './api_models/status_filtered_requests_model.dart'; // 7
+import './api_models/user_approval_model.dart'; // 8
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -281,6 +282,35 @@ class ApiClient {
 
     final data = _handleResponse(response, 'POST');
     return StatusFilteredRequestsModel.fromJson(data);
+  }
+
+  // 8. User Approval requests on Approve/Reject request screen
+  // API Endpoint: /userApprovalType
+  Future<UserApprovalModel> getApprovalStages({
+    required String empId,
+    required int role,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('getUserApprovalRequest');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'role': role,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return UserApprovalModel.fromJson(data);
   }
 
 }

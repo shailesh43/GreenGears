@@ -99,7 +99,7 @@ class DeclarationAcceptanceModal extends StatelessWidget {
                           ),
                           const TextSpan(text: ' ('),
                           TextSpan(
-                            text: request. ?? 'Work Location',
+                            text: request.company ?? 'Work Location',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(
@@ -121,7 +121,7 @@ class DeclarationAcceptanceModal extends StatelessWidget {
                             text: 'Under the said Car policy I am being provided with a car model Car Manufacturer, Car Model and colour (Vehicle/ Car) bearing Request Number ',
                           ),
                           TextSpan(
-                            text: request['requestId'] ?? 'Request ID',
+                            text: request.requestId ?? 'Request ID',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(
@@ -182,12 +182,12 @@ class DeclarationAcceptanceModal extends StatelessWidget {
                           const TextSpan(
                               text: 'Thank You.\n\nYours Sincerely,\n\n'),
                           TextSpan(
-                            text: '${request['employeeName'] ??
+                            text: '${request.employeeName ??
                                 'Employee Name'},\n\n',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           TextSpan(
-                            text: '${request['employeeId'] ??
+                            text: '${request.empId ??
                                 'Employee code'},\n\n',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
@@ -211,12 +211,12 @@ class DeclarationAcceptanceModal extends StatelessWidget {
                         children: [
                           const TextSpan(text: 'For '),
                           TextSpan(
-                            text: '${request['company'] ?? 'Company Name'}\n\n',
+                            text: '${request.company ?? 'Company Name'}\n\n',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(text: 'Authorised ES&A Spoc: '),
                           TextSpan(
-                            text: '${request['assignedTo'] ?? 'SPOC Name'}\n\n',
+                            text: '${request.assignedTo ?? 'SPOC Name'}\n\n',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const TextSpan(text: 'Dated: '),

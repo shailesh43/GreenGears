@@ -5,15 +5,16 @@ import '../../custom/widgets/form_text_field.dart';
 import '../../custom/widgets/form_detail_row.dart';
 import '../../custom/widgets/action_button_pair.dart';
 import '../../network/api_models/car_request.dart';
+import '../../network/api_client.dart';
+import '../../network/api_models/user_approval_model.dart';
+import '../../constants/local_prefs.dart';
 
 class UserApproval extends StatefulWidget {
-  final int stage; // 23 for first approval, 25 for second approval
-  final CarRequest request;
+  final CarRequest? approvalRequest;
 
   const UserApproval({
+    this.approvalRequest,
     super.key,
-    required this.stage,
-    required this.request,
   });
 
   @override
@@ -21,25 +22,79 @@ class UserApproval extends StatefulWidget {
 }
 
 class _UserApprovalState extends State<UserApproval> {
+  final ApiClient _client = ApiClient();
+  bool isLoading = true;
+  CarRequest? approvalRequest;
 
+  Future<void> _loadEmiApprovalRequest() async {
+    setState(() => isLoading = true);
+
+    // 1️⃣ Load from LocalPrefs
+    final empId = await LocalPrefs.getEmpCode();
+    final roleId = await LocalPrefs.getRoleId();
+
+    if (empId == null || empId.isEmpty || roleId == null) {
+      debugPrint('Invalid empId or roleId');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      // 2️⃣ API call
+      final response = await _client.getApprovalStages(
+        empId: empId,
+        role: roleId,
+      );
+
+      // 3️⃣ Safely pick FIRST request of EMI_APPROVAL_USER
+      final List<CarRequest> emiList =
+          response.data['EMI_APPROVAL_USER'] ?? [];
+
+      final CarRequest? emiRequest =
+      emiList.isNotEmpty ? emiList.first : null;
+
+      // 4️⃣ Update state
+      setState(() {
+        approvalRequest = emiRequest;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching approval stages: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with widget's approvalRequest if provided
+    approvalRequest = widget.approvalRequest;
+    _loadEmiApprovalRequest();
+  }
 
   void _showDeclarationModal() {
+    if (approvalRequest == null) {
+      debugPrint('No approval request available');
+      return;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return DeclarationAcceptanceModal(
-          request: widget.request,
+          request: approvalRequest!,
           onAccept: () {
             Navigator.pop(context); // Close modal
-            _handleApproval();
+            _handleApproval(approvalRequest!);
           },
         );
       },
     );
   }
 
-  void _handleApproval() {
+  // For snackbar only
+  void _handleApproval(CarRequest request) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
@@ -73,7 +128,7 @@ class _UserApprovalState extends State<UserApproval> {
     Navigator.pop(context);
   }
 
-  Widget _buildFirstApprovalContent() {
+  Widget _buildFirstApprovalContent(CarRequest request) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -86,21 +141,16 @@ class _UserApprovalState extends State<UserApproval> {
             color: Colors.green,
           ),
         ),
-        const SizedBox(height: 24,),
-        DetailRow(label: 'EMP ID', value:  '209164'),
-        DetailRow(label: 'EMP Name', value:  'Rahil Bopche'),
-        DetailRow(label: 'Mobile No', value:  '8453627897'),
-        DetailRow(label: 'Request ID', value:  'CAR2025241'),
-        DetailRow(label: 'EMP name', value:  'Rahil Bopche'),
-        DetailRow(label: 'Grade', value:  'ME03'),
-        DetailRow(label: 'Eligibility (RS)', value:  '50,000'),
-        DetailRow(label: 'Email', value:  'rahil.bopche@tatapower.com'),
-        DetailRow(label: 'ESNA comments', value:  'Approved'),
-        const SizedBox(height: 16),
-        DetailRow(label: 'Total EMI (in RS)', value:  '36,460'),
-        DetailRow(label: 'Car Allowance', value:  '13,500'),
-        DetailRow(label: 'Company Contribution', value:  '3800'),
-        DetailRow(label: 'EMI tenure (YRS)', value:  '3 years'),
+        const SizedBox(height: 24),
+        DetailRow(label: 'EMP ID', value: request.empId ?? ''),
+        DetailRow(label: 'EMP Name', value: request.employeeName ?? ''),
+        DetailRow(label: 'Mobile No', value: request.contact ?? ''),
+        DetailRow(label: 'Request ID', value: request.requestId ?? ''),
+        DetailRow(label: 'Grade', value: request.grade ?? ''),
+        DetailRow(label: 'Email', value: request.email ?? ''),
+        DetailRow(label: 'Total EMI (₹)', value: request.totalEmi?.toString() ?? ''),
+        DetailRow(label: 'Car Allowance', value: request.carAllowance?.toString() ?? ''),
+        DetailRow(label: 'Company Contribution', value: request.companyContribution?.toString() ?? ''),
         const SizedBox(height: 16),
         const FileUploadField(label: 'Upload Document'),
         const SizedBox(height: 16),
@@ -109,13 +159,12 @@ class _UserApprovalState extends State<UserApproval> {
           hint: 'Your comments',
           maxLines: 3,
           required: true,
-          // controller: _commentsController,
         ),
       ],
     );
   }
 
-  Widget _buildSecondApprovalContent() {
+  Widget _buildSecondApprovalContent(CarRequest request) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -129,20 +178,30 @@ class _UserApprovalState extends State<UserApproval> {
           ),
         ),
         const SizedBox(height: 24),
-        DetailRow(label: 'EMP ID', value:  '208829'),
-        DetailRow(label: 'EMP Name', value:  'Rahil Bopche'),
-        DetailRow(label: 'Mobile No', value:  '8453627897'),
-        DetailRow(label: 'Request ID', value:  'CAR2025241'),
-        DetailRow(label: 'EMP name', value:  'Rahil Bopche'),
-        DetailRow(label: 'Grade', value:  'ME03'),
-        DetailRow(label: 'Eligibility (RS)', value:  '50,000'),
-        DetailRow(label: 'Email', value:  'rahil.bopche@tatapower.com'),
-        DetailRow(label: 'ESNA comments', value:  'Approved'),
+        DetailRow(label: 'EMP ID', value: request.empId ?? ''),
+        DetailRow(label: 'EMP Name', value: request.employeeName ?? ''),
+        DetailRow(label: 'Mobile No', value: request.contact ?? ''),
+        DetailRow(label: 'Request ID', value: request.requestId ?? ''),
+        DetailRow(label: 'Grade', value: request.grade ?? ''),
+        DetailRow(label: 'Eligibility (₹)', value: request.eligibility?.toString() ?? ''),
+        DetailRow(label: 'Email', value: request.email ?? ''),
         const SizedBox(height: 16),
-        DetailRow(label: 'Total EMI (in RS)', value:  '36,460'),
-        DetailRow(label: 'Car Allowance', value:  '13,500'),
-        DetailRow(label: 'Company Contribution (RS)', value:  '3800'),
-        DetailRow(label: 'EMI tenure (YRS)', value:  '3 years'),
+        DetailRow(
+          label: 'Total EMI (₹)',
+          value: request.totalEmi?.toString() ?? '',
+        ),
+        DetailRow(
+          label: 'Car Allowance',
+          value: request.carAllowance?.toString() ?? '',
+        ),
+        DetailRow(
+          label: 'Company Contribution (₹)',
+          value: request.companyContribution?.toString() ?? '',
+        ),
+        DetailRow(
+          label: 'EMI Tenure (YRS)',
+          value: request.completeEmiTenure?.toString() ?? '',
+        ),
         const SizedBox(height: 16),
         const FileUploadField(label: 'Upload Document'),
         const SizedBox(height: 16),
@@ -150,13 +209,11 @@ class _UserApprovalState extends State<UserApproval> {
           label: 'Employee Comments',
           maxLines: 3,
           required: true,
-          // controller: _commentsController,
         ),
       ],
     );
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,46 +234,67 @@ class _UserApprovalState extends State<UserApproval> {
           ),
         ),
       ),
-
-      // 🔼 Scrollable content
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120), // 👈 space for buttons
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            widget.stage == 23
-                ? _buildFirstApprovalContent()
-                : _buildSecondApprovalContent(),
-          ],
-        ),
-      ),
-
-      // 🔽 Fixed bottom buttons
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: ActionButtonPair(
-            primaryText: 'Approve',
-            secondaryText: 'Reject',
-            primaryMessage: 'Request Approved',
-            secondaryMessage: 'Request Rejected',
-            onPrimaryAction: () {
-              if (widget.stage == 25) {
-                _showDeclarationModal();
-              } else {
-                _handleApproval();
-              }
-            },
-            onSecondaryAction: () {
-              // handle reject
-            },
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : approvalRequest == null
+          ? const Center(
+        child: Text(
+          'No approval request available',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 16,
           ),
         ),
+      )
+          : Column(
+        children: [
+          // 📼 Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  approvalRequest!.stage == 25
+                      ? _buildFirstApprovalContent(approvalRequest!)
+                      : _buildSecondApprovalContent(approvalRequest!),
+                ],
+              ),
+            ),
+          ),
+          // 📽 Fixed bottom buttons
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                top: BorderSide(color: Color(0xFFE0E0E0)),
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ActionButtonPair(
+                  primaryText: 'Approve',
+                  secondaryText: 'Reject',
+                  primaryMessage: 'Request Approved',
+                  secondaryMessage: 'Request Rejected',
+                  onPrimaryAction: () {
+                    if (approvalRequest!.stage == 25) {
+                      _showDeclarationModal();
+                    } else {
+                      _handleApproval(approvalRequest!);
+                    }
+                  },
+                  onSecondaryAction: () {
+                    _handleRejection();
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
-
 }
-
-
