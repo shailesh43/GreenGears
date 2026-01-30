@@ -455,7 +455,8 @@ class VehicleDetailsPage extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(34, 197, 94, 1),
+                        backgroundColor: const Color.fromRGBO(
+                            186, 255, 188, 1.0),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -465,7 +466,7 @@ class VehicleDetailsPage extends StatelessWidget {
                       child: const Text(
                         'Request a Vehicle',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Color.fromRGBO(40, 116, 43, 1.0),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Inter',

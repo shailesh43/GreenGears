@@ -157,6 +157,7 @@ class _UserApprovalState extends State<UserApproval> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -176,8 +177,10 @@ class _UserApprovalState extends State<UserApproval> {
           ),
         ),
       ),
+
+      // 🔼 Scrollable content
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120), // 👈 space for buttons
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -185,84 +188,35 @@ class _UserApprovalState extends State<UserApproval> {
             widget.stage == 23
                 ? _buildFirstApprovalContent()
                 : _buildSecondApprovalContent(),
-            const SizedBox(height: 24),
-            ActionButtonPair(
-              primaryText: 'Approve',
-              secondaryText: 'Reject',
-              primaryMessage: 'Request Approved',
-              secondaryMessage: 'Request Rejected',
-              onPrimaryAction: () {
-                //
-                onPressed: () {
-                            if (widget.stage == 25) {
-                              _showDeclarationModal();
-                            } else {
-                              _handleApproval();
-                            }
-                            };
-              },
-              onSecondaryAction: () {
-                //
-              },
-            ),
-            // Row(
-            //   children: [
-            //     Expanded(
-            //       child: ElevatedButton(
-            //         onPressed: () {
-            //           if (widget.stage == 25) {
-            //             _showDeclarationModal();
-            //           } else {
-            //             _handleApproval();
-            //           }
-            //         },
-            //         style: ElevatedButton.styleFrom(
-            //           backgroundColor: const Color(0xFF59BF5C),
-            //           padding: const EdgeInsets.symmetric(vertical: 14),
-            //           shape: RoundedRectangleBorder(
-            //             borderRadius: BorderRadius.circular(40),
-            //           ),
-            //         ),
-            //         child: const Text(
-            //           'Proceed',
-            //           style: TextStyle(
-            //             fontFamily: 'Inter',
-            //             fontSize: 16,
-            //             fontWeight: FontWeight.w600,
-            //             color: Colors.white,
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //     const SizedBox(width: 12),
-            //     Expanded(
-            //       child: OutlinedButton(
-            //         onPressed: _handleRejection,
-            //         style: OutlinedButton.styleFrom(
-            //           padding: const EdgeInsets.symmetric(vertical: 14),
-            //           side: const BorderSide(color: Color(0xFFE0E0E0)),
-            //           shape: RoundedRectangleBorder(
-            //             borderRadius: BorderRadius.circular(40),
-            //           ),
-            //         ),
-            //         child: const Text(
-            //           'Reject',
-            //           style: TextStyle(
-            //             fontFamily: 'Inter',
-            //             fontSize: 16,
-            //             fontWeight: FontWeight.w600,
-            //             color: Colors.black,
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //   ],
-            // ),
           ],
+        ),
+      ),
+
+      // 🔽 Fixed bottom buttons
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ActionButtonPair(
+            primaryText: 'Approve',
+            secondaryText: 'Reject',
+            primaryMessage: 'Request Approved',
+            secondaryMessage: 'Request Rejected',
+            onPrimaryAction: () {
+              if (widget.stage == 25) {
+                _showDeclarationModal();
+              } else {
+                _handleApproval();
+              }
+            },
+            onSecondaryAction: () {
+              // handle reject
+            },
+          ),
         ),
       ),
     );
   }
+
 }
 
 

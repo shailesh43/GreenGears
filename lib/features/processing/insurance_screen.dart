@@ -23,6 +23,8 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
 
   final ApiClient _client = ApiClient();
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   AdminPageResponse? adminPageResponse;
   Map<Stage, List<CarRequest>> stageRequests = {};
   bool isLoading = true;
@@ -30,10 +32,29 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
   List<CarRequest> get assignedToInsuranceStageRequests =>
       stageRequests[Stage.assignedToInsurance] ?? [];
 
+  List<CarRequest> get filteredRequests {
+    final baseList = assignedToInsuranceStageRequests;
+
+    if (_searchQuery.isEmpty) {
+      return baseList;
+    }
+
+    return baseList.where((request) {
+      final name = request.employeeName?.toLowerCase() ?? '';
+      return name.contains(_searchQuery);
+    }).toList();
+  }
+  // Filter based on the search bar input
+
   @override
   void initState() {
     super.initState();
     _loadInsuranceScreenRequests();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
   }
 
   Future<void> _loadInsuranceScreenRequests() async {
@@ -117,7 +138,10 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
             padding: const EdgeInsetsGeometry.fromLTRB(28, 8, 28, 8),
             child: Column(
               children: [
-                CustomSearchBar(),
+                CustomSearchBar(
+                  controller: _searchController,
+                  hintText: 'Search by Employee name',
+                ),
               ],
             ),
           ),
@@ -125,7 +149,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : assignedToInsuranceStageRequests.isEmpty
+                : filteredRequests.isEmpty
                 ? const Center(
               child: Text(
                 'No Pending Requests',
@@ -139,9 +163,9 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
             )
                 : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: assignedToInsuranceStageRequests.length,
+              itemCount: filteredRequests.length,
               itemBuilder: (context, index) {
-                final request = assignedToInsuranceStageRequests[index];
+                final request = filteredRequests[index];
                 return RequestCard(
                   request: request,
                   onTap: () {
@@ -155,4 +179,11 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
       ),
     );
   }
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+
 }

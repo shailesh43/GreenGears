@@ -16,6 +16,8 @@ import '../../network/api_client.dart';
 import '../../constants/local_prefs.dart';
 
 
+import '../../network/api_models/car_request.dart';
+
 class MainDashboard extends StatefulWidget {
   final UserRole role;
 
@@ -214,7 +216,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // used for testing
-  final Map<String, String> mainRequest = {
+  final CarRequest mainRequest = {
     // Basic Request Info
     'requestId': 'CAR2025204',
     'vehicleName': 'Himalayan',
@@ -448,7 +450,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => UserApproval(
-                                    stage: 25,
+                                    stage: 29,
                                     request: mainRequest,
                                   ),
                                 ),

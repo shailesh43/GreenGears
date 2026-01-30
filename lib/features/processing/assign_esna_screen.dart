@@ -22,6 +22,7 @@ class AssignEsnaScreen extends StatefulWidget {
 
 class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
   final ApiClient _client = ApiClient();
+  final TextEditingController _searchController = TextEditingController();
 
   AdminPageResponse? adminPageResponse;
   Map<Stage, List<CarRequest>> stageRequests = {};
@@ -139,7 +140,11 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
             padding: const EdgeInsetsGeometry.fromLTRB(28, 8, 28, 8),
             child: Column(
               children: [
-                CustomSearchBar(),
+                CustomSearchBar(
+                  controller: _searchController,
+                  hintText: 'Search by employee name',
+                ),
+
               ],
             ),
           ),
