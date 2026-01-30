@@ -17,6 +17,7 @@ import './api_models/admin_page_response.dart'; // 5
 import './api_models/stage_bucket.dart'; // 5
 import './api_models/car_request.dart'; // 5
 import './api_models/list_of_esna_model.dart'; // 6
+import './api_models/status_filtered_requests_model.dart'; // 7
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -211,7 +212,8 @@ class ApiClient {
   Future<AdminPageResponse> getAdminPageData({
     required String empId,
     required List<int> roleIds,
-  }) async {
+  }) async
+  {
     final endpointUrl = await ApiConstants.getEndPointUrl('getAllRequests');
 
     final url = Uri.parse(endpointUrl);
@@ -252,5 +254,33 @@ class ApiClient {
     return GetListOfEsnaModel.listFromJson(data as List);
   }
 
+  // 7. Filter based requests on Search Screen
+  // API Endpoint: /car-request-data
+  Future<StatusFilteredRequestsModel> getStatusFilteredRequests({
+    required String empId,
+    required int role,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('getStatusFilteredRequests');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'role': role,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return StatusFilteredRequestsModel.fromJson(data);
+  }
 
 }

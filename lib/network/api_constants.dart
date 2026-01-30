@@ -24,6 +24,7 @@ class ApiConstants {
   static const String createVehicleRequest = 'car-requests'; // to be continued
   static const String getAllRequests = 'AdminPage';
   static const String getListOfEsna = 'getEmployeesRoleDetail';
+  static const String getStatusFilteredRequests = 'car-request-data';
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -46,6 +47,9 @@ class ApiConstants {
         break;
       case "getListOfEsna":
         endPointUrl = "$baseURl$getListOfEsna";
+        break;
+      case "getStatusFilteredRequests":
+        endPointUrl = "$baseURl$getStatusFilteredRequests";
         break;
     }
     return endPointUrl;
