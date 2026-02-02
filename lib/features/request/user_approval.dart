@@ -86,46 +86,11 @@ class _UserApprovalState extends State<UserApproval> {
           request: approvalRequest!,
           onAccept: () {
             Navigator.pop(context); // Close modal
-            _handleApproval(approvalRequest!);
+            // _handleApproval(approvalRequest!);
           },
         );
       },
     );
-  }
-
-  // For snackbar only
-  void _handleApproval(CarRequest request) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Request Approved',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: Color(0xFF388E3B),
-          ),
-        ),
-        backgroundColor: Color(0xFFD7FFD8),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    Navigator.pop(context);
-  }
-
-  void _handleRejection() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Request Rejected',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: Color(0xFFD32F2F),
-          ),
-        ),
-        backgroundColor: Color(0xFFFFCDD2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    Navigator.pop(context);
   }
 
   Widget _buildFirstApprovalContent(CarRequest request) {
@@ -273,21 +238,18 @@ class _UserApprovalState extends State<UserApproval> {
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
                 child: ActionButtonPair(
                   primaryText: 'Approve',
                   secondaryText: 'Reject',
                   primaryMessage: 'Request Approved',
                   secondaryMessage: 'Request Rejected',
                   onPrimaryAction: () {
-                    if (approvalRequest!.stage == 25) {
-                      _showDeclarationModal();
-                    } else {
-                      _handleApproval(approvalRequest!);
-                    }
+                    // handle approval
+
                   },
                   onSecondaryAction: () {
-                    _handleRejection();
+                    // handle rejection
                   },
                 ),
               ),

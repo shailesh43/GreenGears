@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../constants/local_prefs.dart';
+import '../../network/api_client.dart';
 import '../../custom/widgets/file_uploader.dart';
 import '../../custom/modals/quotation_form_modal.dart';
-
 import '../../custom/widgets/form_text_field.dart';
 import '../../custom/widgets/file_uploader.dart';
 import '../../custom/widgets/form_detail_row.dart';
+import '../../custom/widgets/drop_down.dart';
 
 class VehicleRequestPage extends StatefulWidget {
   const VehicleRequestPage({super.key});
@@ -16,22 +18,132 @@ class VehicleRequestPage extends StatefulWidget {
 
 class _VehicleRequestPageState extends State<VehicleRequestPage> {
   final _formKey = GlobalKey<FormState>();
-  String quotationAmountModalResult = '0';
+  final ApiClient _client = ApiClient();
 
-  void _showQuotationModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => QuotationFormModal(
-        onConfirm: (amount) {
-          setState(() {
-            quotationAmountModalResult = amount;
-          });
-        },
-      ),
-    );
+  String empId = '';
+  String? quotationAmountModalResult = '0';
+  final _manufacturerCtrl = TextEditingController();
+  final _vehicleModelCtrl = TextEditingController();
+  final _colourCtrl = TextEditingController();
+  final _commentsCtrl = TextEditingController();
+  String? selectedVehicleType;
+  bool isLoading = true;
+
+  // Employee data
+  String? empName;
+  String? empEmail;
+  String? empCode;
+  String? empGrade;
+  String? empRole;
+  String? empCostCenter;
+  String? empMobileNo;
+  String? empEligibility;
+  String? empCompany;
+  String? empDobDate;
+  String? empWorkLocation;
+  String? empRetirementDate;
+  String? empCluster;
+  String? empDepartment;
+  String? empCompanyCode;
+
+  // Step 0: load empCode & empEligibility
+  Future<void> _loadEmpCodeAndEligibility() async {
+    empCode = await LocalPrefs.getEmpCode();
+    empEligibility = await LocalPrefs.getEmpEligibility();
   }
+
+  // Step 1: Fetch employee profile
+  Future<void> _fetchEmployeeProfile() async {
+    if (empCode == null || empCode!.isEmpty) {
+      debugPrint('Employee code is null or empty');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      final result = await _client.getEmployeeProfile(empCode!);
+
+      if (result != null) {
+        setState(() {
+          isLoading = false;
+          empCode = result.sapEmpNo;
+          empName = result.sapShortNameModify;
+          empGrade = result.sapCurrGradeDesc;
+          empEmail = result.sapEmail;
+          empDobDate = result.sapDob?.toString();
+          empMobileNo = result.sapMobileNo;
+          empCompany = result.sapCompany;
+          empWorkLocation = result.workLocationDescription;
+          empEligibility = empEligibility;
+          empCostCenter = result.sapCostCenter;
+          empRetirementDate = result.sapRetirementDate?.toString();
+          empCluster = result.hrclText;
+          empDepartment = result.sapCurrJobDesc;
+          empCompanyCode = result.sbuText;
+        });
+
+        await LocalPrefs.saveEmployeeProfile(
+          empName: empName,
+          empEmail: empEmail?.toLowerCase(),
+          empMobile: empMobileNo,
+          empGrade: empGrade,
+          empCostCenter: empCostCenter?.toString(),
+        );
+      } else {
+        debugPrint('Employee profile not found');
+        setState(() => isLoading = false); //
+      }
+    } catch (e) {
+      debugPrint('Error fetching employee profile: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  // Step 2: Call the newEmployee: to validate the existent User request
+  // 2.1)
+  Map<String, dynamic> _buildNewEmployeeRequestBody() {
+    return {
+      "emp_id": empCode,
+      "name": empName,
+      "grade": empGrade,
+      "email": empEmail,
+      "dob": empDobDate,
+      "contact": empMobileNo,
+      "company": empCompany,
+      "worklocation": empWorkLocation,
+      "eligibility": empEligibility,
+      "cost_centre": empCostCenter,
+      "retirement_date": empRetirementDate,
+      "cluster": empCluster,
+      "department": empDepartment,
+      "company_code": empCompanyCode,
+    };
+  }
+  // 2.2) REQUEST BODY
+  Future<void> _createNewEmployee() async {
+    final requestBody = _buildNewEmployeeRequestBody();
+    final response = await _client.createNewEmployee(requestBody);
+    print(response.message);
+  }
+
+
+  // Step 3: Bind the inputs from the "Create Request" form fields
+  Map<String, dynamic> _buildCreateVehicleRequestBody(String empId) {
+    return {
+      "emp_id": empId,
+      "car_model": _vehicleModelCtrl.text.trim(),
+      "manufacturer": _manufacturerCtrl.text.trim(),
+      "purpose": "Official Use",
+      "choice_of_lease": "Employee Official Purpose",
+      "color_choice": _colourCtrl.text.trim(),
+      "vehicle_type": selectedVehicleType,
+      "quotation": quotationAmountModalResult,
+      "cooling_period": "90 days",
+      "updated_by": empId,
+      "comments": _commentsCtrl.text.trim(),
+    };
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +191,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                       label: 'Manufacturer',
                       hint: 'Enter Manufacturer',
                       required: true,
+                      controller: _manufacturerCtrl,
                     ),
                     const SizedBox(height: 20),
 
@@ -87,6 +200,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                       label: 'Vehicle Model',
                       hint: 'Enter Vehicle Model',
                       required: true,
+                      controller: _vehicleModelCtrl,
                     ),
                     const SizedBox(height: 20),
 
@@ -95,14 +209,21 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                       label: 'Colour',
                       hint: 'Enter Vehicle colour',
                       required: true,
+                      controller: _colourCtrl,
                     ),
                     const SizedBox(height: 20),
 
                     // Vehicle Type
-                    FormTextField(
+                    DropdownField(
                       label: 'Vehicle Type',
-                      hint: 'Select Vehicle Type',
+                      hints: 'Select Vehicle Type',
+                      items: ["Petrol", "Diesel", "EV", "Hybrid", "CNG"],
                       required: true,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedVehicleType = value;
+                        });
+                      },
                     ),
                     const SizedBox(height: 20),
 
@@ -111,6 +232,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                       label: 'Comments',
                       hint: 'Your Comments',
                       maxLines: 3,
+                      controller: _commentsCtrl,
                     ),
                     const SizedBox(height: 20),
 
@@ -118,6 +240,8 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
                     FileUploadField(label: 'Upload Quotation Document', allowedExtensions: ['pdf', 'txt', 'doc', 'docx'],),
                     const SizedBox(height: 24),
+
+                    // Process_stage & Doc_id Logic
 
                     // Calculate Quotation Button
                     SizedBox(
@@ -153,7 +277,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
             // Submit Button
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -168,17 +292,46 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // Handle submit
+                  onPressed: () async {
+                    if (!_formKey.currentState!.validate()) return;
+
+                    try {
+                      final code = await LocalPrefs.getEmpCode();
+                      setState(() {
+                        empId = code ?? '';
+                      });
+
+                      final requestBody = _buildCreateVehicleRequestBody(empId);
+
+                      final response =
+                      await ApiClient().createNewVehicleRequest(requestBody);
+
+                      if (!mounted) return;
+
+                      _showSnackBar(
+                        context: context,
+                        message: response.message.toString(),
+                        isSuccess: true,
+                      );
+
+                      Navigator.pop(context, true);
+                    } catch (e) {
+                      if (!mounted) return;
+
+                      _showSnackBar(
+                        context: context,
+                        message: e.toString(),
+                        isSuccess: false,
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2ECC71),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14), // 👈 extra comfort
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 0,
                   ),
                   child: const Text(
                     'Submit',
@@ -195,5 +348,62 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
         ),
       ),
     );
+  }
+
+  // Widget Specifics
+  void _showQuotationModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => QuotationFormModal(
+        onConfirm: (amount) {
+          setState(() {
+            quotationAmountModalResult = amount;
+          });
+        },
+      ),
+    );
+  }
+  void _showSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: isSuccess
+                ? const Color(0xFF388E3B)
+                : const Color(0xFFFA6262),
+          ),
+        ),
+        backgroundColor: isSuccess
+            ? const Color(0xFFD7FFD8)
+            : const Color(0xFFFFE3E3),
+      ),
+    );
+  }
+
+  // Sends the requestBody to the ApiClient.createNewVehicleRequest function
+  Future<void> _submitRequest() async {
+    final requestBody = _buildCreateVehicleRequestBody(empId);
+
+    final response =
+    await _client.createNewVehicleRequest(requestBody);
+
+    print(response.message);
+  }
+
+  @override
+  void dispose() {
+    _manufacturerCtrl.dispose();
+    _vehicleModelCtrl.dispose();
+    _colourCtrl.dispose();
+    _commentsCtrl.dispose();
+    super.dispose();
   }
 }
