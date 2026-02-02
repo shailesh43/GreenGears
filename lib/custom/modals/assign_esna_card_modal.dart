@@ -97,6 +97,7 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
                 selectedEsnaName = value;
               });
             },
+            required: true,
           ),
 
           const SizedBox(height: 16),
@@ -111,6 +112,7 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
                 selectedDocumentName = value;
               });
             },
+            required: false,
           ),
 
           const SizedBox(height: 24),

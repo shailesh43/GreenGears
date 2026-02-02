@@ -63,6 +63,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
                 selectedDocumentName = value;
               });
             },
+            required: false,
           ),
           const SizedBox(height: 24),
         ],

@@ -67,6 +67,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
                 selectedDocumentName = value;
               });
             },
+            required: false,
           ),
           const SizedBox(height: 24),
         ],

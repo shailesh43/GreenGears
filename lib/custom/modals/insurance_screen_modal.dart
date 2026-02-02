@@ -130,6 +130,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
                 selectedDocumentName = value;
               });
             },
+            required: false,
           ),
           const SizedBox(height: 24),
         ],

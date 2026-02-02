@@ -5,6 +5,7 @@ class DropdownField extends StatefulWidget {
   final String hints;
   final List<String> items;
   final ValueChanged<String?> onChanged;
+  final bool required;
 
   const DropdownField({
     super.key,
@@ -12,6 +13,7 @@ class DropdownField extends StatefulWidget {
     required this.hints,
     required this.items,
     required this.onChanged,
+    required this.required,
   });
 
   @override
@@ -27,13 +29,27 @@ class DropdownFieldState extends State<DropdownField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         /// Label
-        Text(
-          widget.label,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF757575),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: widget.label,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF757575),
+                ),
+              ),
+              if (widget.required)
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
