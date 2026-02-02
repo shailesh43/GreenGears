@@ -17,15 +17,22 @@ class ApiConstants {
       'https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token';
 
 
-  // API Endpoints
+  // API Endpoints on dashboard
   static const String roleByEmployee = 'role-by-employee';
   static const String employeeProfile = 'employees';
   static const String carEligibility = 'getCarEligibility';
-  static const String createVehicleRequest = 'car-requests'; // to be continued
+
+  // Get data
   static const String getAllRequests = 'AdminPage';
   static const String getListOfEsna = 'getEmployeesRoleDetail';
   static const String getStatusFilteredRequests = 'car-request-data';
   static const String getUserApprovalRequest = 'userApprovalType';
+
+  // Create New Request
+  // API call flow: employeeProfile -> createNewEmployee -> createVehicleRequest -> uploadQuotationDoc
+  static const String createVehicleRequest = 'car-requests';  // { emp_id, car_model, manufacturer, purpose, choice_of_lease, color_choice, vehicle_type, quotation, cooling_period, updated_by, comments }
+  static const String createNewEmployee = 'newEmployee';  // { emp_id, name, grade, email, dob, contact, company, worklocation, eligibility, cost_centre, retirement_date, cluster, department, company_code }
+  static const String uploadQuotationDoc = 'uploadDocuments'; // { emp_id, process_stage, doc_id }
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -40,9 +47,6 @@ class ApiConstants {
       case "getCarEligibility":
         endPointUrl = "$baseURl$carEligibility";
         break;
-      case "createVehicleRequest":
-        endPointUrl = "$baseURl$createVehicleRequest";
-        break;
       case "getAllRequests":
         endPointUrl = "$baseURl$getAllRequests";
         break;
@@ -53,7 +57,16 @@ class ApiConstants {
         endPointUrl = "$baseURl$getStatusFilteredRequests";
         break;
       case "getUserApprovalRequest":
-        endPointUrl = "$baseURl$getStatusFilteredRequests";
+        endPointUrl = "$baseURl$getUserApprovalRequest";
+        break;
+      case "createVehicleRequest":
+        endPointUrl = "$baseURl$createVehicleRequest";
+        break;
+      case "createNewEmployee":
+        endPointUrl = "$baseURl$createNewEmployee";
+        break;
+      case "uploadQuotationDoc":
+        endPointUrl = "$baseURl$uploadQuotationDoc";
         break;
     }
     return endPointUrl;

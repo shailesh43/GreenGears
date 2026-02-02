@@ -13,6 +13,8 @@ import 'package:logger/logger.dart';
 import './api_models/role_by_employee.dart'; // 1
 import './api_models/employee_profile_data.dart'; // 2
 import './api_models/car_eligibility_data.dart'; // 3
+import './api_models/create_vehicle_response_model.dart'; // 4
+import './api_models/create_new_employee_response.dart'; // 4
 import './api_models/admin_page_response.dart'; // 5
 import './api_models/stage_bucket.dart'; // 5
 import './api_models/car_request.dart'; // 5
@@ -206,6 +208,48 @@ class ApiClient {
 
   // 4. Create New Request on CreateRequestScreen
   // API Endpoint: /car-requests
+  Future<CreateVehicleResponseModel> createNewVehicleRequest(
+      Map<String, dynamic> body,
+      ) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('createVehicleRequest');
+
+    final url = Uri.parse(endpointUrl);
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return CreateVehicleResponseModel.fromJson(data);
+  }
+
+  // API Endpoint: /newEmployee
+  Future<CreateNewEmployeeResponse> createNewEmployee(
+      Map<String, dynamic> body,
+      ) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('createNewEmployee');
+
+    final url = Uri.parse(endpointUrl);
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return CreateNewEmployeeResponse.fromJson(data);
+  }
 
 
   // 5. Fetch All Requests - ROLES: User, Admin, ES&A, Insurance based on ENUMS: UserRole, Stage
