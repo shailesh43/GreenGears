@@ -5,6 +5,8 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 import '../core/helpers/encrypt.dart';
 import 'dart:math';        // for Random.secure()
 import 'dart:typed_data';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import '../../core/utils/enum.dart';
 import '../../core/utils/role_stage_policy.dart';
 
@@ -21,6 +23,7 @@ import './api_models/car_request.dart'; // 5
 import './api_models/list_of_esna_model.dart'; // 6
 import './api_models/status_filtered_requests_model.dart'; // 7
 import './api_models/user_approval_model.dart'; // 8
+import './api_models/upload_document_response_model.dart'; // 4
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -207,7 +210,28 @@ class ApiClient {
   }
 
   // 4. Create New Request on CreateRequestScreen
-  // API Endpoint: /car-requests
+  // 4.1) API Endpoint: /newEmployee
+  Future<CreateNewEmployeeResponse> createNewEmployee(
+      Map<String, dynamic> body,
+      ) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('createNewEmployee');
+
+    final url = Uri.parse(endpointUrl);
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return CreateNewEmployeeResponse.fromJson(data);
+  }
+  // 4.2) API Endpoint: /car-requests
   Future<CreateVehicleResponseModel> createNewVehicleRequest(
       Map<String, dynamic> body,
       ) async
@@ -228,27 +252,40 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return CreateVehicleResponseModel.fromJson(data);
   }
-
-  // API Endpoint: /newEmployee
-  Future<CreateNewEmployeeResponse> createNewEmployee(
+  // 4.3) API Endpoint: /uploadDocument
+  Future<UploadDocumentResponseModel> uploadDocument(
       Map<String, dynamic> body,
-      ) async
-  {
+      ) async {
     final endpointUrl =
-    await ApiConstants.getEndPointUrl('createNewEmployee');
+    await ApiConstants.getEndPointUrl('uploadDocument');
 
-    final url = Uri.parse(endpointUrl);
+    final uri = Uri.parse(endpointUrl);
 
-    final response = await _client.post(
-      url,
-      headers: _defaultHeaders(),
-      body: jsonEncode(body),
-    );
+    final request = http.MultipartRequest('POST', uri);
 
-    logger.d('${response.statusCode} > URL: $url');
+    // ---------------- Fields ----------------
+    request.fields['emp_id'] = body['emp_id'].toString();
+    request.fields['process_stage'] =
+        body['process_stage'].toString();
+    request.fields['doc_id'] = body['doc_id'].toString();
+
+    // ---------------- Files ----------------
+    final List<http.MultipartFile> files =
+    body['files'] as List<http.MultipartFile>;
+
+    request.files.addAll(files);
+
+    // ---------------- Headers ----------------
+    request.headers.addAll(_defaultHeaders()
+      ..remove('Content-Type')); // IMPORTANT
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    logger.d('${response.statusCode} > URL: $uri');
 
     final data = _handleResponse(response, 'POST');
-    return CreateNewEmployeeResponse.fromJson(data);
+    return UploadDocumentResponseModel.fromJson(data);
   }
 
 
