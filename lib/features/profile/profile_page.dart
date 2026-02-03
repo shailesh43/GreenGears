@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
           employeeGrade = result.sapCurrGradeDesc;
           employeeCostCenter = result.sapCostCenter;
           employeeAddress = result.workLongTxt;
-          employeeCluster = result.omclText;
+          employeeCluster = result.hrclText;
         });
 
         await LocalPrefs.saveEmployeeProfile(

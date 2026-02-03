@@ -77,3 +77,29 @@ enum Stage {
     );
   }
 }
+
+/// --------------------
+/// Document Upload (stages)
+/// --------------------
+enum Document {
+  initialQuotationDoc(1, 'Initial quotation Document'),
+  esnaUploadDoc(2, 'ES&A Upload Document'),
+  insuranceSupportDoc(3, 'GIT(Insurance Support Document)'),
+  insuranceQuoteApprovalDoc(4, 'Insurance Quote Approval Document'),
+  emiCalculationDoc(5, 'EMI Calculation Document'),
+  emiApprovalDoc(6, 'EMI Approval (User) Document'),
+  paymentDetailsDoc(7, 'Payment Details (ES&A) Document'),
+  rtoTaxReceiptDoc(8, 'RTO Tax Receipt (ES&A) Document'),
+  otherDoc(9, 'Other Document');
+
+  final int docId;
+  final String docLabel;
+
+  const Document(this.docId, this.docLabel);
+
+  static Document? fromDocId(int docId) {
+    return Document.values.firstWhereOrNull(
+          (e) => e.docId == docId,
+    );
+  }
+}

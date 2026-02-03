@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../constants/local_prefs.dart';
+import 'package:file/file.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
+import 'package:logger/logger.dart';
+import '../../core/utils/enum.dart';
 import '../../network/api_client.dart';
 import '../../custom/widgets/file_uploader.dart';
 import '../../custom/modals/quotation_form_modal.dart';
@@ -19,6 +24,7 @@ class VehicleRequestPage extends StatefulWidget {
 class _VehicleRequestPageState extends State<VehicleRequestPage> {
   final _formKey = GlobalKey<FormState>();
   final ApiClient _client = ApiClient();
+  final Logger logger = Logger();
 
   String empId = '';
   String? quotationAmountModalResult = '0';
@@ -46,10 +52,14 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
   String? empDepartment;
   String? empCompanyCode;
 
+  // For Document upload
+  PlatformFile? uploadedQuotationFile;
+
   // Step 0: load empCode & empEligibility
   Future<void> _loadEmpCodeAndEligibility() async {
     empCode = await LocalPrefs.getEmpCode();
     empEligibility = await LocalPrefs.getEmpEligibility();
+    logger.d("empCode: ${empCode}");
   }
 
   // Step 1: Fetch employee profile
@@ -62,6 +72,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
     try {
       final result = await _client.getEmployeeProfile(empCode!);
+      logger.d('Result: ${result}');
 
       if (result != null) {
         setState(() {
@@ -81,7 +92,6 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
           empDepartment = result.sapCurrJobDesc;
           empCompanyCode = result.sbuText;
         });
-
         await LocalPrefs.saveEmployeeProfile(
           empName: empName,
           empEmail: empEmail?.toLowerCase(),
@@ -99,9 +109,8 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     }
   }
 
-  // Step 2: Call the newEmployee: to validate the existent User request
-  // 2.1)
-  Map<String, dynamic> _buildNewEmployeeRequestBody() {
+  // Step 2: Bind New Employee data: To validate the existent User request
+  Map<String, dynamic> _bindNewEmployeeRequestBody() {
     return {
       "emp_id": empCode,
       "name": empName,
@@ -119,16 +128,9 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       "company_code": empCompanyCode,
     };
   }
-  // 2.2) REQUEST BODY
-  Future<void> _createNewEmployee() async {
-    final requestBody = _buildNewEmployeeRequestBody();
-    final response = await _client.createNewEmployee(requestBody);
-    print(response.message);
-  }
-
 
   // Step 3: Bind the inputs from the "Create Request" form fields
-  Map<String, dynamic> _buildCreateVehicleRequestBody(String empId) {
+  Map<String, dynamic> _bindCreateVehicleRequestBody() {
     return {
       "emp_id": empId,
       "car_model": _vehicleModelCtrl.text.trim(),
@@ -144,6 +146,21 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     };
   }
 
+  // Step 4: Bind the documentReqBody
+  Map<String, dynamic> _bindUploadDocRequestBody() {
+    return {
+      "emp_id": empId,
+      "process_stage": Stage.requested?.stageNo,
+      "doc_id": Document.initialQuotationDoc?.docId,
+      "files" : [
+        if (uploadedQuotationFile != null)
+          MultipartFile.fromBytes(
+            uploadedQuotationFile!.bytes!,
+            filename: uploadedQuotationFile!.name,
+          ),
+      ],
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +255,9 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
                     // Upload Document
 
-                    FileUploadField(label: 'Upload Quotation Document', allowedExtensions: ['pdf', 'txt', 'doc', 'docx'],),
+                    FileUploadField(label: 'Upload Quotation Document', allowedExtensions: ['pdf', 'txt', 'doc', 'docx'], onFileSelected: (file) {
+                      uploadedQuotationFile = file;
+                    },),
                     const SizedBox(height: 24),
 
                     // Process_stage & Doc_id Logic
@@ -295,22 +314,34 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                   onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
 
-                    try {
+                    try
+                    {
+                      await _loadEmpCodeAndEligibility();
+                      await _fetchEmployeeProfile();
+                      // ---------------- STEP 1: Create New Employee ----------------
+                      final newEmpRequestBody = _bindNewEmployeeRequestBody();
+                      final newEmpReqResponse =
+                      await _client.createNewEmployee(newEmpRequestBody);
+
+                      // ---------------- STEP 2: Create Vehicle Request ----------------
                       final code = await LocalPrefs.getEmpCode();
-                      setState(() {
-                        empId = code ?? '';
-                      });
+                      empId = code ?? '';
 
-                      final requestBody = _buildCreateVehicleRequestBody(empId);
+                      final carRequestBody = _bindCreateVehicleRequestBody();
+                      final carReqResponse =
+                      await _client.createNewVehicleRequest(carRequestBody);
 
-                      final response =
-                      await ApiClient().createNewVehicleRequest(requestBody);
+                      // ---------------- STEP 3: Upload Document ----------------
+                      final uploadDocReqBody = _bindUploadDocRequestBody();
+                      final uploadDocResponse =
+                      await _client.uploadDocument(uploadDocReqBody);
 
                       if (!mounted) return;
 
+                      // ✅ ALL STEPS SUCCESS
                       _showSnackBar(
                         context: context,
-                        message: response.message.toString(),
+                        message: newEmpReqResponse.message.toString(),
                         isSuccess: true,
                       );
 
@@ -318,11 +349,13 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                     } catch (e) {
                       if (!mounted) return;
 
+                      // ❌ FIRST FAILURE STOPS EVERYTHING
                       _showSnackBar(
                         context: context,
                         message: e.toString(),
                         isSuccess: false,
                       );
+                      return;
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -355,6 +388,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: true,
       backgroundColor: Colors.transparent,
       builder: (context) => QuotationFormModal(
         onConfirm: (amount) {
@@ -365,6 +399,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       ),
     );
   }
+
   void _showSnackBar({
     required BuildContext context,
     required String message,
@@ -386,16 +421,6 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
             : const Color(0xFFFFE3E3),
       ),
     );
-  }
-
-  // Sends the requestBody to the ApiClient.createNewVehicleRequest function
-  Future<void> _submitRequest() async {
-    final requestBody = _buildCreateVehicleRequestBody(empId);
-
-    final response =
-    await _client.createNewVehicleRequest(requestBody);
-
-    print(response.message);
   }
 
   @override
