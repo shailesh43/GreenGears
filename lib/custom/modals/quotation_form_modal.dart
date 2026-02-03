@@ -28,6 +28,9 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
     _baseCostController.dispose();
     _corpRegController.dispose();
     _miscController.dispose();
+    _sgstController.dispose();
+    _cgstController.dispose();
+    _cessController.dispose();
     super.dispose();
   }
 
@@ -50,7 +53,6 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
     Navigator.pop(context);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -72,14 +74,24 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Quotation Form Details',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                  letterSpacing: -0.4,
-                ),
+              /// HEADER WITH CLOSE ICON
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Quotation Form Details',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
@@ -97,32 +109,22 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
               Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        IntegerRangeField(
-                          label: 'SGST (%)',
-                          hint: 'Enter SGST %',
-                          min: 1,
-                          max: 30,
-                          controller: _sgstController,
-                        ),
-                      ],
+                    child: IntegerRangeField(
+                      label: 'SGST (%)',
+                      hint: 'Enter SGST %',
+                      min: 1,
+                      max: 30,
+                      controller: _sgstController,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        IntegerRangeField(
-                          label: 'CGST (%)',
-                          hint: 'Enter CGST %',
-                          min: 1,
-                          max: 30,
-                          controller: _cgstController,
-                        ),
-                      ],
+                    child: IntegerRangeField(
+                      label: 'CGST (%)',
+                      hint: 'Enter CGST %',
+                      min: 1,
+                      max: 30,
+                      controller: _cgstController,
                     ),
                   ),
                 ],
@@ -154,6 +156,7 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
               FormTextField(
                 label: 'Miscellaneous',
                 hint: 'Enter Miscellaneous',
+                controller: _miscController,
               ),
               const SizedBox(height: 32),
 
