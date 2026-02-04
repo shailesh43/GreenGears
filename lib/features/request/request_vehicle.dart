@@ -78,7 +78,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
         setState(() {
           isLoading = false;
           empCode = result.sapEmpNo;
-          empName = result.sapShortNameModify;
+          empName = result.sapShortName;
           empGrade = result.sapCurrGradeDesc;
           empEmail = result.sapEmail;
           empDobDate = result.sapDob?.toString();
@@ -314,6 +314,8 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                   onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
 
+                    if (!_validateBeforeSubmit()) return;
+
                     try
                     {
                       await _loadEmpCodeAndEligibility();
@@ -422,6 +424,65 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       ),
     );
   }
+
+  bool _validateBeforeSubmit() {
+    if (uploadedQuotationFile == null) {
+      _showSnackBar(
+        context: context,
+        message: "Upload Quotation document",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    if (_manufacturerCtrl.text.trim().isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Please enter manufacturer",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    if (_vehicleModelCtrl.text.trim().isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Please enter vehicle model",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    if (_colourCtrl.text.trim().isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Please enter Vehicle color",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    if (selectedVehicleType == null || selectedVehicleType!.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Please select vehicle type",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    if (quotationAmountModalResult == '0' || quotationAmountModalResult!.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Open Quotation Form modal and fill the data",
+        isSuccess: false,
+      );
+      return false;
+    }
+    return true; // ✅ all inputs valid
+  }
+
+
 
   @override
   void dispose() {

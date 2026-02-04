@@ -5,6 +5,9 @@ import '../widgets/form_detail_row.dart';
 import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
 
+import '../../constants/local_prefs.dart';
+import '../../network/api_client.dart';
+
 class DeleteRequestModal extends StatefulWidget {
   final CarRequest request;
 
@@ -19,6 +22,18 @@ class DeleteRequestModal extends StatefulWidget {
 }
 
 class _DeleteRequestModalState extends State<DeleteRequestModal> {
+
+  String? empCode;
+  int? roleId;
+  String? requestId;
+
+  final ApiClient _client = ApiClient();
+
+  Future<void> _loadEmpCodeAndRol() async {
+    empCode = await LocalPrefs.getEmpCode();
+    roleId = await LocalPrefs.getRoleId();
+  }
+
   void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -36,7 +51,9 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context); // close dialog
+            },
             child: const Text(
               'Cancel',
               style: TextStyle(
@@ -46,22 +63,15 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
             ),
           ),
           TextButton(
-            onPressed: () {
-              final requestId = widget.request.requestId;
-              Navigator.pop(context); // close dialog
-              Navigator.pop(context); // close modal
+            onPressed: () async {
+              final requestId = widget.request!.requestId;
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '$requestId has been deleted',
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      color: Color(0xFFFF3C3C),
-                    ),
-                  ),
-                  backgroundColor: const Color(0xFFFFE3E3),
-                ),
+              Navigator.pop(context); // close confirmation dialog
+              Navigator.pop(context); // close request details modal (if any)
+
+              await _handleDeleteRequest(
+                context,
+                requestId: requestId!,
               );
             },
             child: const Text(
@@ -77,6 +87,49 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
       ),
     );
   }
+
+  Future<void> _handleDeleteRequest(
+      BuildContext context, {
+        required String requestId,
+      }) async {
+    try {
+
+      if (roleId == null || empCode == null || widget.request == null) {
+        _showSnackBar(
+          context: context,
+          message: 'Unable to delete request. Please try again.',
+          isSuccess: false,
+        );
+        return;
+      }
+      final response = await _client.deleteRequest(
+        requestId: requestId,
+        role: roleId!, // your logged-in role
+        empId: empCode!, // logged-in employee id
+      );
+
+      if (!mounted) return;
+
+      _showSnackBar(
+        context: context,
+        message: response.message ?? 'Request deleted successfully',
+        isSuccess: true,
+      );
+
+      // 🔁 Refresh dashboard / pop page if needed
+      Navigator.pop(context, true);
+
+    } catch (e) {
+      if (!mounted) return;
+
+      _showSnackBar(
+        context: context,
+        message: e.toString(),
+        isSuccess: false,
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -166,5 +219,33 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
         ),
       ],
     );
+  }
+
+  void _showSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: isSuccess
+                ? const Color(0xFF388E3B)
+                : const Color(0xFFFA6262),
+          ),
+        ),
+        backgroundColor: isSuccess
+            ? const Color(0xFFD7FFD8)
+            : const Color(0xFFFFE3E3),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

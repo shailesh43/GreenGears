@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import '../request/request_vehicle.dart';
 import '../request/user_approval.dart';
 import '../request/search_request_vehicle.dart';
+import '../request/active_request_page.dart';
 
 // Widgets
 import '../docs/uploaded_quotations.dart';
 import '../../custom/widgets/action_card.dart';
 import '../../custom/widgets/action_card_wide.dart';
+import '../../custom/widgets/request_card.dart';
+import '../../custom/modals/delete_request_modal.dart';
 
 // Constants
 import '../../core/utils/enum.dart';
@@ -43,6 +46,10 @@ class _MainDashboard extends State<MainDashboard> {
   String? empMobileNo;
   String? empEligibility;
 
+  // Employee Vehicle Request (if exist i.e. Active Request)
+  CarRequest? employeeRequest;
+  final List<CarRequest> activeRequests = [];
+
 
   int roleId = 0;
   bool isLoading = true;
@@ -57,13 +64,12 @@ class _MainDashboard extends State<MainDashboard> {
     await LocalPrefs.saveRoleId(roleId: widget.role.id);
     await _fetchEmployeeProfile();
     await _fetchCarEligibility();
-    await _fetchAdminPageData();
+    await _loadFilterBasedRequests();
   }
   // 1. Load Employee Code
   Future<void> _loadEmpCode() async {
     empCode = await LocalPrefs.getEmpCode();
   }
-
   // 2. Fetch Employee Profile
   Future<void> _fetchEmployeeProfile() async {
     if (empCode == null || empCode!.isEmpty) {
@@ -129,44 +135,55 @@ class _MainDashboard extends State<MainDashboard> {
       debugPrint('Error fetching car eligibility: $e');
     }
   }
+  // 4. Check for Active request
+  Future<void> _loadFilterBasedRequests() async {
+    setState(() {
+      isLoading = true;
+    });
 
-  // 4. Fetch all requests
-  Future<void> _fetchAdminPageData() async {
-    // Get empId and roleId from LocalPrefs
+    // 1️⃣ Load from LocalPrefs
     final empId = await LocalPrefs.getEmpCode();
     final roleId = await LocalPrefs.getRoleId();
 
-    debugPrint('Fetching admin page data - empId: $empId, roleId: $roleId');
-
     if (empId == null || empId.isEmpty) {
       debugPrint('Employee ID is null or empty');
+      setState(() => isLoading = false);
       return;
     }
 
     if (roleId == null) {
-      debugPrint('Role ID is null - check if it was saved to LocalPrefs');
+      debugPrint('Role ID is null - check LocalPrefs');
+      setState(() => isLoading = false);
       return;
     }
 
     try {
-      final adminPageResponse = await _client.getAdminPageData(
+      // 2️⃣ API call (NEW endpoint)
+      final response = await _client.getStatusFilteredRequests(
         empId: empId,
-        roleIds: [roleId],
+        role: roleId,
       );
 
-      if (adminPageResponse != null) {
+      // 3️⃣ Update state
+      setState(() {
+        activeRequests
+          ..clear()
+          ..addAll(response.active);
+
+
+        isLoading = false;
+      });
+
+      if (activeRequests.isNotEmpty) {
         setState(() {
-          // Update your state variables with the response data
-          // For example:
-          // requests = adminPageResponse.requests;
-          // pendingCount = adminPageResponse.pendingCount;
-          // etc.
+          employeeRequest = activeRequests.firstWhere(
+                (request) => request.empId == empId
+          );
         });
-      } else {
-        debugPrint('Admin page data not found');
       }
     } catch (e) {
-      debugPrint('Error fetching admin page data: $e');
+      debugPrint('Error fetching status-filtered requests: $e');
+      setState(() => isLoading = false);
     }
   }
 
@@ -182,6 +199,7 @@ class _MainDashboard extends State<MainDashboard> {
       empCostCenter: empCostCenter?? '',
       empMobileNo: empMobileNo ?? '',
       role: widget.role,
+      request: employeeRequest,
     );
   }
 }
@@ -196,6 +214,7 @@ class DashboardScreen extends StatefulWidget {
   final String? empCostCenter;
   final String? empMobileNo;
   final UserRole role;
+  final CarRequest? request;
 
   const DashboardScreen({
     super.key,
@@ -208,6 +227,7 @@ class DashboardScreen extends StatefulWidget {
     required this.empCostCenter,
     required this.empMobileNo,
     required this.role,
+    required this.request,
   });
 
   @override
@@ -370,23 +390,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
+                    // Create request only if they
                     Row(
                       children: [
                         Expanded(
                           child: ActionCard(
-                            icon: Icons.edit,
-                            title: 'Create Request\nfor your Vehicle',
+                          icon: widget.request != null ? Icons.remove_red_eye : Icons.edit,
+                            title: widget.request != null
+                                ? 'View Your \n Active Request'
+                                : 'Create Request\nfor your Vehicle',
                             color: const Color.fromRGBO(41, 183, 69, 0.55),
                             titleColor: const Color.fromRGBO(248, 248, 248, 1.0),
                             iconColor: const Color.fromRGBO(248, 248, 248, 1.0),
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const VehicleRequestPage(),
-                                ),
-                              );
+                              if (widget.request != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ActiveRequestPage(
+                                      request: widget.request!, // ✅ pass request
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const VehicleRequestPage(),
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ),
@@ -485,4 +518,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _showRequestDetailsModal(
+      BuildContext context,
+      CarRequest request,
+      ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DeleteRequestModal(request: request),
+    );
+  }
 }

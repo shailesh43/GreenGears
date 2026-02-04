@@ -105,7 +105,6 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
 
     final List<CarRequest> baseList =
