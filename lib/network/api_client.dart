@@ -25,6 +25,7 @@ import './api_models/status_filtered_requests_model.dart'; // 7
 import './api_models/user_approval_model.dart'; // 8
 import './api_models/upload_document_response_model.dart'; // 4
 import './api_models/delete_request_response_model.dart';
+import './api_models/assign_esna_spoc_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -424,6 +425,35 @@ class ApiClient {
 
     final data = _handleResponse(response, 'POST');
     return DeleteRequestResponseModel.fromJson(data);
+  }
+
+  // 10. Assign ES&A spoc
+  // API Endpoint: /update-assigned-esna : { request_id, assigned_to }
+  Future<AssignEsnaSpocModel> assignOrUpdateEsnaSpoc({
+    required String requestId,
+    required String assignedEsnaEmpId,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('getUserApprovalRequest');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'request_id': requestId,
+      'assigned_to': assignedEsnaEmpId,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return AssignEsnaSpocModel.fromJson(data);
   }
 
 }

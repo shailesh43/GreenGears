@@ -6,10 +6,12 @@ import '../widgets/form_detail_row.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
 import '../../network/api_models/car_request.dart';
+import '../../network/api_models/list_of_esna_model.dart';
+import '../../network/api_client.dart';
 
 class AssignEsnaCardModal extends StatefulWidget {
   final CarRequest request;
-  final List<String> esnaList;
+  final List<GetListOfEsnaModel> esnaList;
 
   const AssignEsnaCardModal({
     super.key,
@@ -24,7 +26,11 @@ class AssignEsnaCardModal extends StatefulWidget {
 
 class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
   String? selectedDocumentName;
+  // List<GetListOfEsnaModel> esnaList = [];
   String? selectedEsnaName;
+  String? selectedEsnaEmpId;
+  final ApiClient _client = ApiClient();
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -86,19 +92,30 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
           ),
 
           const SizedBox(height: 24),
-
           /// ES&A Dropdown
           DropdownField(
             label: 'Assign ES&A to the Request',
             hints: 'Select ES&A',
-            items: widget.esnaList,
+            items: widget.esnaList
+                .map((e) => e.shortName.trim())
+                .toList(),
             onChanged: (value) {
+              if (value == null) return;
+
+              final esnaSelected = widget.esnaList.firstWhere(
+                    (e) => e.shortName.trim() == value.trim(),
+                orElse: () => throw Exception('ES&A not found'),
+              );
+
               setState(() {
-                selectedEsnaName = value;
+                selectedEsnaName = esnaSelected.shortName;
+                selectedEsnaEmpId = esnaSelected.empId;
               });
             },
             required: true,
           ),
+
+
 
           const SizedBox(height: 16),
 
@@ -123,17 +140,53 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
         secondaryText: 'Reject',
         primaryMessage: selectedEsnaName == null
             ? 'Please select ES&A'
-            : '$selectedEsnaName has been assigned to ${request.requestId} Request ID.',
+            : '$selectedEsnaName has been assigned to ${widget.request.requestId} Request ID.',
         secondaryMessage: 'Request Rejected',
         onPrimaryAction: selectedEsnaName == null
-            ? null
-            : () {
-          // TODO: approve logic
-        },
+            ? () => SnackBar(
+          content: Text(
+            'Please select ES&A',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: const Color(0xFFFA6262),
+            ),
+          ),
+          backgroundColor: const Color(0xFFFFE3E3),
+        )
+            : () => _handleApprove(),
         onSecondaryAction: () {
           // TODO: reject logic
         },
       ),
+
+
     );
   }
+
+
+  Future<void> _handleApprove() async {
+    final requestId = widget.request.requestId;
+    final esnaEmpId = selectedEsnaEmpId;
+
+    if (requestId == null || esnaEmpId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or ES&A details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.assignOrUpdateEsnaSpoc(
+        requestId: requestId,
+        assignedEsnaEmpId: esnaEmpId,
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
 }

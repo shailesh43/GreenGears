@@ -29,7 +29,6 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
   bool isLoading = true;
 
   List<GetListOfEsnaModel> esnaList = [];
-  List<String> esnaNames = [];
 
   @override
   void initState() {
@@ -95,12 +94,6 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
 
       setState(() {
         esnaList = response;
-
-        // Extract only sap_short_name for dropdown
-        esnaNames = response
-            .map((e) => e.shortName)
-            .toList();
-
         isLoading = false;
       });
     } catch (e) {
@@ -191,7 +184,7 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => AssignEsnaCardModal(request: request, esnaList: esnaNames),
+      builder: (context) => AssignEsnaCardModal(request: request, esnaList: esnaList),
     );
   }
 }
