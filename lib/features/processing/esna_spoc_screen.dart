@@ -9,6 +9,7 @@ import '../../network/api_models/car_request.dart';
 import '../../network/api_models/admin_page_response.dart';
 // Customs
 import '../../custom/widgets/request_card.dart';
+import '../../custom/widgets/custom_search_bar.dart';
 import '../../custom/modals/request_verification_modal.dart';
 import '../../custom/modals/monthly_deduction_modal.dart';
 import '../../custom/modals/payment_details_modal.dart';
@@ -22,6 +23,7 @@ class EsnaSpocScreen extends StatefulWidget {
 
 class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
   final ApiClient _client = ApiClient();
+  final TextEditingController _searchController = TextEditingController();
 
   int _selectedTabIndex = 0;
   AdminPageResponse? adminPageResponse;
@@ -60,16 +62,39 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
     }
   }
 
-  // Get filtered requests based on selected tab
+  // Get filtered requests based on selected tab and search query
   List<CarRequest> get filteredRequests {
     final stage = _getStageForTab(_selectedTabIndex);
-    return stageRequests[stage] ?? [];
+    final requests = stageRequests[stage] ?? [];
+
+    // If search is empty, return all requests for the current tab
+    if (_searchController.text.isEmpty) {
+      return requests;
+    }
+
+    // Filter by employee name (case-insensitive)
+    final searchQuery = _searchController.text.toLowerCase();
+    return requests.where((request) {
+      final employeeName = request.employeeName?.toLowerCase() ?? '';
+      return employeeName.contains(searchQuery);
+    }).toList();
   }
 
   @override
   void initState() {
     super.initState();
     _loadEsnaSpocScreenRequests();
+
+    // Add listener to search controller to rebuild UI on search
+    _searchController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadEsnaSpocScreenRequests() async {
@@ -212,7 +237,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Text(
               _tabs[_selectedTabIndex],
               style: const TextStyle(
@@ -223,9 +248,18 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
               ),
             ),
           ),
+          // CustomSearchBar
+          Padding(
+            padding: const EdgeInsetsGeometry.fromLTRB(16, 0, 16, 0),
+            child: CustomSearchBar(
+              controller: _searchController,
+              hintText: 'Search by employee name',
+            ),
+          ),
+          // Horizontal Tab Chips
           Container(
             height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _tabs.length,
@@ -239,10 +273,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
                   },
                   child: Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Color.fromRGBO(224, 255, 225, 1.0)
