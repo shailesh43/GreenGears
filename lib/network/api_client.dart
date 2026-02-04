@@ -435,7 +435,7 @@ class ApiClient {
   }) async
   {
     final endpointUrl =
-    await ApiConstants.getEndPointUrl('getUserApprovalRequest');
+    await ApiConstants.getEndPointUrl('assignESNA');
 
     final url = Uri.parse(endpointUrl);
 
@@ -455,5 +455,7 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return AssignEsnaSpocModel.fromJson(data);
   }
+
+  // TODO: validate perf factors
 
 }
