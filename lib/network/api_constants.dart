@@ -34,6 +34,9 @@ class ApiConstants {
   static const String createVehicleRequest = 'car-requests';  // { emp_id, car_model, manufacturer, purpose, choice_of_lease, color_choice, vehicle_type, quotation, cooling_period, updated_by, comments }
   static const String uploadDocument = 'uploadDocuments'; // { emp_id, process_stage, doc_id, files }
 
+  // Delete Car Request
+  static const String deleteRequest = 'DeleteRequest'; // { request_id, role, updated_by }
+
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
     String endPointUrl = "";
@@ -67,6 +70,9 @@ class ApiConstants {
         break;
       case "uploadDocument":
         endPointUrl = "$baseURl$uploadDocument";
+        break;
+      case "deleteRequest":
+        endPointUrl = "$baseURl$deleteRequest";
         break;
     }
     return endPointUrl;
