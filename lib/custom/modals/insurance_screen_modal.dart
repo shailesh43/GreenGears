@@ -26,6 +26,13 @@ class InsuranceScreenModal extends StatefulWidget {
 class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   String? selectedDocumentName;
   final ApiClient _client = ApiClient();
+
+  final _baseInsuranceCtrl = TextEditingController();
+  final _addOnCoverCtrl = TextEditingController();
+  final _addOnSapphireCtrl = TextEditingController();
+  final _commentsCtrl = TextEditingController();
+
+
   @override
   Widget build(BuildContext context) {
     return BaseModal(
@@ -84,26 +91,29 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
           const SizedBox(height: 24),
 
           /// Base Insurance
-          const FormTextField(
+          FormTextField(
             label: 'Base Insurance',
             hint: 'Enter Base Insurance',
             required: true,
+            controller: _baseInsuranceCtrl,
           ),
           const SizedBox(height: 16),
 
           /// Addon Cover
-          const FormTextField(
+          FormTextField(
             label: 'Addon Cover',
             hint: 'Enter Addon Cover',
             required: true,
+            controller: _addOnCoverCtrl,
           ),
           const SizedBox(height: 16),
 
           /// Addon Sapphire Plus
-          const FormTextField(
+          FormTextField(
             label: 'Addon Saphire Plus',
             hint: 'Enter Addon Saphire Plus',
             required: true,
+            controller: _addOnSapphireCtrl,
           ),
           const SizedBox(height: 16),
 
@@ -141,9 +151,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
         secondaryText: 'Reject',
         primaryMessage: 'Request Approved',
         secondaryMessage: 'Request Rejected',
-        onPrimaryAction: () {
-          // Handle approve logic i.e. call assignToInsurance API if ESNA has been commented
-        },
+        onPrimaryAction: () => _handleApprove(),
         onSecondaryAction: () => _handleReject(),
       ),
     );
@@ -201,29 +209,38 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
     }
   }
 
-  // Future<void> _handleApprove() async {
-  //   final requestId = widget.request.requestId;
-  //   final esnaEmpId = selectedEsnaEmpId;
-  //
-  //   if (requestId == null || esnaEmpId == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Missing request or ES&A details')),
-  //     );
-  //     return;
-  //   }
-  //
-  //   try {
-  //     final response = await _client.assignOrUpdateEsnaSpoc(
-  //       requestId: requestId,
-  //       assignedEsnaEmpId: esnaEmpId,
-  //     );
-  //
-  //     Navigator.pop(context, response); // success close
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text(e.toString())),
-  //     );
-  //   }
-  // }
+  Future<void> _handleApprove() async {
+    final requestId = widget.request.requestId;
 
+    if (requestId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.SubmitForInsuranceQuoteApproval(
+        requestId: requestId,
+        baseInsurance: int.tryParse(_baseInsuranceCtrl.text.trim()) ?? 0,
+        addOnTataPower: int.tryParse(_addOnCoverCtrl.text.trim()) ?? 0,
+        addOnSapphirePlus: int.tryParse(_addOnSapphireCtrl.text.trim()) ?? 0,
+        commentsByGIT: (_commentsCtrl.text.trim().isEmpty)
+            ? 'null'
+            : _commentsCtrl.text.trim(),
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  // @override
+  // void dispose() {
+  //   _commentsCtrl.dispose();
+  //   super.dispose();
+  // }
 }

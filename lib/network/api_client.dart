@@ -28,6 +28,7 @@ import './api_models/delete_request_response_model.dart';
 import './api_models/assign_esna_spoc_model.dart';
 import './api_models/decrement_stage_model.dart';
 import './api_models/assign_to_insurance_model.dart';
+import './api_models/insurance_quote_approval_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -521,6 +522,42 @@ class ApiClient {
 
     final data = _handleResponse(response, 'POST');
     return AssignToInsuranceModel.fromJson(data);
+  }
+
+  // 13. Submit for Insurance quote approval
+  // API Endpoint: /updateStage : { emp_id, req_id, comments_assigned_to_esna}
+  Future<InsuranceQuoteApprovalModel> SubmitForInsuranceQuoteApproval({
+    required String requestId,
+    required int baseInsurance,
+    required int addOnTataPower,
+    required int addOnSapphirePlus,
+    required String commentsByGIT,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('insuranceQuoteApprovalUser');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      "request_id": requestId,
+      "base_insurance_premium": baseInsurance,
+      "add_on_cover_tata_power": addOnTataPower,
+      "add_on_sapphire_plus": addOnSapphirePlus,
+      "comments_assigned_to_git": commentsByGIT,
+      "insurance_expires_on": "2023-12-31",
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return InsuranceQuoteApprovalModel.fromJson(data);
   }
 
 }

@@ -47,7 +47,8 @@ class _UserApprovalState extends State<UserApproval> {
       return;
     }
 
-    try {
+    try
+    {
       // API call
       final response = await _client.getApprovalStages(
         empId: empId,
@@ -179,7 +180,7 @@ class _UserApprovalState extends State<UserApproval> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Monthly Deduction',
+          'EMI Deduction Approval (Stage 25)',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
