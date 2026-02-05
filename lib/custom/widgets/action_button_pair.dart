@@ -125,9 +125,14 @@ class ActionButtonPairState extends State<ActionButtonPair> {
 
   @override
   Widget build(BuildContext context) {
+    final showSecondary = widget.onSecondaryAction != null;
+
     return Row(
+      mainAxisAlignment:
+      showSecondary ? MainAxisAlignment.start : MainAxisAlignment.center,
       children: [
         Expanded(
+          flex: showSecondary ? 1 : 2,
           child: ElevatedButton(
             onPressed: _isProcessing ? null : _handlePrimaryAction,
             style: ElevatedButton.styleFrom(
@@ -149,30 +154,36 @@ class ActionButtonPairState extends State<ActionButtonPair> {
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _isProcessing ? null : _handleSecondaryAction,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: widget.secondaryColor,
-              disabledBackgroundColor: widget.secondaryColor.withOpacity(0.6),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(40),
+
+        if (showSecondary) ...[
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 1,
+            child: ElevatedButton(
+              onPressed: _isProcessing ? null : _handleSecondaryAction,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: widget.secondaryColor,
+                disabledBackgroundColor:
+                widget.secondaryColor.withOpacity(0.6),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(40),
+                ),
               ),
-            ),
-            child: Text(
-              widget.secondaryText,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: widget.secondaryTextColor,
+              child: Text(
+                widget.secondaryText,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: widget.secondaryTextColor,
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
+
 }

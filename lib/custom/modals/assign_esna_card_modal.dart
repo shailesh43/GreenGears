@@ -136,29 +136,33 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
         ],
       ),
       bottom: ActionButtonPair(
-        primaryText: 'Approve',
-        secondaryText: 'Reject',
-        primaryMessage: selectedEsnaName == null
-            ? 'Please select ES&A'
-            : '$selectedEsnaName has been assigned to ${widget.request.requestId} Request ID.',
-        secondaryMessage: 'Request Rejected',
-        onPrimaryAction: selectedEsnaName == null
-            ? () => ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Please select ES&A',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                color: Color(0xFFFA6262),
-              ),
-            ),
-            backgroundColor: Color(0xFFFFE3E3),
-          ),
-        )
-            : () => _handleApprove(),
-        onSecondaryAction: () => _handleReject(),
-      ),
+        primaryText: 'Proceed',
 
+        primaryMessage: selectedEsnaName == null
+            ? null
+            : '$selectedEsnaName has been assigned to ${widget.request.requestId} request',
+        onPrimaryAction: () {
+          if (selectedEsnaName == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Please select ES&A',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    color: Color(0xFFFA6262),
+                  ),
+                ),
+                backgroundColor: Color(0xFFFFE3E3),
+              ),
+            );
+          } else {
+            _handleApprove();
+          }
+        },
+
+        // Disable secondary button cleanly
+        onSecondaryAction: null,
+      ),
     );
   }
   // Action button actual functions

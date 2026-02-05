@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../network/api_models/car_request.dart';
+import '../../network/api_client.dart';
 
 //Customs
 import '../widgets/form_detail_row.dart';
@@ -33,7 +34,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   String? _emiTenure;
   String? _monthlyEmi;
   bool _excelUploaded = false;
-
+  final ApiClient _client = ApiClient();
   Future<void> _downloadExcelTemplate() async {
     try {
       if (Platform.isAndroid) {
@@ -183,15 +184,40 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryMessage: 'Request Approved',
-        secondaryMessage: 'Request Rejected',
+        primaryMessage: '${widget.request.requestId}: Request Approved',
+        secondaryMessage: '${widget.request.requestId}: Request Rejected',
         onPrimaryAction: () {
           // Handle approve logic
         },
-        onSecondaryAction: () {
-          // Handle reject logic
-        },
+        onSecondaryAction: () => _handleReject(),
       ),
     );
   }
+
+  Future<void> _handleReject() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null || empId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
 }
