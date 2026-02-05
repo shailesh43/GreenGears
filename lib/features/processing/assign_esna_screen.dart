@@ -34,6 +34,16 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
   void initState() {
     super.initState();
     _loadData();
+    // Add listener to search controller to rebuild UI on search
+    _searchController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _loadData() {
@@ -102,8 +112,22 @@ class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
     }
   }
 
-  List<CarRequest> get requestedStageRequests =>
-      stageRequests[Stage.requested] ?? [];
+  List<CarRequest> get requestedStageRequests {
+    final requests = stageRequests[Stage.requested] ?? [];
+
+    // If search is empty, return all requested-stage requests
+    if (_searchController.text.isEmpty) {
+      return requests;
+    }
+
+    final searchQuery = _searchController.text.toLowerCase();
+
+    return requests.where((request) {
+      final employeeName = request.employeeName?.toLowerCase() ?? '';
+      return employeeName.contains(searchQuery);
+    }).toList();
+  }
+
 
 
   @override
