@@ -8,6 +8,8 @@ import '../widgets/drop_down.dart';
 import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
 
+import '../../network/api_client.dart';
+
 class RequestVerificationModal extends StatefulWidget {
   final CarRequest request;
 
@@ -23,6 +25,7 @@ class RequestVerificationModal extends StatefulWidget {
 
 class _RequestVerificationModalState extends State<RequestVerificationModal> {
   String? selectedDocumentName;
+  final ApiClient _client = ApiClient();
 
   @override
   Widget build(BuildContext context) {
@@ -76,17 +79,69 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryMessage: 'Request Approved',
-        secondaryMessage: 'Request Rejected',
+        primaryMessage: '${widget.request.requestId}: Request Approved',
+        secondaryMessage: '${widget.request.requestId}: Request Rejected',
         onPrimaryAction: () {
           // approve logic
         },
-        onSecondaryAction: () {
-          // reject logic
-        },
+        onSecondaryAction: () => _handleReject(),
       ),
     );
-
   }
+
+  // Future<void> _handleApprove() async {
+  //   final requestId = widget.request.requestId;
+  //   final esnaEmpId = selectedEsnaEmpId;
+  //
+  //   if (requestId == null || esnaEmpId == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Missing request or ES&A details')),
+  //     );
+  //     return;
+  //   }
+  //
+  //   try {
+  //     final response = await _client.assignOrUpdateEsnaSpoc(
+  //       requestId: requestId,
+  //       assignedEsnaEmpId: esnaEmpId,
+  //     );
+  //
+  //     Navigator.pop(context, response); // success close
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(e.toString())),
+  //     );
+  //   }
+  // }
+
+  Future<void> _handleReject() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null ||
+        requestId.isEmpty ||
+        empId == null ||
+        empId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
 
 }

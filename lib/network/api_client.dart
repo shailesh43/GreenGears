@@ -26,6 +26,7 @@ import './api_models/user_approval_model.dart'; // 8
 import './api_models/upload_document_response_model.dart'; // 4
 import './api_models/delete_request_response_model.dart';
 import './api_models/assign_esna_spoc_model.dart';
+import './api_models/decrement_stage_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -72,10 +73,13 @@ class ApiClient {
   dynamic _handleResponse(http.Response response, String method) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body);
-    } else {
-      throw Exception('API Error: ${response.statusCode}');
     }
+
+    throw Exception(
+      'API Error [${response.statusCode}]: ${response.body}',
+    );
   }
+
 
 
   // 1. Fetch Employee Role on LoginPage (empId)
@@ -405,7 +409,7 @@ class ApiClient {
   }) async
   {
     final endpointUrl =
-    await ApiConstants.getEndPointUrl('getUserApprovalRequest');
+    await ApiConstants.getEndPointUrl('deleteRequest');
 
     final url = Uri.parse(endpointUrl);
 
@@ -457,5 +461,34 @@ class ApiClient {
   }
 
   // TODO: validate perf factors
+
+  // 11. Decrement stage
+  // API Endpoint: /updateStage : { req_id, emp_id }
+  Future<DecrementStageModel> decrementStageOnReject({
+    required String requestId,
+    required String empId,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('decrementStage');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'req_id': requestId,
+      'emp_id': empId,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return DecrementStageModel.fromJson(data);
+  }
 
 }

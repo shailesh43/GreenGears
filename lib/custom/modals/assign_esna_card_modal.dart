@@ -143,26 +143,50 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
             : '$selectedEsnaName has been assigned to ${widget.request.requestId} Request ID.',
         secondaryMessage: 'Request Rejected',
         onPrimaryAction: selectedEsnaName == null
-            ? () => SnackBar(
-          content: Text(
-            'Please select ES&A',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              color: const Color(0xFFFA6262),
+            ? () => ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please select ES&A',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                color: Color(0xFFFA6262),
+              ),
             ),
+            backgroundColor: Color(0xFFFFE3E3),
           ),
-          backgroundColor: const Color(0xFFFFE3E3),
         )
             : () => _handleApprove(),
-        onSecondaryAction: () {
-          // TODO: reject logic
-        },
+        onSecondaryAction: () => _handleReject(),
       ),
-
 
     );
   }
+  // Action button actual functions
+  Future<void> _handleReject() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
 
+    if (requestId == null || empId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
 
   Future<void> _handleApprove() async {
     final requestId = widget.request.requestId;
@@ -188,5 +212,4 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
       );
     }
   }
-
 }

@@ -34,6 +34,13 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
     roleId = await LocalPrefs.getRoleId();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _loadEmpCodeAndRol();
+  }
+
+
   void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -64,14 +71,25 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
           ),
           TextButton(
             onPressed: () async {
-              final requestId = widget.request!.requestId;
+              final request = widget.request;
+
+              // Safety check: prefs must be loaded
+              if (roleId == null || empCode == null) {
+                _showSnackBar(
+                  context: context,
+                  message: 'Please wait, loading user details...',
+                  isSuccess: false,
+                );
+                return;
+              }
 
               Navigator.pop(context); // close confirmation dialog
-              Navigator.pop(context); // close request details modal (if any)
+              Navigator.pop(context); // close request details modal
 
               await _handleDeleteRequest(
                 context,
-                requestId: requestId!,
+                request: request,
+                roleId: roleId!,
               );
             },
             child: const Text(
@@ -83,6 +101,7 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
               ),
             ),
           ),
+
         ],
       ),
     );
@@ -90,26 +109,17 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
 
   Future<void> _handleDeleteRequest(
       BuildContext context, {
-        required String requestId,
+        required CarRequest request,
+        required int roleId,
       }) async {
     try {
-
-      if (roleId == null || empCode == null || widget.request == null) {
-        _showSnackBar(
-          context: context,
-          message: 'Unable to delete request. Please try again.',
-          isSuccess: false,
-        );
-        return;
-      }
-      final response = await _client.deleteRequest(
-        requestId: requestId,
-        role: roleId!, // your logged-in role
-        empId: empCode!, // logged-in employee id
-      );
-
       if (!mounted) return;
 
+      final response = await _client.deleteRequest(
+        requestId: request.requestId!,
+        role: roleId!, // your logged-in role
+        empId: request.empId!, // logged-in employee id
+      );
       _showSnackBar(
         context: context,
         message: response.message ?? 'Request deleted successfully',

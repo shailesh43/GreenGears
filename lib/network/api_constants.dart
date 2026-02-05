@@ -38,7 +38,11 @@ class ApiConstants {
   static const String deleteRequest = 'DeleteRequest'; // { request_id, role, updated_by }
 
   // StageWise flow
-  static const String assignESNA = 'update-assigned-esna'; // { request_id, role, updated_by }
+  static const String decrementStage = 'updateStage'; // General function to decrement stage: { req_id, emp_id }
+
+  static const String assignESNA = 'update-assigned-esna'; // Stage 20 -> 21: { request_id, role, updated_by }
+  static const String assignInsurance = ''; // Stage 21 -> 22: { request_id, role, updated_by }
+
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -77,8 +81,14 @@ class ApiConstants {
       case "deleteRequest":
         endPointUrl = "$baseURl$deleteRequest";
         break;
+      case "decrementStage":
+        endPointUrl = "$baseURl$decrementStage";
+        break;
       case "assignESNA":
         endPointUrl = "$baseURl$assignESNA";
+        break;
+      case "assignInsurance":
+        endPointUrl = "$baseURl$assignInsurance";
         break;
     }
     return endPointUrl;
