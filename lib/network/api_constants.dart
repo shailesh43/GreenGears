@@ -41,7 +41,7 @@ class ApiConstants {
   static const String decrementStage = 'updateStage'; // General function to decrement stage: { req_id, emp_id }
 
   static const String assignESNA = 'update-assigned-esna'; // Stage 20 -> 21: { request_id, role, updated_by }
-  static const String assignInsurance = ''; // Stage 21 -> 22: { request_id, role, updated_by }
+  static const String assignInsurance = 'saveOrUpdateCommentAndIncrementStage'; // Stage 21 -> 22: { request_id, role, updated_by }
 
 
   // getX function for getting the "API endpoint url"

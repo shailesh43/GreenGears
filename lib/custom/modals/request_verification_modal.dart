@@ -26,6 +26,7 @@ class RequestVerificationModal extends StatefulWidget {
 class _RequestVerificationModalState extends State<RequestVerificationModal> {
   String? selectedDocumentName;
   final ApiClient _client = ApiClient();
+  final _commentsCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +48,11 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
           const SizedBox(height: 24),
 
-          const FormTextField(
+          FormTextField(
             label: 'ES&A Comments',
             hint: 'Enter Your Comments',
             maxLines: 3,
+            controller: _commentsCtrl,
             required: true,
           ),
           const SizedBox(height: 16),
@@ -81,38 +83,50 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
         secondaryText: 'Reject',
         primaryMessage: '${widget.request.requestId}: Request Approved',
         secondaryMessage: '${widget.request.requestId}: Request Rejected',
-        onPrimaryAction: () {
-          // approve logic
-        },
+        onPrimaryAction: _commentsCtrl == null
+            ? () => ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please enter your comments',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                color: Color(0xFFFA6262),
+              ),
+            ),
+            backgroundColor: Color(0xFFFFE3E3),
+          ),
+        )
+            : () => _handleApprove(),
         onSecondaryAction: () => _handleReject(),
       ),
     );
   }
 
-  // Future<void> _handleApprove() async {
-  //   final requestId = widget.request.requestId;
-  //   final esnaEmpId = selectedEsnaEmpId;
-  //
-  //   if (requestId == null || esnaEmpId == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Missing request or ES&A details')),
-  //     );
-  //     return;
-  //   }
-  //
-  //   try {
-  //     final response = await _client.assignOrUpdateEsnaSpoc(
-  //       requestId: requestId,
-  //       assignedEsnaEmpId: esnaEmpId,
-  //     );
-  //
-  //     Navigator.pop(context, response); // success close
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text(e.toString())),
-  //     );
-  //   }
-  // }
+  Future<void> _handleApprove() async {
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
+
+    if (requestId == null || empId == null ) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or ES&A details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.assignToInsurance(
+        requestId: requestId,
+        empId: empId,
+        commentsAssignedToEsna: _commentsCtrl.text.trim(),
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
 
   Future<void> _handleReject() async {
     final request = widget.request;
@@ -142,6 +156,10 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       );
     }
   }
-
+  @override
+  void dispose() {
+    _commentsCtrl.dispose();
+    super.dispose();
+  }
 
 }

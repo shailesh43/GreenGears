@@ -27,6 +27,7 @@ import './api_models/upload_document_response_model.dart'; // 4
 import './api_models/delete_request_response_model.dart';
 import './api_models/assign_esna_spoc_model.dart';
 import './api_models/decrement_stage_model.dart';
+import './api_models/assign_to_insurance_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -489,6 +490,37 @@ class ApiClient {
 
     final data = _handleResponse(response, 'POST');
     return DecrementStageModel.fromJson(data);
+  }
+
+  // 12. Assign to Insurance
+  // API Endpoint: /updateStage : { emp_id, req_id, comments_assigned_to_esna}
+  Future<AssignToInsuranceModel> assignToInsurance({
+    required String requestId,
+    required String empId,
+    required String commentsAssignedToEsna,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('assignInsurance');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'req_id': requestId,
+      'comments_assigned_to_esna': commentsAssignedToEsna,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return AssignToInsuranceModel.fromJson(data);
   }
 
 }

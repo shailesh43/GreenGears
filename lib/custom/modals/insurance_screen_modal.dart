@@ -8,6 +8,7 @@ import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
 import '../../network/api_models/car_request.dart';
+import '../../network/api_client.dart';
 
 class InsuranceScreenModal extends StatefulWidget {
   final CarRequest request;
@@ -24,7 +25,7 @@ class InsuranceScreenModal extends StatefulWidget {
 
 class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   String? selectedDocumentName;
-
+  final ApiClient _client = ApiClient();
   @override
   Widget build(BuildContext context) {
     return BaseModal(
@@ -141,11 +142,9 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
         primaryMessage: 'Request Approved',
         secondaryMessage: 'Request Rejected',
         onPrimaryAction: () {
-          // Handle approve logic
+          // Handle approve logic i.e. call assignToInsurance API if ESNA has been commented
         },
-        onSecondaryAction: () {
-          // Handle reject logic
-        },
+        onSecondaryAction: () => _handleReject(),
       ),
     );
   }
@@ -175,4 +174,56 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
       ],
     );
   }
+  // Action button actual functions
+  Future<void> _handleReject() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null || empId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  // Future<void> _handleApprove() async {
+  //   final requestId = widget.request.requestId;
+  //   final esnaEmpId = selectedEsnaEmpId;
+  //
+  //   if (requestId == null || esnaEmpId == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Missing request or ES&A details')),
+  //     );
+  //     return;
+  //   }
+  //
+  //   try {
+  //     final response = await _client.assignOrUpdateEsnaSpoc(
+  //       requestId: requestId,
+  //       assignedEsnaEmpId: esnaEmpId,
+  //     );
+  //
+  //     Navigator.pop(context, response); // success close
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(e.toString())),
+  //     );
+  //   }
+  // }
+
 }

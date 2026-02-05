@@ -184,6 +184,4 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
     _searchController.dispose();
     super.dispose();
   }
-
-
 }
