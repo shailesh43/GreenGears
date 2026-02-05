@@ -9,6 +9,11 @@ import '../../network/api_client.dart';
 import '../../network/api_models/user_approval_model.dart';
 import '../../constants/local_prefs.dart';
 
+enum ApprovalType {
+  insuranceQuote,
+  emiDeduction,
+}
+
 class UserApproval extends StatefulWidget {
   final CarRequest? approvalRequest;
 
@@ -24,12 +29,15 @@ class UserApproval extends StatefulWidget {
 class _UserApprovalState extends State<UserApproval> {
   final ApiClient _client = ApiClient();
   bool isLoading = true;
-  CarRequest? approvalRequest;
 
-  Future<void> _loadEmiApprovalRequest() async {
+  // Single approval request and its type
+  CarRequest? approvalRequest;
+  ApprovalType? approvalType;
+
+  Future<void> _loadUserApprovals() async {
     setState(() => isLoading = true);
 
-    // 1️⃣ Load from LocalPrefs
+    // Load from LocalPrefs
     final empId = await LocalPrefs.getEmpCode();
     final roleId = await LocalPrefs.getRoleId();
 
@@ -40,22 +48,35 @@ class _UserApprovalState extends State<UserApproval> {
     }
 
     try {
-      // 2️⃣ API call
+      // API call
       final response = await _client.getApprovalStages(
         empId: empId,
         role: roleId,
       );
 
-      // 3️⃣ Safely pick FIRST request of EMI_APPROVAL_USER
+      // Check which approval type is present in the response
+      final List<CarRequest> insuranceQuoteList =
+          response.data['INSURANCE_QUOTE_APPROVAL_USER'] ?? [];
+
       final List<CarRequest> emiList =
           response.data['EMI_APPROVAL_USER'] ?? [];
 
-      final CarRequest? emiRequest =
-      emiList.isNotEmpty ? emiList.first : null;
+      CarRequest? request;
+      ApprovalType? type;
 
-      // 4️⃣ Update state
+      // Determine which approval to display (priority: Insurance Quote first)
+      if (insuranceQuoteList.isNotEmpty) {
+        request = insuranceQuoteList.first;
+        type = ApprovalType.insuranceQuote;
+      } else if (emiList.isNotEmpty) {
+        request = emiList.first;
+        type = ApprovalType.emiDeduction;
+      }
+
+      // Update state
       setState(() {
-        approvalRequest = emiRequest;
+        approvalRequest = request;
+        approvalType = type;
         isLoading = false;
       });
     } catch (e) {
@@ -67,9 +88,7 @@ class _UserApprovalState extends State<UserApproval> {
   @override
   void initState() {
     super.initState();
-    // Initialize with widget's approvalRequest if provided
-    approvalRequest = widget.approvalRequest;
-    _loadEmiApprovalRequest();
+    _loadUserApprovals();
   }
 
   void _showDeclarationModal() {
@@ -85,15 +104,24 @@ class _UserApprovalState extends State<UserApproval> {
         return DeclarationAcceptanceModal(
           request: approvalRequest!,
           onAccept: () {
-            Navigator.pop(context); // Close modal
-            // _handleApproval(approvalRequest!);
+            Navigator.pop(context);
+            // Handle approval after declaration acceptance
           },
         );
       },
     );
   }
 
-  Widget _buildFirstApprovalContent(CarRequest request) {
+  void _handleInsuranceQuoteApproval() {
+    // Handle insurance quote approval logic
+    _showDeclarationModal();
+  }
+
+  void _handleInsuranceQuoteRejection() {
+    // Handle insurance quote rejection logic
+  }
+
+  Widget _buildInsuranceQuoteApprovalContent(CarRequest request) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -125,11 +153,28 @@ class _UserApprovalState extends State<UserApproval> {
           maxLines: 3,
           required: true,
         ),
+        const SizedBox(height: 24),
+        ActionButtonPair(
+          primaryText: 'Approve',
+          secondaryText: 'Reject',
+          primaryMessage: 'Insurance Quote Approved',
+          secondaryMessage: 'Insurance Quote Rejected',
+          onPrimaryAction: _handleInsuranceQuoteApproval,
+          onSecondaryAction: _handleInsuranceQuoteRejection,
+        ),
       ],
     );
   }
 
-  Widget _buildSecondApprovalContent(CarRequest request) {
+  void _handleEmiDeductionApproval() {
+    // Handle EMI deduction approval logic
+  }
+
+  void _handleEmiDeductionRejection() {
+    // Handle EMI deduction rejection logic
+  }
+
+  Widget _buildEmiDeductionApprovalContent(CarRequest request) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -172,11 +217,43 @@ class _UserApprovalState extends State<UserApproval> {
         const SizedBox(height: 16),
         FormTextField(
           label: 'Employee Comments',
+          hint: 'Your comments',
           maxLines: 3,
           required: true,
         ),
+        const SizedBox(height: 24),
+        ActionButtonPair(
+          primaryText: 'Approve',
+          secondaryText: 'Reject',
+          primaryMessage: 'EMI Deduction Approved',
+          secondaryMessage: 'EMI Deduction Rejected',
+          onPrimaryAction: _handleEmiDeductionApproval,
+          onSecondaryAction: _handleEmiDeductionRejection,
+        ),
       ],
     );
+  }
+
+  Widget _buildApprovalContent() {
+    if (approvalRequest == null || approvalType == null) {
+      return const Center(
+        child: Text(
+          'No approval request available',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
+
+    // Display content based on approval type
+    switch (approvalType!) {
+      case ApprovalType.insuranceQuote:
+        return _buildInsuranceQuoteApprovalContent(approvalRequest!);
+      case ApprovalType.emiDeduction:
+        return _buildEmiDeductionApprovalContent(approvalRequest!);
+    }
   }
 
   @override
@@ -201,61 +278,15 @@ class _UserApprovalState extends State<UserApproval> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : approvalRequest == null
-          ? const Center(
-        child: Text(
-          'No approval request available',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 16,
-          ),
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            _buildApprovalContent(),
+          ],
         ),
-      )
-          : Column(
-        children: [
-          // 📼 Scrollable content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  approvalRequest!.stage == 25
-                      ? _buildFirstApprovalContent(approvalRequest!)
-                      : _buildSecondApprovalContent(approvalRequest!),
-                ],
-              ),
-            ),
-          ),
-          // 📽 Fixed bottom buttons
-          Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(color: Color(0xFFE0E0E0)),
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                child: ActionButtonPair(
-                  primaryText: 'Approve',
-                  secondaryText: 'Reject',
-                  primaryMessage: 'Request Approved',
-                  secondaryMessage: 'Request Rejected',
-                  onPrimaryAction: () {
-                    // handle approval
-
-                  },
-                  onSecondaryAction: () {
-                    // handle rejection
-                  },
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
