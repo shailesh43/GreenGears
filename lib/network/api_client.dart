@@ -30,6 +30,7 @@ import './api_models/decrement_stage_model.dart';
 import './api_models/assign_to_insurance_model.dart';
 import './api_models/insurance_quote_approval_model.dart';
 import './api_models/first_user_approval_model.dart';
+import './api_models/second_user_approval_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -560,7 +561,8 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return InsuranceQuoteApprovalModel.fromJson(data);
   }
-
+  // 14. Submit By User: First approval
+  // API Endpoint: /insurance-quote-approval
   Future<FirstUserApprovalModel> firstUserApproval({
     required String requestId,
     required String userApprovalComments,
@@ -591,5 +593,37 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return FirstUserApprovalModel.fromJson(data);
   }
+
+  // 15. Submit By User: Second approval
+  // API Endpoint: /insurance-quote-approval
+  Future<SecondUserApprovalModel> secondUserApproval({
+    required String requestId,
+    required String empId,
+    required String commentsAssignedToEsna,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('secondUserApproval');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'req_id': requestId,
+      'comments_assigned_to_esna': commentsAssignedToEsna,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return SecondUserApprovalModel.fromJson(data);
+  }
+
 
 }

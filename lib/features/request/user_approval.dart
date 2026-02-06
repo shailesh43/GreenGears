@@ -158,7 +158,6 @@ class _UserApprovalState extends State<UserApproval> {
         );
       }
   }
-
   Future<void> _handleInsuranceQuoteRejection() async {
     // Handle insurance quote rejection logic
     final request = approvalRequest!;
@@ -260,12 +259,57 @@ class _UserApprovalState extends State<UserApproval> {
   }
 
   Future<void> _handleEmiDeductionApproval() async {
-    // Handle EMI deduction approval logic
-    _showDeclarationModal();
+    //   final requestId = widget.request.requestId;
+    //   final empId = widget.request.empId;
+    //
+    //   if (requestId == null || empId == null ) {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       const SnackBar(content: Text('Missing request or ES&A details')),
+    //     );
+    //     return;
+    //   }
+    //
+    //   try {
+    //     final response = await _client.assignToInsurance(
+    //       requestId: requestId,
+    //       empId: empId,
+    //       commentsAssignedToEsna: _commentsCtrl.text.trim(),
+    //     );
+    //
+    //     Navigator.pop(context, response); // success close
+    //   } catch (e) {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text(e.toString())),
+    //     );
+    //   }
+    // }
   }
 
   Future<void> _handleEmiDeductionRejection() async {
     // Handle EMI deduction rejection logic
+    final request = approvalRequest!;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null || empId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
 
   Widget _buildEmiDeductionApprovalContent(CarRequest request) {

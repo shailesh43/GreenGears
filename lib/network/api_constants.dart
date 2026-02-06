@@ -3,7 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class ApiConstants {
-  static String baseURl = "http://localhost:3010/api/";
+  // static String baseURl = "http://localhost:3010/api/";
+  static String baseURl = "https://bizappsd.tatapower.com/dev/greengears/api/"
 
   // SAMAL auth credentials
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
@@ -43,7 +44,10 @@ class ApiConstants {
   static const String assignESNA = 'update-assigned-esna'; // Stage 20 -> 21: { request_id, role, updated_by }
   static const String assignInsurance = 'saveOrUpdateCommentAndIncrementStage'; // Stage 21 -> 22: { request_id, role, updated_by }
   static const String insuranceQuoteApprovalUser = 'updateInsuranceQuotes'; // Stage 21 -> 22: { request_id, role, updated_by }
+
+  // User screens
   static const String firstUserApproval = 'insurance-quote-approval';
+  static const String secondUserApproval = 'saveOrUpdateCommentAndIncrementStage';
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -96,6 +100,9 @@ class ApiConstants {
         break;
       case "firstUserApproval":
         endPointUrl = "$baseURl$firstUserApproval";
+        break;
+      case "secondUserApproval":
+        endPointUrl = "$baseURl$secondUserApproval";
         break;
     }
     return endPointUrl;
