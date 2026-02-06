@@ -43,6 +43,7 @@ class ApiConstants {
   static const String assignESNA = 'update-assigned-esna'; // Stage 20 -> 21: { request_id, role, updated_by }
   static const String assignInsurance = 'saveOrUpdateCommentAndIncrementStage'; // Stage 21 -> 22: { request_id, role, updated_by }
   static const String insuranceQuoteApprovalUser = 'updateInsuranceQuotes'; // Stage 21 -> 22: { request_id, role, updated_by }
+  static const String firstUserApproval = 'insurance-quote-approval';
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -92,6 +93,9 @@ class ApiConstants {
         break;
       case "insuranceQuoteApprovalUser":
         endPointUrl = "$baseURl$insuranceQuoteApprovalUser";
+        break;
+      case "firstUserApproval":
+        endPointUrl = "$baseURl$firstUserApproval";
         break;
     }
     return endPointUrl;

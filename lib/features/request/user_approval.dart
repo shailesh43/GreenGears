@@ -3,6 +3,7 @@ import '../../custom/modals/declaration_acceptance_modal.dart';
 import '../../custom/widgets/file_uploader.dart';
 import '../../custom/widgets/form_text_field.dart';
 import '../../custom/widgets/form_detail_row.dart';
+import '../../custom/widgets/drop_down.dart';
 import '../../custom/widgets/action_button_pair.dart';
 import '../../network/api_models/car_request.dart';
 import '../../network/api_client.dart';
@@ -15,11 +16,12 @@ enum ApprovalType {
 }
 
 class UserApproval extends StatefulWidget {
+
   final CarRequest? approvalRequest;
 
   const UserApproval({
-    this.approvalRequest,
     super.key,
+    this.approvalRequest,
   });
 
   @override
@@ -29,10 +31,13 @@ class UserApproval extends StatefulWidget {
 class _UserApprovalState extends State<UserApproval> {
   final ApiClient _client = ApiClient();
   bool isLoading = true;
+  final _commentsCtrl = TextEditingController();
 
-  // Single approval request and its type
+  // State variable to hold the approval request
   CarRequest? approvalRequest;
+  // Single approval request and its type
   ApprovalType? approvalType;
+  String? selectedInsuranceType;
 
   Future<void> _loadUserApprovals() async {
     setState(() => isLoading = true);
@@ -62,7 +67,7 @@ class _UserApprovalState extends State<UserApproval> {
       final List<CarRequest> emiList =
           response.data['EMI_APPROVAL_USER'] ?? [];
 
-      CarRequest? request;
+      late CarRequest request;
       ApprovalType? type;
 
       // Determine which approval to display (priority: Insurance Quote first)
@@ -89,6 +94,8 @@ class _UserApprovalState extends State<UserApproval> {
   @override
   void initState() {
     super.initState();
+    // Initialize from widget property if provided
+    approvalRequest = widget.approvalRequest;
     _loadUserApprovals();
   }
 
@@ -113,16 +120,81 @@ class _UserApprovalState extends State<UserApproval> {
     );
   }
 
-  void _handleInsuranceQuoteApproval() {
+  Future<void> _handleInsuranceQuoteApproval() async {
     // Handle insurance quote approval logic
-    _showDeclarationModal();
+    final request = approvalRequest!;
+
+    final requestId = request.requestId;
+
+    final String addOnTataPowerValue =
+    selectedInsuranceType == 'Add on Tata Power'
+        ? (request.addOnCoverTataPower?.toString() ?? '')
+        : '';
+
+    final String addOnSapphirePlusValue =
+    selectedInsuranceType == 'Add on Sapphire plus'
+        ? (request.addOnSapphirePlus?.toString() ?? '')
+        : '';
+
+      if (requestId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Missing request')),
+        );
+        return;
+      }
+
+      try {
+        final response = await _client.firstUserApproval(
+          requestId: requestId,
+          userApprovalComments: _commentsCtrl.text.trim(),
+          addOnTataPower: addOnTataPowerValue,
+          addOnSapphirePlus: addOnSapphirePlusValue,
+        );
+
+        Navigator.pop(context, response); // success close
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
   }
 
-  void _handleInsuranceQuoteRejection() {
+  Future<void> _handleInsuranceQuoteRejection() async {
     // Handle insurance quote rejection logic
+    final request = approvalRequest!;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null || empId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
 
   Widget _buildInsuranceQuoteApprovalContent(CarRequest request) {
+
+    final String insuranceValue =
+    selectedInsuranceType == 'Add on Tata Power'
+        ? request.addOnCoverTataPower?.toString() ?? ''
+        : selectedInsuranceType == 'Add on Sapphire plus'
+        ? request.addOnSapphirePlus?.toString() ?? ''
+        : '';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -142,9 +214,28 @@ class _UserApprovalState extends State<UserApproval> {
         DetailRow(label: 'Request ID', value: request.requestId ?? ''),
         DetailRow(label: 'Grade', value: request.grade ?? ''),
         DetailRow(label: 'Email', value: request.email ?? ''),
-        DetailRow(label: 'Total EMI (₹)', value: request.totalEmi?.toString() ?? ''),
-        DetailRow(label: 'Car Allowance', value: request.carAllowance?.toString() ?? ''),
-        DetailRow(label: 'Company Contribution', value: request.companyContribution?.toString() ?? ''),
+        DetailRow(label: 'Quoatation Amount', value: request.quotation?.toString() ?? ''),
+        const SizedBox(height: 16),
+        DetailRow(label: 'Base Insurance', value: request.baseInsurancePremium?.toString() ?? ''),
+        const SizedBox(height: 16),
+        DropdownField(
+          label: 'Insurance add on',
+          hints: 'Select Insurance Type',
+          items: ['Add on Tata Power', 'Add on Sapphire plus'],
+          onChanged: (value) {
+            setState(() {
+              selectedInsuranceType = value;
+            });
+          },
+          required: true,
+        ),
+        const SizedBox(height: 16),
+        if (selectedInsuranceType != null)
+          DetailRow(
+            label: selectedInsuranceType ?? '',
+            value: insuranceValue,
+          ),
+
         const SizedBox(height: 16),
         const FileUploadField(label: 'Upload Document'),
         const SizedBox(height: 16),
@@ -153,6 +244,7 @@ class _UserApprovalState extends State<UserApproval> {
           hint: 'Your comments',
           maxLines: 3,
           required: true,
+          controller: _commentsCtrl,
         ),
         const SizedBox(height: 24),
         ActionButtonPair(
@@ -160,18 +252,19 @@ class _UserApprovalState extends State<UserApproval> {
           secondaryText: 'Reject',
           primaryMessage: 'Insurance Quote Approved',
           secondaryMessage: 'Insurance Quote Rejected',
-          onPrimaryAction: _handleInsuranceQuoteApproval,
-          onSecondaryAction: _handleInsuranceQuoteRejection,
+          onPrimaryAction: () =>  _handleInsuranceQuoteApproval(),
+          onSecondaryAction: () =>  _handleInsuranceQuoteRejection(),
         ),
       ],
     );
   }
 
-  void _handleEmiDeductionApproval() {
+  Future<void> _handleEmiDeductionApproval() async {
     // Handle EMI deduction approval logic
+    _showDeclarationModal();
   }
 
-  void _handleEmiDeductionRejection() {
+  Future<void> _handleEmiDeductionRejection() async {
     // Handle EMI deduction rejection logic
   }
 
@@ -238,11 +331,11 @@ class _UserApprovalState extends State<UserApproval> {
   Widget _buildApprovalContent() {
     if (approvalRequest == null || approvalType == null) {
       return const Center(
-        child: Text(
-          'No approval request available',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 16,
+        child: SizedBox(
+          width: double.infinity,
+          height: 600,
+          child: Center(
+            child: Text('You have No approval request available'),
           ),
         ),
       );

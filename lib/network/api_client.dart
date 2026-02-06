@@ -29,6 +29,7 @@ import './api_models/assign_esna_spoc_model.dart';
 import './api_models/decrement_stage_model.dart';
 import './api_models/assign_to_insurance_model.dart';
 import './api_models/insurance_quote_approval_model.dart';
+import './api_models/first_user_approval_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -558,6 +559,37 @@ class ApiClient {
 
     final data = _handleResponse(response, 'POST');
     return InsuranceQuoteApprovalModel.fromJson(data);
+  }
+
+  Future<FirstUserApprovalModel> firstUserApproval({
+    required String requestId,
+    required String userApprovalComments,
+    required String addOnTataPower,
+    required String addOnSapphirePlus,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('firstUserApproval');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      "request_id": requestId,
+      "add_on_cover_tata_power": addOnTataPower,
+      "add_on_sapphire_plus": addOnSapphirePlus,
+      "insurance_quote_approval_user": userApprovalComments,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return FirstUserApprovalModel.fromJson(data);
   }
 
 }
