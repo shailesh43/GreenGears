@@ -3,9 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class ApiConstants {
-  // static String baseURl = "http://localhost:3010/api/";
-  static String baseURl = "https://bizappsd.tatapower.com/dev/greengears/api/"
-
+  static String baseURl = "http://localhost:3010/api/";
   // SAMAL auth credentials
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
   static String get clientId => dotenv.env['CLIENT_ID'] ?? '';
@@ -39,15 +37,18 @@ class ApiConstants {
   static const String deleteRequest = 'DeleteRequest'; // { request_id, role, updated_by }
 
   // StageWise flow
-  static const String decrementStage = 'updateStage'; // General function to decrement stage: { req_id, emp_id }
-
-  static const String assignESNA = 'update-assigned-esna'; // Stage 20 -> 21: { request_id, role, updated_by }
-  static const String assignInsurance = 'saveOrUpdateCommentAndIncrementStage'; // Stage 21 -> 22: { request_id, role, updated_by }
-  static const String insuranceQuoteApprovalUser = 'updateInsuranceQuotes'; // Stage 21 -> 22: { request_id, role, updated_by }
+  static const String decrementStage = 'updateStage';
+  static const String assignESNA = 'update-assigned-esna'; // 20 -> 21
+  static const String assignInsurance = 'saveOrUpdateCommentAndIncrementStage'; // 21 -> 22
+  static const String insuranceQuoteApprovalUser = 'updateInsuranceQuotes'; // 22 -> 23
 
   // User screens
-  static const String firstUserApproval = 'insurance-quote-approval';
-  static const String secondUserApproval = 'saveOrUpdateCommentAndIncrementStage';
+  static const String firstUserApproval = 'insurance-quote-approval'; // 23 -> 24
+  static const String secondUserApproval = ''; // 25 -> 26
+
+  // Processing Screens (ES&A and Insurance)
+  static const String monthlyDeduction = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
+
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -103,6 +104,9 @@ class ApiConstants {
         break;
       case "secondUserApproval":
         endPointUrl = "$baseURl$secondUserApproval";
+        break;
+      case "emiCalculationEsna":
+        endPointUrl = "$baseURl$monthlyDeduction";
         break;
     }
     return endPointUrl;

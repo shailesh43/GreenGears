@@ -31,6 +31,7 @@ import './api_models/assign_to_insurance_model.dart';
 import './api_models/insurance_quote_approval_model.dart';
 import './api_models/first_user_approval_model.dart';
 import './api_models/second_user_approval_model.dart';
+import './api_models/submit_by_esna_emi.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -262,10 +263,13 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return CreateVehicleResponseModel.fromJson(data);
   }
+
+  // TODO: Test this endpoint
   // 4.3) API Endpoint: /uploadDocument
   Future<UploadDocumentResponseModel> uploadDocument(
-      Map<String, dynamic> body,
-      ) async {
+      Map<String, dynamic> body,)
+  async
+  {
     final endpointUrl =
     await ApiConstants.getEndPointUrl('uploadDocument');
 
@@ -298,9 +302,8 @@ class ApiClient {
     return UploadDocumentResponseModel.fromJson(data);
   }
 
-
   // 5. Fetch All Requests - ROLES: User, Admin, ES&A, Insurance based on ENUMS: UserRole, Stage
-  // API Endpoint: /employees (POST request with reqBody : empId, roleIds: [])
+  // API Endpoint: /AdminPage
   Future<AdminPageResponse> getAdminPageData({
     required String empId,
     required List<int> roleIds,
@@ -328,7 +331,7 @@ class ApiClient {
   }
 
   // 6. Get List of ES&As on AssignEsnaScreen
-  // API Endpoint: /getallEmployees
+  // API Endpoint: /getEmployeesRoleDetail
   Future<List<GetListOfEsnaModel>> getListOfEsna() async {
     final endpointUrl =
     await ApiConstants.getEndPointUrl('getListOfEsna');
@@ -346,7 +349,7 @@ class ApiClient {
     return GetListOfEsnaModel.listFromJson(data as List);
   }
 
-  // 7. Filter based requests on Search Screen
+  // 7. Filter based requests on Search Screen (ACTIVE/INACTIVE)
   // API Endpoint: /car-request-data
   Future<StatusFilteredRequestsModel> getStatusFilteredRequests({
     required String empId,
@@ -405,7 +408,7 @@ class ApiClient {
   }
 
   // 9. Delete Car Request
-  // API Endpoint: /DeleteRequest : { request_id, role, updated_by }
+  // API Endpoint: /DeleteRequest TODO: Validate this api call
   Future<DeleteRequestResponseModel> deleteRequest({
     required String requestId,
     required int role,
@@ -436,7 +439,7 @@ class ApiClient {
   }
 
   // 10. Assign ES&A spoc
-  // API Endpoint: /update-assigned-esna : { request_id, assigned_to }
+  // API Endpoint: /update-assigned-esna
   Future<AssignEsnaSpocModel> assignOrUpdateEsnaSpoc({
     required String requestId,
     required String assignedEsnaEmpId,
@@ -464,10 +467,8 @@ class ApiClient {
     return AssignEsnaSpocModel.fromJson(data);
   }
 
-  // TODO: validate perf factors
-
   // 11. Decrement stage
-  // API Endpoint: /updateStage : { req_id, emp_id }
+  // API Endpoint: /updateStage :
   Future<DecrementStageModel> decrementStageOnReject({
     required String requestId,
     required String empId,
@@ -496,7 +497,7 @@ class ApiClient {
   }
 
   // 12. Assign to Insurance
-  // API Endpoint: /updateStage : { emp_id, req_id, comments_assigned_to_esna}
+  // API Endpoint: /saveOrUpdateCommentAndIncrementStage
   Future<AssignToInsuranceModel> assignToInsurance({
     required String requestId,
     required String empId,
@@ -527,7 +528,7 @@ class ApiClient {
   }
 
   // 13. Submit for Insurance quote approval
-  // API Endpoint: /updateStage : { emp_id, req_id, comments_assigned_to_esna}
+  // API Endpoint: /updateInsuranceQuotes
   Future<InsuranceQuoteApprovalModel> SubmitForInsuranceQuoteApproval({
     required String requestId,
     required int baseInsurance,
@@ -561,7 +562,7 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return InsuranceQuoteApprovalModel.fromJson(data);
   }
-  // 14. Submit By User: First approval
+  // 14. Submit By User: First approval (Quotation Approval)
   // API Endpoint: /insurance-quote-approval
   Future<FirstUserApprovalModel> firstUserApproval({
     required String requestId,
@@ -594,8 +595,8 @@ class ApiClient {
     return FirstUserApprovalModel.fromJson(data);
   }
 
-  // 15. Submit By User: Second approval
-  // API Endpoint: /insurance-quote-approval
+  // 15. Submit By User: Second approval (EMI approval)
+  // API Endpoint: /
   Future<SecondUserApprovalModel> secondUserApproval({
     required String requestId,
     required String empId,
@@ -625,5 +626,34 @@ class ApiClient {
     return SecondUserApprovalModel.fromJson(data);
   }
 
+  // 16. Submit By ESNA: EMI calculation (Monthly deduction)
+  // API Endpoint: /saveOrUpdateCommentAndIncrementStage
+  Future<SubmitByEsnaEmi> submitByEsnaEmi({
+    required String requestId,
+    required String empId,
+    required String commentsAssignedToEsna,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('emiCalculationEsna');
 
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'req_id': requestId,
+      'comments_assigned_to_esna': commentsAssignedToEsna,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return SubmitByEsnaEmi.fromJson(data);
+  }
 }
