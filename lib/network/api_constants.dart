@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-
 class ApiConstants {
+
+  // BASEURL of GreenGears backend
   static String baseURl = "http://localhost:3010/api/";
+
   // SAMAL auth credentials
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
   static String get clientId => dotenv.env['CLIENT_ID'] ?? '';
@@ -15,8 +17,7 @@ class ApiConstants {
   static String get tokenEndpoint =>
       'https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token';
 
-
-  // API Endpoints on dashboard
+  // Dashboard Endpoints
   static const String roleByEmployee = 'role-by-employee';
   static const String employeeProfile = 'employees';
   static const String carEligibility = 'getCarEligibility';
@@ -50,6 +51,8 @@ class ApiConstants {
   static const String monthlyDeduction = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
   static const String paymentDetails = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
   static const String rtoTaxReceipt = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
+
+  static const String commentsByRequestId = 'getCommentsByRequestId';
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -114,6 +117,9 @@ class ApiConstants {
         break;
       case "rtoTaxReceipt":
         endPointUrl = "$baseURl$rtoTaxReceipt";
+        break;
+      case "commentsByRequestId":
+        endPointUrl = "$baseURl$commentsByRequestId";
         break;
     }
     return endPointUrl;

@@ -1,29 +1,31 @@
-import 'dart:convert';
-import 'dart:async';
-import 'package:http/http.dart' as http;
-import './api_constants.dart';
-import 'package:encrypt/encrypt.dart' as encrypt;
-import '../core/helpers/encrypt.dart';
-import 'package:logger/logger.dart';
-import 'dart:math';
-import 'dart:typed_data';
 import 'dart:io';
+import 'dart:async';
+import 'dart:math';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
+import 'package:encrypt/encrypt.dart' as encrypt;
+import 'package:logger/logger.dart';
 
+// REFERENCES
+import './api_constants.dart';
 import '../../core/utils/enum.dart';
 import '../../core/utils/role_stage_policy.dart';
+import '../core/helpers/encrypt.dart';
 
-import './api_models/role_by_employee.dart'; // 1
-import './api_models/employee_profile_data.dart'; // 2
-import './api_models/car_eligibility_data.dart'; // 3
-import './api_models/create_vehicle_response_model.dart'; // 4
-import './api_models/create_new_employee_response.dart'; // 4
-import './api_models/admin_page_response.dart'; // 5
-import './api_models/stage_bucket.dart'; // 5
-import './api_models/car_request.dart'; // 5
-import './api_models/list_of_esna_model.dart'; // 6
-import './api_models/status_filtered_requests_model.dart'; // 7
-import './api_models/user_approval_model.dart'; // 8
-import './api_models/upload_document_response_model.dart'; // 4
+// API MODELS
+import './api_models/role_by_employee.dart';
+import './api_models/employee_profile_data.dart';
+import './api_models/car_eligibility_data.dart';
+import './api_models/create_vehicle_response_model.dart';
+import './api_models/create_new_employee_response.dart';
+import './api_models/admin_page_response.dart';
+import './api_models/stage_bucket.dart';
+import './api_models/car_request.dart';
+import './api_models/list_of_esna_model.dart';
+import './api_models/status_filtered_requests_model.dart';
+import './api_models/user_approval_model.dart';
+import './api_models/upload_document_response_model.dart';
 import './api_models/delete_request_response_model.dart';
 import './api_models/assign_esna_spoc_model.dart';
 import './api_models/decrement_stage_model.dart';
@@ -34,6 +36,7 @@ import './api_models/second_user_approval_model.dart';
 import './api_models/submit_by_esna_emi_model.dart';
 import './api_models/submit_by_esna_payment_model.dart';
 import './api_models/submit_by_esna_receipt_model.dart';
+import './api_models/comments_response_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -722,6 +725,33 @@ class ApiClient {
 
     final data = _handleResponse(response, 'POST');
     return SubmitByEsnaReceiptModel.fromJson(data);
+  }
+
+  // 19. GET comments posted by User
+  // API Endpoint: /getCommentsByRequestId
+  Future<CommentsResponseModel> getCommentsByRequestId({
+    required String requestId,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('commentsByRequestId');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'req_id': requestId,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return CommentsResponseModel.fromJson(data);
   }
 
 }
