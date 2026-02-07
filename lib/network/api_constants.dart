@@ -48,7 +48,7 @@ class ApiConstants {
 
   // Processing Screens (ES&A and Insurance)
   static const String monthlyDeduction = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
-
+  static const String paymentDetails = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -107,6 +107,9 @@ class ApiConstants {
         break;
       case "emiCalculationEsna":
         endPointUrl = "$baseURl$monthlyDeduction";
+        break;
+      case "paymentDetailsEsna":
+        endPointUrl = "$baseURl$paymentDetails";
         break;
     }
     return endPointUrl;

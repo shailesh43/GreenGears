@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import './car_request.dart';
 
-class SubmitByEsnaEmi {
+class SubmitByEsnaPaymentModel {
   final String message;
   final CarRequest updatedRequest;
 
-  SubmitByEsnaEmi({
+  SubmitByEsnaPaymentModel({
     required this.message,
     required this.updatedRequest,
   });
 
-  factory SubmitByEsnaEmi.fromJson(Map<String, dynamic> json) {
-    return SubmitByEsnaEmi(
+  factory SubmitByEsnaPaymentModel.fromJson(Map<String, dynamic> json) {
+    return SubmitByEsnaPaymentModel(
       message: json['message'] ?? '',
       updatedRequest: CarRequest.fromJson(json['updatedRequest']),
     );

@@ -31,7 +31,8 @@ import './api_models/assign_to_insurance_model.dart';
 import './api_models/insurance_quote_approval_model.dart';
 import './api_models/first_user_approval_model.dart';
 import './api_models/second_user_approval_model.dart';
-import './api_models/submit_by_esna_emi.dart';
+import './api_models/submit_by_esna_emi_model.dart';
+import './api_models/submit_by_esna_payment_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -628,7 +629,7 @@ class ApiClient {
 
   // 16. Submit By ESNA: EMI calculation (Monthly deduction)
   // API Endpoint: /saveOrUpdateCommentAndIncrementStage
-  Future<SubmitByEsnaEmi> submitByEsnaEmi({
+  Future<SubmitByEsnaEmiModel> submitByEsnaEmi({
     required String requestId,
     required String empId,
     required String commentsAssignedToEsna,
@@ -654,6 +655,37 @@ class ApiClient {
     logger.d('${response.statusCode} > URL: $url');
 
     final data = _handleResponse(response, 'POST');
-    return SubmitByEsnaEmi.fromJson(data);
+    return SubmitByEsnaEmiModel.fromJson(data);
+  }
+
+  // 17. Submit By ESNA: Purchase order (Payment Details)
+  // API Endpoint: /saveOrUpdateCommentAndIncrementStage
+  Future<SubmitByEsnaPaymentModel> submitByEsnaPayment({
+    required String requestId,
+    required String empId,
+    required String commentsAssignedToEsna,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('paymentDetailsEsna');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'req_id': requestId,
+      'comments_assigned_to_esna': commentsAssignedToEsna,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return SubmitByEsnaPaymentModel.fromJson(data);
   }
 }
