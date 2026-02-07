@@ -304,7 +304,7 @@ class _UserApprovalState extends State<UserApproval> {
         empId: empId,
       );
 
-      Navigator.pop(context, response); // success close
+      // Navigator.pop(context, response); // success close
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
