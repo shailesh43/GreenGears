@@ -1,17 +1,17 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import './api_constants.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import '../core/helpers/encrypt.dart';
-import 'dart:math';        // for Random.secure()
+import 'package:logger/logger.dart';
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:io';
-import 'package:http/http.dart' as http;
+
 import '../../core/utils/enum.dart';
 import '../../core/utils/role_stage_policy.dart';
 
-import 'dart:async';
-import 'package:logger/logger.dart';
 import './api_models/role_by_employee.dart'; // 1
 import './api_models/employee_profile_data.dart'; // 2
 import './api_models/car_eligibility_data.dart'; // 3
@@ -33,13 +33,15 @@ import './api_models/first_user_approval_model.dart';
 import './api_models/second_user_approval_model.dart';
 import './api_models/submit_by_esna_emi_model.dart';
 import './api_models/submit_by_esna_payment_model.dart';
+import './api_models/submit_by_esna_receipt_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
   final Logger logger = Logger();
 
   // ---------------- GET ----------------
-  Future<Map<String, dynamic>> get(String endpoint) async {
+  Future<Map<String, dynamic>> get(String endpoint) async
+  {
     final url = Uri.parse('${ApiConstants.baseURl}$endpoint');
 
     final response = await _client.get(
@@ -55,7 +57,8 @@ class ApiClient {
       String endpoint, {
         required Map<String, dynamic> body,
         required Map<String, String>? headers,
-      }) async {
+      }) async
+  {
     final url = Uri.parse('${ApiConstants.baseURl}$endpoint');
 
     final response = await _client.post(
@@ -86,7 +89,7 @@ class ApiClient {
     );
   }
 
-
+  // ---------------- API ENDPOINTS ----------------
 
   // 1. Fetch Employee Role on LoginPage (empId)
   // API Endpoint: /role-by-employee/:empId
@@ -265,7 +268,7 @@ class ApiClient {
     return CreateVehicleResponseModel.fromJson(data);
   }
 
-  // TODO: Test this endpoint
+  // TODO: Test & Rewrite this endpoint
   // 4.3) API Endpoint: /uploadDocument
   Future<UploadDocumentResponseModel> uploadDocument(
       Map<String, dynamic> body,)
@@ -409,7 +412,7 @@ class ApiClient {
   }
 
   // 9. Delete Car Request
-  // API Endpoint: /DeleteRequest TODO: Validate this api call
+  // API Endpoint: /DeleteRequest
   Future<DeleteRequestResponseModel> deleteRequest({
     required String requestId,
     required int role,
@@ -563,6 +566,7 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return InsuranceQuoteApprovalModel.fromJson(data);
   }
+
   // 14. Submit By User: First approval (Quotation Approval)
   // API Endpoint: /insurance-quote-approval
   Future<FirstUserApprovalModel> firstUserApproval({
@@ -688,4 +692,36 @@ class ApiClient {
     final data = _handleResponse(response, 'POST');
     return SubmitByEsnaPaymentModel.fromJson(data);
   }
+
+  // 18. Submit By ESNA: Vehicle history (RTO Tax receipt)
+  // API Endpoint: /saveOrUpdateCommentAndIncrementStage
+  Future<SubmitByEsnaReceiptModel> submitByEsnaRtoTaxReceipt({
+    required String requestId,
+    required String empId,
+    required String commentsAssignedToEsna,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('rtoTaxReceipt');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'req_id': requestId,
+      'comments_assigned_to_esna': commentsAssignedToEsna,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return SubmitByEsnaReceiptModel.fromJson(data);
+  }
+
 }

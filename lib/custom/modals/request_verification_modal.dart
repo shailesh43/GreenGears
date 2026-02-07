@@ -114,7 +114,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
     }
 
     try {
-      final response = await _client.assignToInsurance(
+      final response = await _client.submi(
         requestId: requestId,
         empId: empId,
         commentsAssignedToEsna: _commentsCtrl.text.trim(),
@@ -156,6 +156,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       );
     }
   }
+
   @override
   void dispose() {
     _commentsCtrl.dispose();

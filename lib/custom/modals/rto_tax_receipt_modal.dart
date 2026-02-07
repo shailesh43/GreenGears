@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../network/api_models/car_request.dart';
+import '../../network/api_client.dart';
 
 // Customs
 import '../widgets/action_button_pair.dart';
@@ -25,7 +26,8 @@ class RtoTaxReceiptModal extends StatefulWidget {
 
 class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   String? selectedDocumentName;
-
+  final ApiClient _client = ApiClient();
+  final _commentsCtrl = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return BaseModal(
@@ -65,21 +67,75 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
             },
             required: false,
           ),
+          const SizedBox(height: 16),
+          FormTextField(label: 'Comments', hint: 'Your Comments', required: true, maxLines: 3, controller: _commentsCtrl,),
           const SizedBox(height: 24),
         ],
       ),
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryMessage: 'Request Approved',
-        secondaryMessage: 'Request Rejected',
-        onPrimaryAction: () {
-          // Handle approve logic
-        },
-        onSecondaryAction: () {
-          // Handle reject logic
-        },
+        primaryMessage: '${widget.request.requestId} Request Approved',
+        secondaryMessage: '${widget.request.requestId} Request Rejected',
+        onPrimaryAction: () => _handleApprove(),
+        onSecondaryAction: () => _handleReject(),
       ),
     );
   }
+
+  Future<void> _handleApprove() async {
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
+
+    if (requestId == null || empId == null ) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or ES&A details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.submitByEsnaRtoTaxReceipt(
+        requestId: requestId,
+        empId: empId,
+        commentsAssignedToEsna: _commentsCtrl.text.trim(),
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _handleReject() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null ||
+        requestId.isEmpty ||
+        empId == null ||
+        empId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
 }
