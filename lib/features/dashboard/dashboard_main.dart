@@ -434,9 +434,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (_) => UserApproval(),
-                                ),
+                                MaterialPageRoute(builder: (_) => UserApproval()),
                               );
                             },
                           ),

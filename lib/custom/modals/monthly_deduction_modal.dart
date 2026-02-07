@@ -34,6 +34,8 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   String? _emiTenure;
   String? _monthlyEmi;
   bool _excelUploaded = false;
+
+  final _commentsCtrl = TextEditingController();
   final ApiClient _client = ApiClient();
   Future<void> _downloadExcelTemplate() async {
     try {
@@ -171,13 +173,13 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
             const SizedBox(height: 12),
             DetailRow(label: 'Total', value: _total ?? ''),
             DetailRow(label: 'Car Allowance', value: _carAllowance ?? ''),
-            DetailRow(label: 'Company Contribution', value: _companyContribution ?? ''),
+            DetailRow(label: 'Company Contr.', value: _companyContribution ?? ''),
             DetailRow(label: 'EMI Tenure in Years', value: _emiTenure ?? ''),
             DetailRow(label: 'Monthly EMI', value: _monthlyEmi ?? ''),
             const SizedBox(height: 24),
           ],
 
-          const FormTextField(label: 'ES&A Comments', maxLines: 3),
+          FormTextField(label: 'ES&A Comments', maxLines: 3, controller: _commentsCtrl, required: true,),
           const SizedBox(height: 24),
         ],
       ),
@@ -186,12 +188,37 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
         secondaryText: 'Reject',
         primaryMessage: '${widget.request.requestId}: Request Approved',
         secondaryMessage: '${widget.request.requestId}: Request Rejected',
-        onPrimaryAction: () {
-          // Handle approve logic
-        },
+        onPrimaryAction:  () => _handleApprove(),
         onSecondaryAction: () => _handleReject(),
       ),
     );
+  }
+
+  Future<void> _handleApprove() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null || empId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.submitByEsnaEmi(
+        requestId: requestId,
+        empId: empId,
+        commentsAssignedToEsna: _commentsCtrl.text.trim(),
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
 
   Future<void> _handleReject() async {
