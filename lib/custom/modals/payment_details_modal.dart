@@ -26,6 +26,9 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   final _commentsCtrl = TextEditingController();
 
   @override
+
+
+  @override
   Widget build(BuildContext context) {
     return BaseModal(
       request: widget.request,
@@ -34,16 +37,20 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ES&A Data fields
-          DetailRow(label: 'EMP ID', value: widget.request.empId ?? 'NULL'),
-          const SizedBox(height: 8),
           DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
-          const SizedBox(height: 8),
-          DetailRow(label: 'EMP name', value: widget.request.employeeName ?? 'NULL'),
-          const SizedBox(height: 8),
+          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
+          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
+          DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
           DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
-          const SizedBox(height: 8),
-          DetailRow(label: 'Eligibility (RS)', value: widget.request.eligibility.toString() ?? 'NULL'),
-          const SizedBox(height: 8),
+          DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
+          DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
+          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
+          DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
+          DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
+          DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
+          DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
+
           DetailRow(label: 'EMI approval status', value: 'Approved'),
           const SizedBox(height: 16),
 
@@ -127,5 +134,31 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
       );
     }
   }
+
+  Future<void> _getCommentsByRequestId() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+
+    if (requestId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.getCommentsByRequestId(
+        requestId: requestId,
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+
 
 }

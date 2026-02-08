@@ -177,7 +177,6 @@ class _ActiveRequestPageState extends State<ActiveRequestPage> {
                   DetailRow(label: 'Vehicle Name', value: request.carModel ?? 'NULL'),
                   DetailRow(label: 'Manufactured by', value: request.manufacturer ?? 'NULL'),
                   DetailRow(label: 'Vehicle Type', value: request.vehicleType ?? 'NULL'),
-                  DetailRow(label: 'Vehicle Model', value: request.carModel ?? 'NULL'),
                   DetailRow(label: 'Color', value: request.colorChoice ?? 'NULL'),
                   DetailRow(
                     label: 'Total',

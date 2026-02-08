@@ -43,51 +43,19 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
         children: [
           _buildHeader(widget.request),
           const SizedBox(height: 24),
+          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
+          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
+          DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
+          DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
+          DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
+          DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
 
-          DetailRow(
-            label: 'Vehicle Model',
-            value: widget.request.carModel ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Manufactured by',
-            value: widget.request.manufacturer ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Color',
-            value: widget.request.colorChoice ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Employee Name',
-            value: widget.request.employeeName ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Employee ID',
-            value: widget.request.empId ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Phone',
-            value: widget.request.contact ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Company',
-            value: widget.request.company ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Grade',
-            value: widget.request.grade ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Email',
-            value: widget.request.email ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Eligibility',
-            value: widget.request.eligibility.toString(),
-          ),
-          DetailRow(
-            label: 'Quotation Amount',
-            value: widget.request.totalEmi.toString(),
-          ),
+          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
+          DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
+          DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
+          DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
+          DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
           const SizedBox(height: 24),
 
           /// Base Insurance
@@ -237,10 +205,4 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
       );
     }
   }
-
-  // @override
-  // void dispose() {
-  //   _commentsCtrl.dispose();
-  //   super.dispose();
-  // }
 }

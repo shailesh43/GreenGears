@@ -37,15 +37,19 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
-          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
           DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
+          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
+          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
+          DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
           DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
+          DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
+          DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
+          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
           DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
           DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
-          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
-          DetailRow(label: 'Email', value: widget.request.email ?? 'NULL'),
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
+          DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
           const SizedBox(height: 24),
 
           FormTextField(
@@ -114,7 +118,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
     }
 
     try {
-      final response = await _client.submi(
+      final response = await _client.assignToInsurance(
         requestId: requestId,
         empId: empId,
         commentsAssignedToEsna: _commentsCtrl.text.trim(),
