@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../network/api_models/car_request.dart';
 import '../../network/api_client.dart';
+import 'dart:core';
+import 'package:intl/intl.dart';
 
 // Customs
 import '../widgets/action_button_pair.dart';
@@ -37,12 +39,25 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
-          const SizedBox(height: 8),
-          DetailRow(label: 'EMP ID',value: widget.request.empId ?? 'NULL'),
-          const SizedBox(height: 8),
-          DetailRow(label: 'EMP name', value: widget.request.employeeName ?? 'NULL'),
-          const SizedBox(height: 8),
-          DetailRow(label: 'Vehicle model',value: widget.request.carModel ?? 'NULL'),
+          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
+          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
+          DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
+          DetailRow(
+            label: 'Date Of Request',
+            value: widget.request.updatedTime != null
+                ? DateFormat('dd/MM/yyyy').format(widget.request.updatedTime!)
+                : 'NULL',
+          ),
+          DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
+          DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
+          DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
+          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
+          DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
+          DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
+          DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
+          DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
+
           const SizedBox(height: 16),
           const FormTextField(label: 'Vehicle Number', hint: 'Enter Vehicle number', required: true,),
           const SizedBox(height: 16),

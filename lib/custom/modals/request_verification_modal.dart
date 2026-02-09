@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../network/api_models/car_request.dart';
+import 'package:intl/intl.dart';
 // Customs
 import '../widgets/form_detail_row.dart';
 import '../widgets/form_text_field.dart';
@@ -27,6 +28,16 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   String? selectedDocumentName;
   final ApiClient _client = ApiClient();
   final _commentsCtrl = TextEditingController();
+  String? commentsOnEsnaReqVerif;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getCommentsByRequestId();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +53,12 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
           DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
           DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
           DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
+          DetailRow(
+            label: 'Date Of Request',
+            value: widget.request.updatedTime != null
+                ? DateFormat('dd/MM/yyyy').format(widget.request.updatedTime!)
+                : 'NULL',
+          ),
           DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
           DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
           DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
@@ -50,6 +67,8 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
           DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
           DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
+          DetailRow(label: 'Comments by Employee', value: commentsOnEsnaReqVerif?.toString() ?? 'NULL'),
+
           const SizedBox(height: 24),
 
           FormTextField(
@@ -160,6 +179,33 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       );
     }
   }
+
+  Future<void> _getCommentsByRequestId() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+
+    if (requestId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.getCommentsByRequestId(
+        requestId: requestId,
+      );
+
+      setState(() {
+        commentsOnEsnaReqVerif = response.data?.commentsByUser ?? 'NULL';
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
 
   @override
   void dispose() {

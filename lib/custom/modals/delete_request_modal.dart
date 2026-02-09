@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../network/api_models/car_request.dart';
+import 'package:intl/intl.dart';
 // Customs
 import '../widgets/form_detail_row.dart';
 import '../widgets/action_button_pair.dart';
@@ -152,24 +153,25 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DetailRow(label: 'Employee ID', value: request.empId ?? 'NULL'),
-          DetailRow(label: 'Employee Name', value: request.employeeName ?? 'NULL'),
-          DetailRow(label: 'Contact', value: request.contact ?? 'NULL'),
-          DetailRow(label: 'Email', value: request.email ?? 'NULL'),
-          DetailRow(label: 'Vehicle Name', value: request.carModel ?? 'NULL'),
-          DetailRow(label: 'Manufactured by', value: request.manufacturer ?? 'NULL'),
-          DetailRow(label: 'Vehicle Type', value: request.vehicleType ?? 'NULL'),
-          DetailRow(label: 'Vehicle Model', value: request.carModel ?? 'NULL'),
-          DetailRow(label: 'Color', value: request.colorChoice ?? 'NULL'),
-          DetailRow(label: 'Grade', value: request.grade ?? 'NULL'),
+          DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
+          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
+          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
+          DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
           DetailRow(
-            label: 'Eligibility',
-            value: request.eligibility?.toString() ?? 'NULL',
+            label: 'Date Of Request',
+            value: widget.request.updatedTime != null
+                ? DateFormat('dd/MM/yyyy').format(widget.request.updatedTime!)
+                : 'NULL',
           ),
-          DetailRow(
-            label: 'Total',
-            value: request.totalEmi?.toString() ?? 'NULL',
-          ),
+          DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
+          DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
+          DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
+          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
+          DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
+          DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
+          DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
+          DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
           const SizedBox(height: 16),
           _buildStatusRow(request),
           const SizedBox(height: 8),

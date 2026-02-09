@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -132,6 +132,26 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
+          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
+          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
+          DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
+          DetailRow(
+            label: 'Date Of Request',
+            value: widget.request.updatedTime != null
+                ? DateFormat('dd/MM/yyyy').format(widget.request.updatedTime!)
+                : 'NULL',
+          ),
+          DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
+          DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
+          DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
+          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
+          DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
+          DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
+          DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
+          DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
+          const SizedBox(height: 24,),
           const Text(
             "1. Download and fill the EMI Calculator excel",
             style: TextStyle(

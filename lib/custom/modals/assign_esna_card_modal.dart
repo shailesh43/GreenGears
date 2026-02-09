@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../widgets/action_button_pair.dart';
 import '../widgets/request_card.dart';
@@ -25,12 +26,13 @@ class AssignEsnaCardModal extends StatefulWidget {
 }
 
 class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
-  String? selectedDocumentName;
-  // List<GetListOfEsnaModel> esnaList = [];
-  String? selectedEsnaName;
-  String? selectedEsnaEmpId;
   final ApiClient _client = ApiClient();
   bool isLoading = false;
+
+  String? selectedDocumentName;
+  String? selectedEsnaName;
+  String? selectedEsnaEmpId;
+  String? commentsByAdmin;
 
   @override
   Widget build(BuildContext context) {
@@ -42,54 +44,25 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
+          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
+          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
+          DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
           DetailRow(
-            label: 'Employee Name',
-            value: request.employeeName ?? '—',
+            label: 'Date Of Request',
+            value: widget.request.updatedTime != null
+                ? DateFormat('dd/MM/yyyy').format(widget.request.updatedTime!)
+                : 'NULL',
           ),
-          DetailRow(
-            label: 'Employee ID',
-            value: request.empId ?? '—',
-          ),
-          DetailRow(
-            label: 'Phone',
-            value: request.contact ?? '—',
-          ),
-          DetailRow(
-            label: 'Company',
-            value: request.company ?? '—',
-          ),
-          DetailRow(
-            label: 'Email',
-            value: request.email?.toLowerCase() ?? '—',
-          ),
-          DetailRow(
-            label: 'Vehicle Model',
-            value: request.carModel ?? '—',
-          ),
-          DetailRow(
-            label: 'Manufactured by',
-            value: request.manufacturer ?? '—',
-          ),
-          DetailRow(
-            label: 'Vehicle Type',
-            value: request.vehicleType ?? '—',
-          ),
-          DetailRow(
-            label: 'Color',
-            value: request.colorChoice ?? '—',
-          ),
-          DetailRow(
-            label: 'Grade',
-            value: request.grade ?? '—',
-          ),
-          DetailRow(
-            label: 'Eligibility',
-            value: request.eligibility?.toString() ?? '—',
-          ),
-          DetailRow(
-            label: 'Quotation Amount',
-            value: request.quotation?.toString() ?? '—',
-          ),
+          DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
+          DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
+          DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
+          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
+          DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
+          DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
+          DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
+          DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
 
           const SizedBox(height: 24),
           /// ES&A Dropdown
@@ -114,8 +87,6 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
             },
             required: true,
           ),
-
-
 
           const SizedBox(height: 16),
 
@@ -193,6 +164,31 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
   }
 
   Future<void> _handleApprove() async {
+    final requestId = widget.request.requestId;
+    final esnaEmpId = selectedEsnaEmpId;
+
+    if (requestId == null || esnaEmpId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or ES&A details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.assignOrUpdateEsnaSpoc(
+        requestId: requestId,
+        assignedEsnaEmpId: esnaEmpId,
+      );
+
+      Navigator.pop(context, response); // success close
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _getCommentsByRequestId() async {
     final requestId = widget.request.requestId;
     final esnaEmpId = selectedEsnaEmpId;
 
