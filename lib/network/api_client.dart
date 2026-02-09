@@ -37,6 +37,7 @@ import './api_models/submit_by_esna_emi_model.dart';
 import './api_models/submit_by_esna_payment_model.dart';
 import './api_models/submit_by_esna_receipt_model.dart';
 import './api_models/comments_response_model.dart';
+import './api_models/get_all_docs_response_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -754,4 +755,30 @@ class ApiClient {
     return CommentsResponseModel.fromJson(data);
   }
 
+  // 19. GET Uploaded Documents posted by specified EmpId
+  // API Endpoint: /getAllUploadedDocuments
+  Future<GetAllDocsResponseModel> getAllUploadedDocsFromS3({
+    required String requestId,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('getAllUploadedDocuments');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'request_id': requestId,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return GetAllDocsResponseModel.fromJson(data);
+  }
 }

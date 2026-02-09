@@ -27,6 +27,7 @@ class ApiConstants {
   static const String getListOfEsna = 'getEmployeesRoleDetail';
   static const String getStatusFilteredRequests = 'car-request-data';
   static const String getUserApprovalRequest = 'userApprovalType';
+  static const String getAllUploadedDocuments = 'getAllUploadedDocuments';
 
   // Create New Request
   // API call flow: employeeProfile -> createNewEmployee -> createVehicleRequest -> uploadQuotationDoc
@@ -120,6 +121,9 @@ class ApiConstants {
         break;
       case "commentsByRequestId":
         endPointUrl = "$baseURl$commentsByRequestId";
+        break;
+      case "getAllUploadedDocuments":
+        endPointUrl = "$baseURl$getAllUploadedDocuments";
         break;
     }
     return endPointUrl;
