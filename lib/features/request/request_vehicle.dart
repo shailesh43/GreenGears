@@ -59,6 +59,10 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
   Future<void> _loadEmpCodeAndEligibility() async {
     empCode = await LocalPrefs.getEmpCode();
     empEligibility = await LocalPrefs.getEmpEligibility();
+    setState(() {
+      empCode = empCode;
+      empEligibility = empEligibility;
+    });
     logger.d("empCode: ${empCode}");
   }
 
@@ -148,10 +152,11 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
   // Step 4: Bind the documentReqBody
   Map<String, dynamic> _bindUploadDocRequestBody() {
+    print('EMPID: $empCode');
     return {
-      "emp_id": empId,
-      "process_stage": Stage.requested?.stageNo,
-      "doc_id": Document.initialQuotationDoc?.docId,
+      "emp_id": empCode,
+      "process_stage": Stage.requested?.stageNo ?? 20,
+      "doc_id": Document.initialQuotationDoc?.docId ?? 1,
       "files" : [
         if (uploadedQuotationFile != null)
           MultipartFile.fromBytes(
@@ -325,25 +330,22 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                       final newEmpReqResponse =
                       await _client.createNewEmployee(newEmpRequestBody);
 
-                      // ---------------- STEP 2: Create Vehicle Request ----------------
-                      final code = await LocalPrefs.getEmpCode();
-                      empId = code ?? '';
-
-                      final carRequestBody = _bindCreateVehicleRequestBody();
-                      final carReqResponse =
-                      await _client.createNewVehicleRequest(carRequestBody);
-
-                      // ---------------- STEP 3: Upload Document ----------------
+                      // ---------------- STEP 2: Upload Document ----------------
                       final uploadDocReqBody = _bindUploadDocRequestBody();
                       final uploadDocResponse =
                       await _client.uploadDocument(uploadDocReqBody);
+
+                      ---------------- STEP 3: Create Vehicle Request ----------------
+                      final carRequestBody = _bindCreateVehicleRequestBody();
+                      final carReqResponse =
+                      await _client.createNewVehicleRequest(carRequestBody);
 
                       if (!mounted) return;
 
                       // ✅ ALL STEPS SUCCESS
                       _showSnackBar(
                         context: context,
-                        message: newEmpReqResponse.message.toString(),
+                        message: uploadDocResponse.message.toString(),
                         isSuccess: true,
                       );
 
@@ -481,8 +483,6 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     }
     return true; // ✅ all inputs valid
   }
-
-
 
   @override
   void dispose() {

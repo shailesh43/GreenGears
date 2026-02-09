@@ -9,6 +9,9 @@ import './base_modal.dart';
 import '../../network/api_models/car_request.dart';
 import '../../network/api_models/list_of_esna_model.dart';
 import '../../network/api_client.dart';
+import '../../core/utils/enum.dart';
+import '../../network/api_models/car_request.dart';
+import '../../network/api_models/get_all_docs_response_model.dart';
 
 class AssignEsnaCardModal extends StatefulWidget {
   final CarRequest request;
@@ -29,10 +32,23 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
   final ApiClient _client = ApiClient();
   bool isLoading = false;
 
-  String? selectedDocumentName;
+  Document? selectedDocumentName;
   String? selectedEsnaName;
   String? selectedEsnaEmpId;
   String? commentsByAdmin;
+
+  List<UploadedDocData> uploadedDocs = [];
+  List<Document> documentList = [];
+  Document? selectedDocument;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getDocumentsByRequestId();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,15 +110,21 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
           DropdownField(
             label: 'View Document',
             hints: 'Select Document',
-            items: const ['User Quotation Document'],
+            items: documentList.map((e) => e.docLabel).toList(),
             onChanged: (value) {
+              if (value == null) return;
+
+              final doc = documentList.firstWhere(
+                    (e) => e.docLabel == value,
+                orElse: () => throw Exception('Document not found'),
+              );
+
               setState(() {
-                selectedDocumentName = value;
+                selectedDocumentName = doc;
               });
             },
-            required: false,
+            required: true,
           ),
-
           const SizedBox(height: 24),
         ],
       ),
@@ -112,26 +134,11 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
         primaryMessage: selectedEsnaName == null
             ? null
             : '$selectedEsnaName has been assigned to ${widget.request.requestId} request',
-        onPrimaryAction: () {
-          if (selectedEsnaName == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Please select ES&A',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    color: Color(0xFFFA6262),
-                  ),
-                ),
-                backgroundColor: Color(0xFFFFE3E3),
-              ),
-            );
-          } else {
-            _handleApprove();
-          }
-        },
 
-        // Disable secondary button cleanly
+        onPrimaryAction: selectedEsnaName == null
+            ? null // 👈 THIS prevents auto pop
+            : _handleApprove,
+
         onSecondaryAction: null,
       ),
     );
@@ -180,7 +187,7 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
         assignedEsnaEmpId: esnaEmpId,
       );
 
-      Navigator.pop(context, response); // success close
+      // Navigator.pop(context, response); // success close
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
@@ -188,28 +195,74 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
     }
   }
 
-  Future<void> _getCommentsByRequestId() async {
+  Future<void> _getDocumentsByRequestId() async {
     final requestId = widget.request.requestId;
-    final esnaEmpId = selectedEsnaEmpId;
 
-    if (requestId == null || esnaEmpId == null) {
+    if (requestId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or ES&A details')),
+        const SnackBar(content: Text('Missing request or employee details')),
       );
       return;
     }
 
     try {
-      final response = await _client.assignOrUpdateEsnaSpoc(
+      final response = await _client.getAllUploadedDocsFromS3(
         requestId: requestId,
-        assignedEsnaEmpId: esnaEmpId,
       );
 
-      Navigator.pop(context, response); // success close
+      final docs = response.data; // List<UploadedDocData>
+
+      final List<Document> docsEnumList = docs
+          .map((e) => Document.fromDocId(e.docId ?? -1))
+          .whereType<Document>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.docId.compareTo(b.docId));
+
+      setState(() {
+        uploadedDocs = docs;
+        documentList = docsEnumList;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
     }
+  }
+
+  bool _validateBeforeSubmit() {
+    if (selectedEsnaName == null) {
+      _showSnackBar(
+        context: context,
+        message: "Select ES&A",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    return true; // ✅ all inputs valid
+  }
+
+  void _showSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: isSuccess
+                ? const Color(0xFF388E3B)
+                : const Color(0xFFFA6262),
+          ),
+        ),
+        backgroundColor: isSuccess
+            ? const Color(0xFFD7FFD8)
+            : const Color(0xFFFFE3E3),
+      ),
+    );
   }
 }

@@ -5,7 +5,7 @@ class BaseModal extends StatelessWidget {
   final CarRequest request;
   final String title;
   final Widget content;
-  final Widget? bottom; // 👈 NEW
+  final Widget? bottom;
 
   const BaseModal({
     super.key,

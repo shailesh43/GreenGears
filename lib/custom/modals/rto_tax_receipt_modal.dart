@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
-import '../../network/api_models/car_request.dart';
-import '../../network/api_client.dart';
 import 'dart:core';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../network/api_client.dart';
+import '../../core/utils/enum.dart';
+import '../../network/api_models/car_request.dart';
+import '../../network/api_models/get_all_docs_response_model.dart';
 
 // Customs
 import '../widgets/action_button_pair.dart';
@@ -30,6 +33,22 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   String? selectedDocumentName;
   final ApiClient _client = ApiClient();
   final _commentsCtrl = TextEditingController();
+
+  String? commentsOnEsnaRto;
+  List<UploadedDocData> uploadedDocs = [];
+  List<Document> documentList = [];
+  Document? selectedDocument;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getCommentsByRequestId();
+      _getDocumentsByRequestId();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BaseModal(
@@ -74,13 +93,20 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
           DropdownField(
             label: 'View Document',
             hints: 'Select Document',
-            items: ['RTO Certificate', 'Tax Receipt', 'Insurance Copy'],
+            items: documentList.map((e) => e.docLabel).toList(),
             onChanged: (value) {
+              if (value == null) return;
+
+              final doc = documentList.firstWhere(
+                    (e) => e.docLabel == value,
+                orElse: () => throw Exception('Document not found'),
+              );
+
               setState(() {
-                selectedDocumentName = value;
+                selectedDocument = doc;
               });
             },
-            required: false,
+            required: true,
           ),
           const SizedBox(height: 16),
           FormTextField(label: 'Comments', hint: 'Your Comments', required: true, maxLines: 3, controller: _commentsCtrl,),
@@ -146,6 +172,67 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       );
 
       Navigator.pop(context, response);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _getCommentsByRequestId() async {
+    final request = widget.request;
+    final requestId = request.requestId;
+
+    if (requestId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.getCommentsByRequestId(
+        requestId: requestId,
+      );
+
+      setState(() {
+        commentsOnEsnaRto = response.data?.commentsEmiUserApproval ?? 'NULL';
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _getDocumentsByRequestId() async {
+    final requestId = widget.request.requestId;
+
+    if (requestId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.getAllUploadedDocsFromS3(
+        requestId: requestId,
+      );
+
+      final docs = response.data; // List<UploadedDocData>
+
+      final List<Document> docsEnumList = docs
+          .map((e) => Document.fromDocId(e.docId ?? -1))
+          .whereType<Document>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.docId.compareTo(b.docId));
+
+      setState(() {
+        uploadedDocs = docs;
+        documentList = docsEnumList;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),

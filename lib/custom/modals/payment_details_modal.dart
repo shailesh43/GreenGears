@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../network/api_models/car_request.dart';
 import 'package:intl/intl.dart';
 // Custom
 import '../widgets/form_detail_row.dart';
@@ -7,9 +6,14 @@ import '../widgets/form_text_field.dart';
 import '../widgets/file_uploader.dart';
 import '../widgets/date_picker_field.dart';
 import '../widgets/action_button_pair.dart';
+import '../widgets/drop_down.dart';
 import './base_modal.dart';
 
 import '../../network/api_client.dart';
+import '../../core/utils/enum.dart';
+import '../../network/api_models/car_request.dart';
+import '../../network/api_models/get_all_docs_response_model.dart';
+
 
 class PaymentDetailsModal extends StatefulWidget {
   final CarRequest request;
@@ -27,12 +31,17 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   final _commentsCtrl = TextEditingController();
   String? commentsOnEsnaPayment;
 
+  List<UploadedDocData> uploadedDocs = [];
+  List<Document> documentList = [];
+  Document? selectedDocument;
+
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getCommentsByRequestId();
+      _getDocumentsByRequestId();
     });
   }
 
@@ -80,6 +89,26 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
           const FormTextField(label: 'UTR', hint: 'Enter UTR code', required: true,),
           const SizedBox(height: 16),
           const FileUploadField(label: 'Upload Document'),
+          const SizedBox(height: 16),
+          DropdownField(
+            label: 'View Document',
+            hints: 'Select Document',
+            items: documentList.map((e) => e.docLabel).toList(),
+            onChanged: (value) {
+              if (value == null) return;
+
+              final doc = documentList.firstWhere(
+                    (e) => e.docLabel == value,
+                orElse: () => throw Exception('Document not found'),
+              );
+
+              setState(() {
+                selectedDocument = doc;
+              });
+            },
+            required: true,
+          ),
+
           const SizedBox(height: 16),
           FormTextField(label: 'Comments', hint: 'Your Comments', maxLines: 3, required: true, controller: _commentsCtrl,),
           const SizedBox(height: 24),
@@ -174,4 +203,40 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
       );
     }
   }
+
+  Future<void> _getDocumentsByRequestId() async {
+    final requestId = widget.request.requestId;
+
+    if (requestId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing request or employee details')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.getAllUploadedDocsFromS3(
+        requestId: requestId,
+      );
+
+      final docs = response.data; // List<UploadedDocData>
+
+      final List<Document> docsEnumList = docs
+          .map((e) => Document.fromDocId(e.docId ?? -1))
+          .whereType<Document>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.docId.compareTo(b.docId));
+
+      setState(() {
+        uploadedDocs = docs;
+        documentList = docsEnumList;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
 }

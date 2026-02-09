@@ -4,7 +4,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiConstants {
 
   // BASEURL of GreenGears backend
-  static String baseURl = "http://localhost:3010/api/";
+  // static String baseURl = "http://localhost:3010/api/";
+  static String baseURl = "https://bizapps.tatapower.com/api/greengears/carmanagement/api/";
 
   // SAMAL auth credentials
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
