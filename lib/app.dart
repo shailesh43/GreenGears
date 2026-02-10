@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:core';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
+import 'package:flutter/services.dart';
 
 // Construct pages through shell
 import 'core/dashboard_shell.dart';
@@ -24,13 +26,38 @@ class _MyAppState extends State<MyApp> {
   final ApiClient _client = ApiClient();
   bool isLoading = false;
 
-  late Future<String?> _loginFuture;
+  late Future<String?> _initFuture;
 
   @override
   void initState() {
     super.initState();
-    _loginFuture = _checkLoginStatus();
+
+    // Start app initialization (auth + delay)
+    _initFuture = _initializeApp();
+
+    // Preload visual assets AFTER first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _preloadAssets(context);
+    });
   }
+
+  Future<void> _preloadAssets(BuildContext context) async {
+    await precacheImage(
+      const AssetImage('assets/images/tata_power_logo.png'),
+      context,
+    );
+  }
+
+
+  // Initialize app with splash screen delay
+  Future<String?> _initializeApp() async {
+    // Ensure splash shows for minimum duration
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Then check login status
+    return _checkLoginStatus();
+  }
+
 
   // Check if user is already logged in
   Future<String?> _checkLoginStatus() async {
@@ -91,15 +118,11 @@ class _MyAppState extends State<MyApp> {
         scaffoldBackgroundColor: Colors.white,
       ),
       home: FutureBuilder<String?>(
-        future: _loginFuture,
+        future: _initFuture,
         builder: (context, snapshot) {
-          // Show loading indicator while authenticating
+          // Show splash screen while initializing
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
+            return const SplashScreen();
           }
 
           // Check if login was successful
@@ -139,7 +162,7 @@ class _MyAppState extends State<MyApp> {
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        _loginFuture = _login();
+                        _initFuture = _login();
                       });
                     },
                     style: ElevatedButton.styleFrom(
@@ -166,6 +189,90 @@ class _MyAppState extends State<MyApp> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// Splash Screen Widget
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+
+  late final AnimationController _slideController;
+  late final Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(-1.2, 0), // off-screen left
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 180,
+              child: Transform.scale(
+                scale: 1.4,
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.mode(
+                    Color.fromRGBO(70, 200, 76, 1.0),
+                    BlendMode.srcIn,
+                  ),
+                  child: Lottie.asset(
+                    'assets/anims/car_anim.json',
+                    repeat: true,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            const Text(
+              'GreenGears',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.8,
+                color: Color.fromRGBO(15, 102, 16, 1.0),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
