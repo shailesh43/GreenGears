@@ -3,11 +3,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConstants {
 
-  // BASEURL of GreenGears backend
+  // BASEURL of GreenGears node backend
   // static String baseURl = "http://localhost:3010/api/";
+
+  // BASEURL of GreenGears Production backend
   static String baseURl = "https://bizapps.tatapower.com/api/greengears/carmanagement/api/";
 
-  // SAMAL auth credentials
+  // SAMAL auth credentials & URL params
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
   static String get clientId => dotenv.env['CLIENT_ID'] ?? '';
   static String get redirectUri => dotenv.env['REDIRECT_URI'] ?? '';
@@ -18,7 +20,7 @@ class ApiConstants {
   static String get tokenEndpoint =>
       'https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token';
 
-  // Dashboard Endpoints
+  // LocalPrefs Endpoints
   static const String roleByEmployee = 'role-by-employee';
   static const String employeeProfile = 'employees';
   static const String carEligibility = 'getCarEligibility';
@@ -29,18 +31,19 @@ class ApiConstants {
   static const String getStatusFilteredRequests = 'car-request-data';
   static const String getUserApprovalRequest = 'userApprovalType';
   static const String getAllUploadedDocuments = 'getAllUploadedDocuments';
+  static const String getCommentsByRequestId = 'getCommentsByRequestId';
 
   // Create New Request
-  // API call flow: employeeProfile -> createNewEmployee -> createVehicleRequest -> uploadQuotationDoc
-  static const String createNewEmployee = 'newEmployee';  // { emp_id, name, grade, email, dob, contact, company, worklocation, eligibility, cost_centre, retirement_date, cluster, department, company_code }
-  static const String createVehicleRequest = 'car-requests';  // { emp_id, car_model, manufacturer, purpose, choice_of_lease, color_choice, vehicle_type, quotation, cooling_period, updated_by, comments }
-  static const String uploadDocument = 'uploadDocuments'; // { emp_id, process_stage, doc_id, files }
+  // API call flow: employeeProfile -> createNewEmployee -> uploadQuotationDoc -> createVehicleRequest
+  static const String createNewEmployee = 'newEmployee';
+  static const String createVehicleRequest = 'car-requests';
+  static const String uploadDocument = 'uploadDocuments';
 
   // Delete Car Request
-  static const String deleteRequest = 'DeleteRequest'; // { request_id, role, updated_by }
+  static const String deleteRequest = 'DeleteRequest'; // Anything -> 120
 
   // StageWise flow
-  static const String decrementStage = 'updateStage';
+  static const String decrementStage = 'updateStage'; // {26 -> 25, 21 -> 20, 23 -> 22}
   static const String assignESNA = 'update-assigned-esna'; // 20 -> 21
   static const String assignInsurance = 'saveOrUpdateCommentAndIncrementStage'; // 21 -> 22
   static const String insuranceQuoteApprovalUser = 'updateInsuranceQuotes'; // 22 -> 23
@@ -53,8 +56,6 @@ class ApiConstants {
   static const String monthlyDeduction = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
   static const String paymentDetails = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
   static const String rtoTaxReceipt = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
-
-  static const String commentsByRequestId = 'getCommentsByRequestId';
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -121,7 +122,7 @@ class ApiConstants {
         endPointUrl = "$baseURl$rtoTaxReceipt";
         break;
       case "commentsByRequestId":
-        endPointUrl = "$baseURl$commentsByRequestId";
+        endPointUrl = "$baseURl$getCommentsByRequestId";
         break;
       case "getAllUploadedDocuments":
         endPointUrl = "$baseURl$getAllUploadedDocuments";
