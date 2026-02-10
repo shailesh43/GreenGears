@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-
+import 'package:file/file.dart';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import '../widgets/action_button_pair.dart';
 import '../widgets/request_card.dart';
 import '../widgets/form_detail_row.dart';
@@ -9,7 +12,10 @@ import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
 import '../../network/api_models/car_request.dart';
+
+import '../../core/utils/enum.dart';
 import '../../network/api_client.dart';
+import '../../custom/widgets/file_uploader.dart';
 
 class InsuranceScreenModal extends StatefulWidget {
   final CarRequest request;
@@ -33,6 +39,31 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   final _addOnCoverCtrl = TextEditingController();
   final _addOnSapphireCtrl = TextEditingController();
   final _commentsCtrl = TextEditingController();
+
+  // TODO: For Document upload & Progress
+  PlatformFile? uploadedQuotationFile;
+  double _uploadProgress = 0.0;   // 0.0 → 1.0 for LinearProgressIndicator
+  bool _isUploading = false;
+
+  Map<String, dynamic> _bindUploadDocRequestBody() {
+    if (uploadedQuotationFile == null) {
+      throw Exception('No file selected');
+    }
+
+    return {
+      'emp_id': widget.request.empId.toString(),
+      'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
+      'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(),
+
+      // MUST be a LIST for multer.array("files")
+      'files': [
+        MultipartFile.fromBytes(
+          uploadedQuotationFile!.bytes!, // 🔴 buffer
+          filename: uploadedQuotationFile!.name, // 🔴 originalname
+        ),
+      ],
+    };
+  }
 
   @override
   void initState() {
@@ -102,8 +133,12 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
           const SizedBox(height: 16),
 
           /// Upload Document
-          const FileUploadField(
-            label: 'Upload Document',
+          FileUploadField(
+            label: 'Upload Quotation Document',
+            allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+            onFileSelected: (file) {
+              uploadedQuotationFile = file; // 🔴 THIS is required
+            },
           ),
           const SizedBox(height: 16),
 
@@ -193,6 +228,63 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
     }
   }
 
+  Future<void> _handleUpload() async {
+    try {
+      final docReqBody = _bindUploadDocRequestBody();
+
+      setState(() {
+        _isUploading = true;
+        _uploadProgress = 0.0;
+      });
+
+      await _client.uploadDocument(
+        body: docReqBody,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() {
+            _uploadProgress = progress;
+          });
+        },
+      );
+
+      setState(() {
+        _isUploading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      // ⛔ propagate failure to caller
+      rethrow;
+    }
+  }
+
+  void _showSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: isSuccess
+                ? const Color(0xFF388E3B)
+                : const Color(0xFFFA6262),
+          ),
+        ),
+        backgroundColor: isSuccess
+            ? const Color(0xFFD7FFD8)
+            : const Color(0xFFFFE3E3),
+      ),
+    );
+  }
+
   Future<void> _handleApprove() async {
     final requestId = widget.request.requestId;
 
@@ -204,18 +296,34 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
     }
 
     try {
+      // ---------------- STEP 1: Upload document ----------------
+      await _handleUpload(); // ⬅️ integrated here
+
+      // ---------------- STEP 2: Submit for approval ----------------
       final response = await _client.SubmitForInsuranceQuoteApproval(
         requestId: requestId,
         baseInsurance: int.tryParse(_baseInsuranceCtrl.text.trim()) ?? 0,
         addOnTataPower: int.tryParse(_addOnCoverCtrl.text.trim()) ?? 0,
-        addOnSapphirePlus: int.tryParse(_addOnSapphireCtrl.text.trim()) ?? 0,
+        addOnSapphirePlus:
+        int.tryParse(_addOnSapphireCtrl.text.trim()) ?? 0,
         commentsByGIT: (_commentsCtrl.text.trim().isEmpty)
             ? 'null'
             : _commentsCtrl.text.trim(),
       );
 
-      Navigator.pop(context, response); // success close
+      if (!mounted) return;
+
+      // ---------------- SUCCESS ----------------
+      _showSnackBar(
+        context: context,
+        message: 'Document uploaded & approval submitted successfully',
+        isSuccess: true,
+      );
+
+      Navigator.pop(context, response);
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );

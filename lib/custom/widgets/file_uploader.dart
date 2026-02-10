@@ -32,22 +32,26 @@ class _FileUploadFieldState extends State<FileUploadField> {
 
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: widget.allowedExtensions != null ? FileType.custom : FileType.any,
-      allowedExtensions: widget.allowedExtensions,
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+      withData: true, // 🔴 REQUIRED
     );
 
     if (result != null) {
+      final pickedFile = result.files.single;
+
       setState(() {
-        _selectedFile = result.files.single;
-        _fileName = _selectedFile!.name;
+        _selectedFile = pickedFile;
+        _fileName = pickedFile.name;
       });
 
-      // Callback to parent widget
+      // ✅ SEND FILE TO PARENT
       if (widget.onFileSelected != null) {
-        widget.onFileSelected!(_selectedFile);
+        widget.onFileSelected!(pickedFile);
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
