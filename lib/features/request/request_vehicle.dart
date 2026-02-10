@@ -54,7 +54,8 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
   // For Document upload
   PlatformFile? uploadedQuotationFile;
-
+  double _uploadProgress = 0.0;   // 0.0 → 1.0 for LinearProgressIndicator
+  bool _isUploading = false;
   // Step 0: load empCode & empEligibility
   Future<void> _loadEmpCodeAndEligibility() async {
     empCode = await LocalPrefs.getEmpCode();
@@ -152,17 +153,21 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
   // Step 4: Bind the documentReqBody
   Map<String, dynamic> _bindUploadDocRequestBody() {
-    print('EMPID: $empCode');
+    if (uploadedQuotationFile == null) {
+      throw Exception('No file selected');
+    }
+
     return {
-      "emp_id": empCode,
-      "process_stage": Stage.requested?.stageNo ?? 20,
-      "doc_id": Document.initialQuotationDoc?.docId ?? 1,
-      "files" : [
-        if (uploadedQuotationFile != null)
-          MultipartFile.fromBytes(
-            uploadedQuotationFile!.bytes!,
-            filename: uploadedQuotationFile!.name,
-          ),
+      'emp_id': empCode.toString(),
+      'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
+      'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(),
+
+      // MUST be a LIST for multer.array("files")
+      'files': [
+        MultipartFile.fromBytes(
+          uploadedQuotationFile!.bytes!, // 🔴 buffer
+          filename: uploadedQuotationFile!.name, // 🔴 originalname
+        ),
       ],
     };
   }
@@ -260,9 +265,13 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
                     // Upload Document
 
-                    FileUploadField(label: 'Upload Quotation Document', allowedExtensions: ['pdf', 'txt', 'doc', 'docx'], onFileSelected: (file) {
-                      uploadedQuotationFile = file;
-                    },),
+                    FileUploadField(
+                      label: 'Upload Quotation Document',
+                      allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+                      onFileSelected: (file) {
+                        uploadedQuotationFile = file; // 🔴 THIS is required
+                      },
+                    ),
                     const SizedBox(height: 24),
 
                     // Process_stage & Doc_id Logic
@@ -318,59 +327,42 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
-
                     if (!_validateBeforeSubmit()) return;
 
-                    try
-                    {
-                      await _loadEmpCodeAndEligibility();
-                      await _fetchEmployeeProfile();
-                      // ---------------- STEP 1: Create New Employee ----------------
-                      final newEmpRequestBody = _bindNewEmployeeRequestBody();
-                      final newEmpReqResponse =
-                      await _client.createNewEmployee(newEmpRequestBody);
+                    try {
+                      // Optional: show loading
+                      setState(() {
+                        _isUploading = true;
+                      });
 
-                      // ---------------- STEP 2: Upload Document ----------------
-                      final uploadDocReqBody = _bindUploadDocRequestBody();
-                      final uploadDocResponse =
-                      await _client.uploadDocument(uploadDocReqBody);
-
-                      ---------------- STEP 3: Create Vehicle Request ----------------
-                      final carRequestBody = _bindCreateVehicleRequestBody();
-                      final carReqResponse =
-                      await _client.createNewVehicleRequest(carRequestBody);
-
-                      if (!mounted) return;
-
-                      // ✅ ALL STEPS SUCCESS
-                      _showSnackBar(
-                        context: context,
-                        message: uploadDocResponse.message.toString(),
-                        isSuccess: true,
-                      );
-
-                      Navigator.pop(context, true);
-                    } catch (e) {
-                      if (!mounted) return;
-
-                      // ❌ FIRST FAILURE STOPS EVERYTHING
-                      _showSnackBar(
-                        context: context,
-                        message: e.toString(),
-                        isSuccess: false,
-                      );
-                      return;
+                      // Call the unified submit handler
+                      await _handleSubmit();
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _isUploading = false;
+                        });
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2ECC71),
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14), // 👈 extra comfort
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
+                  child: _isUploading
+                      ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                      : const Text(
                     'Submit',
                     style: TextStyle(
                       fontSize: 16,
@@ -482,6 +474,70 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       return false;
     }
     return true; // ✅ all inputs valid
+  }
+
+  Future<void> _handleSubmit() async {
+    try {
+      // ---------------- STEP 1: Upload document ----------------
+      await _handleUpload();
+
+      // ---------------- STEP 2: New/update Employee Data ----------------
+      final newEmpRequestBody = _bindNewEmployeeRequestBody();
+      await _client.createNewEmployee(newEmpRequestBody);
+      // ---------------- STEP 3: New Vehicle Request ----------------
+      final carRequestBody = _bindCreateVehicleRequestBody();
+      final response = await _client.createNewVehicleRequest(carRequestBody);
+      if (!mounted) return;
+
+      // ---------------- SUCCESS ----------------
+      _showSnackBar(
+        context: context,
+        message: 'New Request Created successfully!',
+        isSuccess: true,
+      );
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _handleUpload() async {
+    try {
+      final docReqBody = _bindUploadDocRequestBody();
+
+      setState(() {
+        _isUploading = true;
+        _uploadProgress = 0.0;
+      });
+
+      await _client.uploadDocument(
+        body: docReqBody,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() {
+            _uploadProgress = progress;
+          });
+        },
+      );
+
+      setState(() {
+        _isUploading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      // ⛔ propagate failure to caller
+      rethrow;
+    }
   }
 
   @override

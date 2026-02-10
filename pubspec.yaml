@@ -42,9 +42,8 @@ dev_dependencies:
   collection: ^1.19.1
   dio: ^5.9.1
   intl: ^0.20.2
-
-#  testing above
-
+  lottie: ^3.3.2
+  flutter_svg: ^2.2.3
 
 flutter:
   uses-material-design: true
@@ -52,6 +51,7 @@ flutter:
     - assets/images/
     - assets/docs/CarPolicy.pdf
     - assets/docs/EMI_Calculator.xlsx
+    - assets/anims/car_anim.json
     - assets/msal_config.json
     - .env
 

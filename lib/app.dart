@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter/services.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 // Construct pages through shell
 import 'core/dashboard_shell.dart';
 // SAMAL(msauth) Login & logout function
@@ -143,7 +143,6 @@ class _MyAppState extends State<MyApp> {
               },
             );
           }
-
           // Login failed - show error message
           return Scaffold(
             body: Center(
@@ -244,6 +243,33 @@ class _SplashScreenState extends State<SplashScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Tata Power SVG + GreenGears text
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/images/tata_power_logo.svg',
+                  height: 60,
+                  colorFilter: const ColorFilter.mode(
+                    Color.fromRGBO(15, 111, 16, 1.0),
+                    BlendMode.srcIn,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                const Text(
+                  'GreenGears',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                    color: Color.fromRGBO(15, 111, 16, 1.0),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
             SizedBox(
               height: 180,
               child: Transform.scale(
@@ -260,20 +286,10 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-            const Text(
-              'GreenGears',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 34,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.8,
-                color: Color.fromRGBO(15, 102, 16, 1.0),
-              ),
-            ),
           ],
         ),
       ),
     );
+
   }
 }

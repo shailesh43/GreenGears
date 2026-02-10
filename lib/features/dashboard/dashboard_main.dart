@@ -515,16 +515,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ],
     );
   }
-
-  void _showRequestDetailsModal(
-      BuildContext context,
-      CarRequest request,
-      ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DeleteRequestModal(request: request),
-    );
-  }
 }
