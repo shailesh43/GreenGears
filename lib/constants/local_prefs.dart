@@ -9,6 +9,7 @@ class LocalPrefs {
   static const _empGrade = 'emp_grade';
   static const _empEligibility = 'emp_eligibility';
   static const _empCostCenter = 'emp_cost_center';
+  static const _isLoggedIn = 'is_logged_in';
 
   static Future<void> saveEmpId({
     required String empCode,
@@ -25,6 +26,14 @@ class LocalPrefs {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_roleId, roleId);
+  }
+
+  // Save login status
+  static Future<void> saveLoginStatus({
+    required bool isLoggedIn,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isLoggedIn, isLoggedIn);
   }
 
   // SAVE Employee Profile
@@ -104,6 +113,12 @@ class LocalPrefs {
   static Future<String?> getEmpCostCenter() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_empCostCenter);
+  }
+
+  // Get login status
+  static Future<bool> getIsLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isLoggedIn) ?? false;
   }
 
   static Future<void> clear() async {

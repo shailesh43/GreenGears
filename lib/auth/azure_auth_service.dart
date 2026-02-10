@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 
 import '../network/api_constants.dart';
 import '../constants/local_prefs.dart';
+import './token.dart';
 import 'package:logger/logger.dart';
 
 class AuthenticationService {
@@ -88,6 +90,39 @@ class AuthenticationService {
     }
   }
 
+  static Future<Token> refreshToken(
+      BuildContext context, String? refreshToken) async {
+    if (refreshToken == null) {
+      // If no refresh token, perform full login
+      final empId = await login();
+      if (empId == null) {
+        throw Exception('Login failed - unable to get employee ID');
+      }
+      throw Exception('No refresh token available - full login required');
+    } else {
+      final Map<String, dynamic> tokenParameters = {
+        'client_id': ApiConstants.clientId,
+        'scope': ApiConstants.scope,
+        'refresh_token': refreshToken,
+        'grant_type': 'refresh_token',
+      };
+
+      final response = await http.post(
+        Uri.parse(ApiConstants.tokenEndpoint),
+        headers: <String, String>{
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: tokenParameters,
+      );
+
+      if (response.statusCode == 200) {
+        return tokenFromJson(response.body);
+      } else {
+        throw Exception('Failed to refresh token');
+      }
+    }
+  }
+
   static Future<void> logout() async {
     final logoutUrl =
         '${ApiConstants.authorizationEndpoint.replaceAll('/authorize', '/logout')}?'
@@ -97,5 +132,8 @@ class AuthenticationService {
       url: logoutUrl,
       callbackUrlScheme: 'msauth',
     );
+
+    // Clear login status from local storage
+    await LocalPrefs.saveLoginStatus(isLoggedIn: false);
   }
 }

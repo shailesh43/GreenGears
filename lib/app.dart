@@ -29,7 +29,23 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _loginFuture = _login();
+    _loginFuture = _checkLoginStatus();
+  }
+
+  // Check if user is already logged in
+  Future<String?> _checkLoginStatus() async {
+    final isLoggedIn = await LocalPrefs.getIsLoggedIn();
+
+    if (isLoggedIn) {
+      // User is already logged in, get empId from local storage
+      final empId = await LocalPrefs.getEmpCode();
+      if (empId != null && empId.isNotEmpty) {
+        return empId;
+      }
+    }
+
+    // User is not logged in, perform login
+    return _login();
   }
 
   // Login method that returns empId
@@ -38,6 +54,8 @@ class _MyAppState extends State<MyApp> {
 
     if (empId != null) {
       await LocalPrefs.saveEmpId(empCode: empId);
+      // Save login status as true
+      await LocalPrefs.saveLoginStatus(isLoggedIn: true);
     }
 
     return empId;
@@ -52,6 +70,10 @@ class _MyAppState extends State<MyApp> {
     try {
       final result = await _client.getRoleByEmployee(empCode);
       final roleId = result.roleIds.isNotEmpty ? result.roleIds.first : 1;
+
+      // Save roleId to local storage
+      await LocalPrefs.saveRoleId(roleId: roleId);
+
       return UserRole.fromId(roleId) ?? UserRole.user;
     } catch (e) {
       debugPrint('Error fetching role: $e');
