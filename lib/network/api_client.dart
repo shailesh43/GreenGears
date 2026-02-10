@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:logger/logger.dart';
+import 'package:dio/dio.dart';
 
 // REFERENCES
 import './api_constants.dart';
@@ -42,7 +43,12 @@ import './api_models/get_all_docs_response_model.dart';
 class ApiClient {
   final http.Client _client = http.Client();
   final Logger logger = Logger();
-
+  final Dio _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+    ),
+  );
   // ---------------- GET ----------------
   Future<Map<String, dynamic>> get(String endpoint) async
   {
@@ -274,40 +280,39 @@ class ApiClient {
 
   // TODO: Test & Rewrite this endpoint
   // 4.3) API Endpoint: /uploadDocument
-  Future<UploadDocumentResponseModel> uploadDocument(
-      Map<String, dynamic> body,)
-  async
+  Future<UploadDocumentResponseModel> uploadDocument({
+    required Map<String, dynamic> body,
+    required void Function(double progress) onProgress,
+  }) async
   {
     final endpointUrl =
     await ApiConstants.getEndPointUrl('uploadDocument');
 
-    final uri = Uri.parse(endpointUrl);
+    final formData = FormData.fromMap({
+      'emp_id': body['emp_id'],
+      'process_stage': body['process_stage'],
+      'doc_id': body['doc_id'],
+      'files': body['files'], // 🔴 MUST be list
+    });
 
-    final request = http.MultipartRequest('POST', uri);
+    final response = await _dio.post(
+      endpointUrl,
+      data: formData,
+      options: Options(
+        headers: {
+          ..._defaultHeaders(),
+          // ❌ NEVER set Content-Type manually
+        },
+      ),
+      onSendProgress: (sent, total) {
+        if (total > 0) {
+          final progress = sent / total;
+          onProgress(progress); // 0.0 → 1.0
+        }
+      },
+    );
 
-    // ---------------- Fields ----------------
-    request.fields['emp_id'] = body['emp_id'].toString();
-    request.fields['process_stage'] =
-        body['process_stage'].toString();
-    request.fields['doc_id'] = body['doc_id'].toString();
-
-    // ---------------- Files ----------------
-    final List<http.MultipartFile> files =
-    body['files'] as List<http.MultipartFile>;
-
-    request.files.addAll(files);
-
-    // ---------------- Headers ----------------
-    request.headers.addAll(_defaultHeaders()
-      ..remove('Content-Type')); // IMPORTANT
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-
-    logger.d('${response.statusCode} > URL: $uri');
-
-    final data = _handleResponse(response, 'POST');
-    return UploadDocumentResponseModel.fromJson(data);
+    return UploadDocumentResponseModel.fromJson(response.data);
   }
 
   // 5. Fetch All Requests - ROLES: User, Admin, ES&A, Insurance based on ENUMS: UserRole, Stage
