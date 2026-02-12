@@ -134,7 +134,9 @@ class _MyAppState extends State<MyApp> {
                 if (roleSnapshot.connectionState == ConnectionState.waiting) {
                   return const Scaffold(
                     body: Center(
-                      child: CircularProgressIndicator(),
+                      child: CircularProgressIndicator(
+                        color: Color.fromRGBO(34, 197, 94, 1), // Your green color
+                      ),
                     ),
                   );
                 }
@@ -241,22 +243,20 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: Colors.white,
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Tata Power SVG + GreenGears text
+            // Logo + Text Block
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SvgPicture.asset(
-                  'assets/images/tata_power_logo.svg',
-                  height: 60,
-                  colorFilter: const ColorFilter.mode(
-                    Color.fromRGBO(15, 111, 16, 1.0),
-                    BlendMode.srcIn,
-                  ),
+                Image.asset(
+                  'assets/images/tata_power_full_logo.png',
+                  height: 72,
+                  color: const Color.fromRGBO(22, 100, 162, 1.0),
                 ),
-                const SizedBox(width: 5),
+                const SizedBox(height: 24), // ✅ correct vertical spacing
                 const Text(
                   'GreenGears',
                   style: TextStyle(
@@ -269,20 +269,20 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ],
             ),
-            const SizedBox(height: 28),
+
+            const SizedBox(height: 20), // 👈 pushes car slightly lower
+
+            // Car Lottie (smaller + cleaner)
             SizedBox(
-              height: 180,
-              child: Transform.scale(
-                scale: 1.4,
-                child: ColorFiltered(
-                  colorFilter: const ColorFilter.mode(
-                    Color.fromRGBO(70, 200, 76, 1.0),
-                    BlendMode.srcIn,
-                  ),
-                  child: Lottie.asset(
-                    'assets/anims/car_anim.json',
-                    repeat: true,
-                  ),
+              height: 250, // 👈 reduced from 180
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.mode(
+                  Color.fromRGBO(50, 50, 50, 0.96),
+                  BlendMode.srcIn,
+                ),
+                child: Lottie.asset(
+                  'assets/anims/car_anim.json',
+                  repeat: true,
                 ),
               ),
             ),

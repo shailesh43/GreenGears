@@ -143,7 +143,9 @@ class _DashboardShellState extends State<DashboardShell> {
     if (isLoading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: Color.fromRGBO(34, 197, 94, 1), // Your green color
+          ),
         ),
       );
     }
