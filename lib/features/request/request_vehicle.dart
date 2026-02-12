@@ -10,7 +10,6 @@ import '../../network/api_client.dart';
 import '../../custom/widgets/file_uploader.dart';
 import '../../custom/modals/quotation_form_modal.dart';
 import '../../custom/widgets/form_text_field.dart';
-import '../../custom/widgets/file_uploader.dart';
 import '../../custom/widgets/form_detail_row.dart';
 import '../../custom/widgets/drop_down.dart';
 
@@ -26,19 +25,26 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
   final ApiClient _client = ApiClient();
   final Logger logger = Logger();
 
-  String empId = '';
-  String? quotationAmountModalResult = '0';
+  // Form Controllers
   final _manufacturerCtrl = TextEditingController();
   final _vehicleModelCtrl = TextEditingController();
   final _colourCtrl = TextEditingController();
   final _commentsCtrl = TextEditingController();
+
+  // Form State
   String? selectedVehicleType;
+  String? quotationAmountModalResult = '0';
+
+  // Document Upload State
+  PlatformFile? uploadedQuotationFile;
+  double _uploadProgress = 0.0;
+  bool _isUploading = false;
   bool isLoading = true;
 
-  // Employee data
+  // Employee Data
+  String? empCode;
   String? empName;
   String? empEmail;
-  String? empCode;
   String? empGrade;
   String? empRole;
   String? empCostCenter;
@@ -52,11 +58,28 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
   String? empDepartment;
   String? empCompanyCode;
 
-  // For Document upload
-  PlatformFile? uploadedQuotationFile;
-  double _uploadProgress = 0.0;   // 0.0 → 1.0 for LinearProgressIndicator
-  bool _isUploading = false;
-  // Step 0: load empCode & empEligibility
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  @override
+  void dispose() {
+    _manufacturerCtrl.dispose();
+    _vehicleModelCtrl.dispose();
+    _colourCtrl.dispose();
+    _commentsCtrl.dispose();
+    super.dispose();
+  }
+
+  // ==================== INITIALIZATION ====================
+
+  Future<void> _initializeData() async {
+    await _loadEmpCodeAndEligibility();
+    await _fetchEmployeeProfile();
+  }
+
   Future<void> _loadEmpCodeAndEligibility() async {
     empCode = await LocalPrefs.getEmpCode();
     empEligibility = await LocalPrefs.getEmpEligibility();
@@ -64,10 +87,9 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       empCode = empCode;
       empEligibility = empEligibility;
     });
-    logger.d("empCode: ${empCode}");
+    logger.d("empCode: $empCode");
   }
 
-  // Step 1: Fetch employee profile
   Future<void> _fetchEmployeeProfile() async {
     if (empCode == null || empCode!.isEmpty) {
       debugPrint('Employee code is null or empty');
@@ -77,7 +99,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
     try {
       final result = await _client.getEmployeeProfile(empCode!);
-      logger.d('Result: ${result}');
+      logger.d('Result: $result');
 
       if (result != null) {
         setState(() {
@@ -90,13 +112,13 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
           empMobileNo = result.sapMobileNo;
           empCompany = result.sapCompany;
           empWorkLocation = result.workLocationDescription;
-          empEligibility = empEligibility;
           empCostCenter = result.sapCostCenter;
           empRetirementDate = result.sapRetirementDate?.toString();
           empCluster = result.hrclText;
           empDepartment = result.sapCurrJobDesc;
           empCompanyCode = result.sbuText;
         });
+
         await LocalPrefs.saveEmployeeProfile(
           empName: empName,
           empEmail: empEmail?.toLowerCase(),
@@ -106,7 +128,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
         );
       } else {
         debugPrint('Employee profile not found');
-        setState(() => isLoading = false); //
+        setState(() => isLoading = false);
       }
     } catch (e) {
       debugPrint('Error fetching employee profile: $e');
@@ -114,7 +136,9 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     }
   }
 
-  // Step 2: Bind New Employee data: To validate the existent User request
+  // ==================== REQUEST BODY BUILDERS ====================
+
+  /// Prepares the new employee data payload
   Map<String, dynamic> _bindNewEmployeeRequestBody() {
     return {
       "emp_id": empCode,
@@ -134,10 +158,10 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     };
   }
 
-  // Step 3: Bind the inputs from the "Create Request" form fields
+  /// Prepares the vehicle request payload from form inputs
   Map<String, dynamic> _bindCreateVehicleRequestBody() {
     return {
-      "emp_id": empId,
+      "emp_id": empCode,
       "car_model": _vehicleModelCtrl.text.trim(),
       "manufacturer": _manufacturerCtrl.text.trim(),
       "purpose": "Official Use",
@@ -146,12 +170,12 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       "vehicle_type": selectedVehicleType,
       "quotation": quotationAmountModalResult,
       "cooling_period": "90 days",
-      "updated_by": empId,
+      "updated_by": empCode,
       "comments": _commentsCtrl.text.trim(),
     };
   }
 
-  // Step 4: Bind the documentReqBody
+  /// Prepares the document upload payload
   Map<String, dynamic> _bindUploadDocRequestBody() {
     if (uploadedQuotationFile == null) {
       throw Exception('No file selected');
@@ -161,16 +185,194 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       'emp_id': empCode.toString(),
       'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
       'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(),
-
-      // MUST be a LIST for multer.array("files")
       'files': [
         MultipartFile.fromBytes(
-          uploadedQuotationFile!.bytes!, // 🔴 buffer
-          filename: uploadedQuotationFile!.name, // 🔴 originalname
+          uploadedQuotationFile!.bytes!,
+          filename: uploadedQuotationFile!.name,
         ),
       ],
     };
   }
+
+  // ==================== VALIDATION ====================
+
+  /// Validates all required fields before submission
+  bool _validateBeforeSubmit() {
+    // Document validation
+    if (uploadedQuotationFile == null) {
+      _showSnackBar(
+        context: context,
+        message: "Upload Quotation document",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // Manufacturer validation
+    if (_manufacturerCtrl.text.trim().isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Please enter manufacturer",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // Vehicle model validation
+    if (_vehicleModelCtrl.text.trim().isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Please enter vehicle model",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // Color validation
+    if (_colourCtrl.text.trim().isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Please enter Vehicle color",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // Vehicle type validation
+    if (selectedVehicleType == null || selectedVehicleType!.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Please select vehicle type",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // Quotation validation
+    if (quotationAmountModalResult == '0' || quotationAmountModalResult!.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: "Open Quotation Form modal and fill the data",
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  // ==================== SUBMISSION HANDLERS ====================
+
+  /// Main submission handler - orchestrates the three-step process
+  Future<void> _handleSubmit() async {
+    try {
+      // STEP 1: Upload document to S3
+      await _handleUpload();
+
+      // STEP 2: Create/update employee record
+      final newEmpRequestBody = _bindNewEmployeeRequestBody();
+      await _client.createNewEmployee(newEmpRequestBody);
+
+      // STEP 3: Create vehicle request
+      final carRequestBody = _bindCreateVehicleRequestBody();
+      final response = await _client.createNewVehicleRequest(carRequestBody);
+
+      if (!mounted) return;
+
+      // Success feedback
+      _showSnackBar(
+        context: context,
+        message: 'New Request Created successfully!',
+        isSuccess: true,
+      );
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  /// Handles document upload with progress tracking
+  Future<void> _handleUpload() async {
+    try {
+      final docReqBody = _bindUploadDocRequestBody();
+
+      setState(() {
+        _isUploading = true;
+        _uploadProgress = 0.0;
+      });
+
+      await _client.uploadDocument(
+        body: docReqBody,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() {
+            _uploadProgress = progress;
+          });
+        },
+      );
+
+      setState(() {
+        _isUploading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      // Propagate failure to caller
+      rethrow;
+    }
+  }
+
+  // ==================== UI HELPERS ====================
+
+  void _showQuotationModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => QuotationFormModal(
+        onConfirm: (amount) {
+          setState(() {
+            quotationAmountModalResult = amount;
+          });
+        },
+      ),
+    );
+  }
+
+  void _showSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: isSuccess
+                ? const Color(0xFF388E3B)
+                : const Color(0xFFFA6262),
+          ),
+        ),
+        backgroundColor: isSuccess
+            ? const Color(0xFFD7FFD8)
+            : const Color(0xFFFFE3E3),
+      ),
+    );
+  }
+
+  // ==================== BUILD METHOD ====================
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +446,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                     DropdownField(
                       label: 'Vehicle Type',
                       hints: 'Select Vehicle Type',
-                      items: ["Petrol", "Diesel", "EV", "Hybrid", "CNG"],
+                      items: const ["Petrol", "Diesel", "EV", "Hybrid", "CNG"],
                       required: true,
                       onChanged: (value) {
                         setState(() {
@@ -264,26 +466,25 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                     const SizedBox(height: 20),
 
                     // Upload Document
-
                     FileUploadField(
                       label: 'Upload Quotation Document',
-                      allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+                      allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
                       onFileSelected: (file) {
-                        uploadedQuotationFile = file; // 🔴 THIS is required
+                        setState(() {
+                          uploadedQuotationFile = file;
+                        });
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    // Process_stage & Doc_id Logic
-
-                    // Calculate Quotation Button
+                    // Quotation Button
                     SizedBox(
                       width: double.infinity,
-                      height: 52,
+                      height: 48,
                       child: ElevatedButton(
                         onPressed: _showQuotationModal,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2C2C2C),
+                          backgroundColor: const Color(0xF5323232),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -302,7 +503,10 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                     const SizedBox(height: 20),
 
                     // Quotation Amount Display
-                    DetailRow(label: 'Quotation Amount (₹)', value: '₹ $quotationAmountModalResult'),
+                    DetailRow(
+                      label: 'Quotation Amount (₹)',
+                      value: '₹ $quotationAmountModalResult',
+                    ),
                   ],
                 ),
               ),
@@ -325,17 +529,17 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: _isUploading
+                      ? null
+                      : () async {
                     if (!_formKey.currentState!.validate()) return;
                     if (!_validateBeforeSubmit()) return;
 
                     try {
-                      // Optional: show loading
                       setState(() {
                         _isUploading = true;
                       });
 
-                      // Call the unified submit handler
                       await _handleSubmit();
                     } finally {
                       if (mounted) {
@@ -377,175 +581,5 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
         ),
       ),
     );
-  }
-
-  // Widget Specifics
-  void _showQuotationModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => QuotationFormModal(
-        onConfirm: (amount) {
-          setState(() {
-            quotationAmountModalResult = amount;
-          });
-        },
-      ),
-    );
-  }
-
-  void _showSnackBar({
-    required BuildContext context,
-    required String message,
-    required bool isSuccess,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: isSuccess
-                ? const Color(0xFF388E3B)
-                : const Color(0xFFFA6262),
-          ),
-        ),
-        backgroundColor: isSuccess
-            ? const Color(0xFFD7FFD8)
-            : const Color(0xFFFFE3E3),
-      ),
-    );
-  }
-
-  bool _validateBeforeSubmit() {
-    if (uploadedQuotationFile == null) {
-      _showSnackBar(
-        context: context,
-        message: "Upload Quotation document",
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    if (_manufacturerCtrl.text.trim().isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Please enter manufacturer",
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    if (_vehicleModelCtrl.text.trim().isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Please enter vehicle model",
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    if (_colourCtrl.text.trim().isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Please enter Vehicle color",
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    if (selectedVehicleType == null || selectedVehicleType!.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Please select vehicle type",
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    if (quotationAmountModalResult == '0' || quotationAmountModalResult!.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Open Quotation Form modal and fill the data",
-        isSuccess: false,
-      );
-      return false;
-    }
-    return true; // ✅ all inputs valid
-  }
-
-  Future<void> _handleSubmit() async {
-    try {
-      // ---------------- STEP 1: Upload document ----------------
-      await _handleUpload();
-
-      // ---------------- STEP 2: New/update Employee Data ----------------
-      final newEmpRequestBody = _bindNewEmployeeRequestBody();
-      await _client.createNewEmployee(newEmpRequestBody);
-      // ---------------- STEP 3: New Vehicle Request ----------------
-      final carRequestBody = _bindCreateVehicleRequestBody();
-      final response = await _client.createNewVehicleRequest(carRequestBody);
-      if (!mounted) return;
-
-      // ---------------- SUCCESS ----------------
-      _showSnackBar(
-        context: context,
-        message: 'New Request Created successfully!',
-        isSuccess: true,
-      );
-
-      Navigator.pop(context, response);
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  Future<void> _handleUpload() async {
-    try {
-      final docReqBody = _bindUploadDocRequestBody();
-
-      setState(() {
-        _isUploading = true;
-        _uploadProgress = 0.0;
-      });
-
-      await _client.uploadDocument(
-        body: docReqBody,
-        onProgress: (progress) {
-          if (!mounted) return;
-          setState(() {
-            _uploadProgress = progress;
-          });
-        },
-      );
-
-      setState(() {
-        _isUploading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _isUploading = false;
-      });
-
-      // ⛔ propagate failure to caller
-      rethrow;
-    }
-  }
-
-  @override
-  void dispose() {
-    _manufacturerCtrl.dispose();
-    _vehicleModelCtrl.dispose();
-    _colourCtrl.dispose();
-    _commentsCtrl.dispose();
-    super.dispose();
   }
 }
