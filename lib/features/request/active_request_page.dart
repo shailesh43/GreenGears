@@ -102,7 +102,8 @@ class _ActiveRequestPageState extends State<ActiveRequestPage> {
       BuildContext context, {
         required CarRequest request,
         required int roleId,
-      }) async {
+      }) async
+  {
     try {
       if (!mounted) return;
 

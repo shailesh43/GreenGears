@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../network/api_client.dart';
 import '../../network/api_models/role_by_employee.dart';
+import '../../network/api_models/car_request.dart';
 import '../../network/api_models/employee_profile_data.dart';
 import '../request/request_vehicle.dart';
 import '../../constants/local_prefs.dart';
@@ -31,6 +32,9 @@ class _ProfilePageState extends State<ProfilePage> {
   String? employeeAddress;
   String? employeeCluster;
 
+  CarRequest? employeeRequest;
+  final List<CarRequest> activeRequests = [];
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await _loadEmpCode();
     await _fetchEmployeeProfile();
     await _loadEmpEligibility();
+    await _loadFilterBasedRequests();
   }
   // Load Employee Code
   Future<void> _loadEmpCode() async {
@@ -87,17 +92,73 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() => isLoading = false);
     }
   }
+
   // Load Eligibility from Local Prefs
   Future<void> _loadEmpEligibility() async {
     employeeEligibility = await LocalPrefs.getEmpEligibility();
     setState(() {});
   }
 
+  Future<void> _loadFilterBasedRequests() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // 1️⃣ Load from LocalPrefs
+    final empId = await LocalPrefs.getEmpCode();
+    final roleId = await LocalPrefs.getRoleId();
+
+    if (empId == null || empId.isEmpty) {
+      debugPrint('Employee ID is null or empty');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    if (roleId == null) {
+      debugPrint('Role ID is null - check LocalPrefs');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      // 2️⃣ API call (NEW endpoint)
+      final response = await _client.getStatusFilteredRequests(
+        empId: empId,
+        role: roleId,
+      );
+
+      // 3️⃣ Update state
+      setState(() {
+        activeRequests
+          ..clear()
+          ..addAll(response.active);
+
+
+        isLoading = false;
+      });
+
+      if (activeRequests.isNotEmpty) {
+        setState(() {
+          employeeRequest = activeRequests.firstWhere(
+                  (request) => request.empId == empId
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching status-filtered requests: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color.fromRGBO(34, 197, 94, 1), // Your green color
+          ),
+        ),
       );
     }
 
@@ -367,15 +428,15 @@ class _ExpandableAddressFieldState extends State<ExpandableAddressField> {
                       padding: const EdgeInsets.only(top: 4),
                       child: Align(
                         alignment: Alignment.centerRight,
-                      child: Text(
-                        _expanded ? 'View less' : 'View more',
-                        style: const TextStyle(
-                          color: Color.fromRGBO(37, 99, 235, 1), // blue-600
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Inter',
+                        child: Text(
+                          _expanded ? 'View less' : 'View more',
+                          style: const TextStyle(
+                            color: Color.fromRGBO(37, 99, 235, 1), // blue-600
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Inter',
+                          ),
                         ),
-                      ),
                       ),
                     ),
                   ),
@@ -388,12 +449,93 @@ class _ExpandableAddressFieldState extends State<ExpandableAddressField> {
   }
 }
 
-// Vehicle Details Page
-class VehicleDetailsPage extends StatelessWidget {
+// Vehicle Details Page - Now a StatefulWidget
+class VehicleDetailsPage extends StatefulWidget {
   const VehicleDetailsPage({Key? key}) : super(key: key);
 
   @override
+  State<VehicleDetailsPage> createState() => _VehicleDetailsPageState();
+}
+
+class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
+  final ApiClient _client = ApiClient();
+
+  // Employee Vehicle Request (if exist i.e. Active Request)
+  CarRequest? employeeRequest;
+  final List<CarRequest> activeRequests = [];
+
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFilterBasedRequests();
+  }
+
+  // Check for Active request - Same logic as dashboard_main.dart
+  Future<void> _loadFilterBasedRequests() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // 1️⃣ Load from LocalPrefs
+    final empId = await LocalPrefs.getEmpCode();
+    final roleId = await LocalPrefs.getRoleId();
+
+    if (empId == null || empId.isEmpty) {
+      debugPrint('Employee ID is null or empty');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    if (roleId == null) {
+      debugPrint('Role ID is null - check LocalPrefs');
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      // 2️⃣ API call
+      final response = await _client.getStatusFilteredRequests(
+        empId: empId,
+        role: roleId,
+      );
+
+      // 3️⃣ Update state
+      setState(() {
+        activeRequests
+          ..clear()
+          ..addAll(response.active);
+
+        isLoading = false;
+      });
+
+      if (activeRequests.isNotEmpty) {
+        setState(() {
+          employeeRequest = activeRequests.firstWhere(
+                  (request) => request.empId == empId
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching status-filtered requests: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color.fromRGBO(34, 197, 94, 1), // Your green color
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -427,56 +569,152 @@ class VehicleDetailsPage extends StatelessWidget {
                 fontFamily: 'Inter',
               ),
             ),
-            const SizedBox(height: 40),
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'You haven\'t registered for any Vehicle yet.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color.fromRGBO(17, 24, 39, 1),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'Inter',
+            const SizedBox(height: 16),
+
+            // Show request data if there's an active request, otherwise show "Request a Vehicle"
+            if (employeeRequest != null) ...[
+              // Display Vehicle Request Details
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: double.infinity),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const VehicleRequestPage(),
+                    child: Column(
+                      children: [
+                        ProfileField(
+                          label: 'Request ID',
+                          value: employeeRequest!.requestId,
+                        ),
+                        const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                        ProfileField(
+                          label: 'Manufacturer',
+                          value: employeeRequest!.manufacturer,
+                        ),
+                        const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                        ProfileField(
+                          label: 'Car Model',
+                          value: employeeRequest!.carModel,
+                        ),
+                        const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                        ProfileField(
+                          label: 'Color Choice',
+                          value: employeeRequest!.colorChoice,
+                        ),
+                        const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                        ProfileField(
+                          label: 'Choice of Lease',
+                          value: employeeRequest!.choiceOfLease,
+                        ),
+                        const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                        ProfileField(
+                          label: 'Purpose',
+                          value: employeeRequest!.purpose,
+                        ),
+                        const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                        ProfileField(
+                          label: 'Vehicle Type',
+                          value: employeeRequest!.vehicleType,
+                        ),
+                        const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                        ProfileField(
+                          label: 'Stage',
+                          value: employeeRequest!.stageName,
+                        ),
+                        const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                        ProfileField(
+                          label: 'Status',
+                          value: employeeRequest!.recordStatusName,
+                        ),
+                        if (employeeRequest!.quotation != null) ...[
+                          const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                          ProfileField(
+                            label: 'Quotation',
+                            value: '₹${employeeRequest!.quotation?.toStringAsFixed(2)}',
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(
-                            186, 255, 188, 1.0),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        elevation: 0,
+                        ],
+                        if (employeeRequest!.emiAmount != null) ...[
+                          const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                          ProfileField(
+                            label: 'EMI Amount',
+                            value: '₹${employeeRequest!.emiAmount?.toStringAsFixed(2)}',
+                          ),
+                        ],
+                        if (employeeRequest!.completeEmiTenure != null) ...[
+                          const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                          ProfileField(
+                            label: 'EMI Tenure',
+                            value: '${employeeRequest!.completeEmiTenure} months',
+                          ),
+                        ],
+                        if (employeeRequest!.poNumber != null) ...[
+                          const Divider(height: 1, thickness: 1, color: Color.fromRGBO(229, 231, 235, 1)),
+                          ProfileField(
+                            label: 'PO Number',
+                            value: employeeRequest!.poNumber,
+                            isLast: true,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ] else ...[
+              // Show "Request a Vehicle" section when no active request
+              const SizedBox(height: 24),
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'You haven\'t registered for any Vehicle yet.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color.fromRGBO(17, 24, 39, 1),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Inter',
                       ),
-                      child: const Text(
-                        'Request a Vehicle',
-                        style: TextStyle(
-                          color: Color.fromRGBO(40, 116, 43, 1.0),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Inter',
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VehicleRequestPage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromRGBO(
+                              124, 209, 127, 1.0),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Request a Vehicle',
+                          style: TextStyle(
+                            color: Color.fromRGBO(255, 255, 255, 1.0),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Inter',
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
