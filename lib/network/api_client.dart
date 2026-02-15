@@ -708,6 +708,13 @@ class ApiClient {
     required String requestId,
     required String empId,
     required String commentsAssignedToEsna,
+    required String vehicleNumber,
+    required String vehicleMake,
+    required String vehicleModel,
+    required String chassisNumber,
+    required String engineNumber,
+    required String vehicleHandoverDate,
+    required String fastTagNumber
   }) async
   {
     final endpointUrl =
@@ -718,7 +725,14 @@ class ApiClient {
     final body = {
       'emp_id': empId,
       'req_id': requestId,
-      'comments_assigned_to_esna': commentsAssignedToEsna,
+      'comments_rto_tax_receipt_other_docs_esna': commentsAssignedToEsna,
+      'vehicle_number' : vehicleNumber,
+      'vehicle_make' : vehicleMake,
+      'vehicle_model' : vehicleModel,
+      'chasis_number' : chassisNumber,
+      'engine_number' : engineNumber,
+      'vehicle_hand_over_date_to_employee' : vehicleHandoverDate,
+      'fast_tag_number' : fastTagNumber,
     };
 
     final response = await _client.post(
