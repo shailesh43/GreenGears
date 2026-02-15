@@ -168,11 +168,11 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryMessage: 'Request Approved',
-        secondaryMessage: 'Request Rejected',
-        onPrimaryAction: () => _handleApprove(),
-        onSecondaryAction: () => _handleReject(),
-      ),
+        primaryValidator: _validateBeforeApprove,
+        onPrimaryAction: _handleApprove,
+        onSecondaryAction: _handleReject,
+      )
+
     );
   }
 
@@ -297,7 +297,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
 
     try {
       // ---------------- STEP 1: Upload document ----------------
-      await _handleUpload(); // ⬅️ integrated here
+      await _handleUpload();
 
       // ---------------- STEP 2: Submit for approval ----------------
       final response = await _client.SubmitForInsuranceQuoteApproval(
@@ -354,6 +354,70 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
         SnackBar(content: Text(e.toString())),
       );
     }
+  }
+
+  bool _validateBeforeApprove() {
+    final baseText = _baseInsuranceCtrl.text.trim();
+    final tataText = _addOnCoverCtrl.text.trim();
+    final sapphireText = _addOnSapphireCtrl.text.trim();
+
+    // 1️⃣ Check if all fields are empty
+    if (baseText.isEmpty &&
+        tataText.isEmpty &&
+        sapphireText.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Please enter at least one insurance amount',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // 2️⃣ Validate numeric values
+    final baseInsurance = int.tryParse(baseText);
+    final tataPower = int.tryParse(tataText);
+    final sapphirePlus = int.tryParse(sapphireText);
+
+    if (baseText.isNotEmpty && baseInsurance == null) {
+      _showSnackBar(
+        context: context,
+        message: 'Base Insurance must be a valid number',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    if (tataText.isNotEmpty && tataPower == null) {
+      _showSnackBar(
+        context: context,
+        message: 'Tata Power Add-on must be a valid number',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    if (sapphireText.isNotEmpty && sapphirePlus == null) {
+      _showSnackBar(
+        context: context,
+        message: 'Sapphire Plus Add-on must be a valid number',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // 3️⃣ Ensure at least one value is greater than zero
+    if ((baseInsurance ?? 0) <= 0 &&
+        (tataPower ?? 0) <= 0 &&
+        (sapphirePlus ?? 0) <= 0) {
+      _showSnackBar(
+        context: context,
+        message: 'At least one insurance amount must be greater than 0',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    return true; // 🔥 Safe to proceed
   }
 
 }
