@@ -9,10 +9,10 @@ import 'package:flutter/material.dart';
 /// Common use cases: Approve/Reject, Submit/Cancel, Save/Discard, Confirm/Cancel
 class ActionButtonPair extends StatefulWidget {
   /// Callback function triggered when primary (left) button is pressed
-  final VoidCallback? onPrimaryAction;
+  final Future<void> Function()? onPrimaryAction;
 
   /// Callback function triggered when secondary (right) button is pressed
-  final VoidCallback? onSecondaryAction;
+  final Future<void> Function()? onSecondaryAction;
 
   /// Text for the primary button (defaults to 'Confirm')
   final String primaryText;
@@ -66,29 +66,15 @@ class ActionButtonPairState extends State<ActionButtonPair> {
       _isProcessing = true;
     });
 
-    // Call the onPrimaryAction callback if provided
-    widget.onPrimaryAction?.call();
-
-    // Close the current screen
-    if (mounted) {
-      Navigator.pop(context);
-
-      // Show snackbar if message is provided
-      if (widget.primaryMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.primaryMessage!,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                color: Color(0xFF388E3B),
-              ),
-            ),
-            backgroundColor: const Color(0xFFD7FFD8),
-          ),
-        );
-      }
+    if (widget.onPrimaryAction != null) {
+      await widget.onPrimaryAction!();
     }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isProcessing = false;
+    });
   }
 
   void _handleSecondaryAction() async {
@@ -98,29 +84,13 @@ class ActionButtonPairState extends State<ActionButtonPair> {
       _isProcessing = true;
     });
 
-    // Call the onSecondaryAction callback if provided
     widget.onSecondaryAction?.call();
 
-    // Close the current screen
-    if (mounted) {
-      Navigator.pop(context);
+    if (!mounted) return;
 
-      // Show snackbar if message is provided
-      if (widget.secondaryMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.secondaryMessage!,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                color: Color(0xFFFA6262),
-              ),
-            ),
-            backgroundColor: const Color(0xFFFFE3E3),
-          ),
-        );
-      }
-    }
+    setState(() {
+      _isProcessing = false;
+    });
   }
 
   @override
