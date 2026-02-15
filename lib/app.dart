@@ -43,7 +43,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _preloadAssets(BuildContext context) async {
     await precacheImage(
-      const AssetImage('assets/images/tata_power_logo.png'),
+      const AssetImage('assets/images/tata_power_full_logo.png'),
       context,
     );
   }
@@ -215,7 +215,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1200),
     );
 
     _slideAnimation = Tween<Offset>(
@@ -241,55 +241,47 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Logo + Text Block
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/images/tata_power_full_logo.png',
-                  height: 72,
-                  color: const Color.fromRGBO(22, 100, 162, 1.0),
-                ),
-                const SizedBox(height: 24), // ✅ correct vertical spacing
-                const Text(
-                  'GreenGears',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.6,
-                    color: Color.fromRGBO(15, 111, 16, 1.0),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20), // 👈 pushes car slightly lower
-
-            // Car Lottie (smaller + cleaner)
-            SizedBox(
-              height: 250, // 👈 reduced from 180
-              child: ColorFiltered(
-                colorFilter: const ColorFilter.mode(
-                  Color.fromRGBO(50, 50, 50, 0.96),
-                  BlendMode.srcIn,
-                ),
-                child: Lottie.asset(
-                  'assets/anims/car_anim.json',
-                  repeat: true,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Logo + Text Block
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/images/tata_power_full_logo.png',
+                height: 80,
+                color: const Color.fromRGBO(22, 100, 162, 1.0),
+              ),
+              const SizedBox(height: 32),
+              const Text(
+                'GreenGears',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.8,
+                  color: Color.fromRGBO(15, 111, 16, 1.0),
                 ),
               ),
+            ],
+          ),
+
+          const SizedBox(height: 42),
+
+          // ✅ Full-width Lottie
+          SizedBox(
+            width: double.infinity,
+            height: 250,
+            child: Lottie.asset(
+              'assets/anims/moving_car_lottie.json',
+              fit: BoxFit.cover, // important for full width feel
+              repeat: true,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
-
   }
 }
