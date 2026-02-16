@@ -90,22 +90,34 @@ class ActionButtonPairState extends State<ActionButtonPair> {
       children: [
         Expanded(
           flex: showSecondary ? 1 : 2,
-          child: _isProcessing
-              ? const SizedBox(
-            height: 18,
-            width: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
+          child: ElevatedButton(
+            onPressed: _isProcessing ? null : _handlePrimaryAction,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: widget.primaryColor,
+              disabledBackgroundColor:
+              widget.primaryColor.withOpacity(0.6),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(40),
+              ),
             ),
-          )
-              : Text(
-            widget.primaryText,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: widget.primaryTextColor,
+            child: _isProcessing
+                ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+                : Text(
+              widget.primaryText,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: widget.primaryTextColor,
+              ),
             ),
           ),
         ),

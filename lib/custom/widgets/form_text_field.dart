@@ -9,6 +9,7 @@ class FormTextField extends StatelessWidget {
   /// The label text displayed above the text field
   final String label;
   final String hint;
+
   /// Whether this field is required (shows red asterisk)
   final bool required;
 
@@ -74,6 +75,10 @@ class FormTextField extends StatelessWidget {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
