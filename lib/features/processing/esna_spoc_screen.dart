@@ -172,7 +172,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => RequestVerificationModal(request: request),
+      builder: (_) => RequestVerificationModal(request: request, parentContext: context,),
     );
   }
 

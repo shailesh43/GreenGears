@@ -267,7 +267,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Flexible(
                       child: Image.asset(
-                        'assets/images/tata_power_logo.png',
+                        'assets/images/tata_power_full_logo.png',
                         height: 48,
                         fit: BoxFit.contain,
                         color: Colors.white,

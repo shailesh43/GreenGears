@@ -31,13 +31,20 @@ class UserApproval extends StatefulWidget {
 class _UserApprovalState extends State<UserApproval> {
   final ApiClient _client = ApiClient();
   bool isLoading = true;
-  final _commentsCtrl = TextEditingController();
-
+  final _commentsInsuranceCtrl = TextEditingController();
+  final _commentsEmiCtrl = TextEditingController();
+  String? addOnTataPowerValue;
+  String? addOnSapphirePlusValue;
   // State variable to hold the approval request
   CarRequest? approvalRequest;
   // Single approval request and its type
   ApprovalType? approvalType;
   String? selectedInsuranceType;
+
+  final _chassisNumberCtrl = TextEditingController();
+  final _engineNumberCtrl = TextEditingController();
+  final _fastTagNumberCtrl = TextEditingController();
+  final _vehicleHandoverDateCtrl = TextEditingController();
 
   Future<void> _loadUserApprovals() async {
     setState(() => isLoading = true);
@@ -120,35 +127,51 @@ class _UserApprovalState extends State<UserApproval> {
     );
   }
 
-  Future<void> _handleInsuranceQuoteApproval() async {
-    // Handle insurance quote approval logic
+  // First Approval
+  bool _validateBeforeInsuranceApprove() {
     final request = approvalRequest!;
+    final comments = _commentsInsuranceCtrl.text.trim();
 
-    final requestId = request.requestId;
+    if (selectedInsuranceType == null) {
+      _showSnackBar(
+        context: context,
+        message: 'Please select Insurance Type',
+        isSuccess: false,
+      );
+      return false;
+    }
 
-    final String addOnTataPowerValue =
+    addOnTataPowerValue =
     selectedInsuranceType == 'Add on Tata Power'
         ? (request.addOnCoverTataPower?.toString() ?? '')
         : '';
 
-    final String addOnSapphirePlusValue =
+    addOnSapphirePlusValue =
     selectedInsuranceType == 'Add on Sapphire plus'
         ? (request.addOnSapphirePlus?.toString() ?? '')
         : '';
 
-      if (requestId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Missing request')),
-        );
-        return;
-      }
+    if (comments.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Comments are required',
+        isSuccess: false,
+      );
+      return false;
+    }
 
+    return true;
+  }
+  Future<void> _handleInsuranceQuoteApproval() async {
+    final request = approvalRequest!;
+    final requestId = request.requestId!;
+    // Handle insurance quote approval logic
       try {
         final response = await _client.firstUserApproval(
           requestId: requestId,
-          userApprovalComments: _commentsCtrl.text.trim(),
-          addOnTataPower: addOnTataPowerValue,
-          addOnSapphirePlus: addOnSapphirePlusValue,
+          userApprovalComments: _commentsInsuranceCtrl.text.trim(),
+          addOnTataPower: addOnTataPowerValue!,
+          addOnSapphirePlus: addOnSapphirePlusValue!,
         );
 
         Navigator.pop(context, response); // success close
@@ -184,7 +207,6 @@ class _UserApprovalState extends State<UserApproval> {
       );
     }
   }
-
   Widget _buildInsuranceQuoteApprovalContent(CarRequest request) {
 
     final String insuranceValue =
@@ -213,9 +235,9 @@ class _UserApprovalState extends State<UserApproval> {
         DetailRow(label: 'Request ID', value: request.requestId ?? ''),
         DetailRow(label: 'Grade', value: request.grade ?? ''),
         DetailRow(label: 'Email', value: request.email ?? ''),
-        DetailRow(label: 'Quoatation Amount', value: request.quotation?.toString() ?? ''),
+        DetailRow(label: 'Quoatation Amount', value: request.quotation?.toString() ?? 'NAN'),
         const SizedBox(height: 16),
-        DetailRow(label: 'Base Insurance', value: request.baseInsurancePremium?.toString() ?? ''),
+        DetailRow(label: 'Base Insurance', value: request.baseInsurancePremium?.toString() ?? 'NAN'),
         const SizedBox(height: 16),
         DropdownField(
           label: 'Insurance add on',
@@ -243,48 +265,62 @@ class _UserApprovalState extends State<UserApproval> {
           hint: 'Your comments',
           maxLines: 3,
           required: true,
-          controller: _commentsCtrl,
+          controller: _commentsInsuranceCtrl,
         ),
         const SizedBox(height: 24),
         ActionButtonPair(
           primaryText: 'Approve',
           secondaryText: 'Reject',
-          primaryMessage: 'Insurance Quote Approved',
-          secondaryMessage: 'Insurance Quote Rejected',
-          onPrimaryAction: () =>  _handleInsuranceQuoteApproval(),
-          onSecondaryAction: () =>  _handleInsuranceQuoteRejection(),
+          primaryValidator: _validateBeforeInsuranceApprove,
+          onPrimaryAction: _handleInsuranceQuoteApproval,
+          onSecondaryAction: _handleInsuranceQuoteRejection,
         ),
       ],
     );
   }
 
-  Future<void> _handleEmiDeductionApproval() async {
-    //   final requestId = widget.request.requestId;
-    //   final empId = widget.request.empId;
-    //
-    //   if (requestId == null || empId == null ) {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       const SnackBar(content: Text('Missing request or ES&A details')),
-    //     );
-    //     return;
-    //   }
-    //
-    //   try {
-    //     final response = await _client.assignToInsurance(
-    //       requestId: requestId,
-    //       empId: empId,
-    //       commentsAssignedToEsna: _commentsCtrl.text.trim(),
-    //     );
-    //
-    //     Navigator.pop(context, response); // success close
-    //   } catch (e) {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text(e.toString())),
-    //     );
-    //   }
-    // }
-  }
+  // Second Approval
+  bool _validateBeforeEmiApprove() {
+    final comments = _commentsEmiCtrl.text.trim();
 
+    // Check comments
+    if (comments.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Enter Comments',
+        isSuccess: false,
+      );
+      return false;
+
+    }
+    return true;
+  }
+  Future<void> _handleEmiDeductionApproval() async {
+      final request = approvalRequest!;
+      final requestId = request.requestId;
+      final empId = request.empId;
+
+      if (requestId == null || empId == null ) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Missing request or ES&A details')),
+        );
+        return;
+      }
+
+      try {
+        final response = await _client.secondUserApproval(
+          requestId: requestId,
+          empId: empId,
+          commentsAssignedToEsna: _commentsEmiCtrl.text.trim(),
+        );
+
+        Navigator.pop(context, response); // success close
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
   Future<void> _handleEmiDeductionRejection() async {
     // Handle EMI deduction rejection logic
     final request = approvalRequest!;
@@ -311,7 +347,6 @@ class _UserApprovalState extends State<UserApproval> {
       );
     }
   }
-
   Widget _buildEmiDeductionApprovalContent(CarRequest request) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,13 +393,13 @@ class _UserApprovalState extends State<UserApproval> {
           hint: 'Your comments',
           maxLines: 3,
           required: true,
+          controller: _commentsEmiCtrl,
         ),
         const SizedBox(height: 24),
         ActionButtonPair(
           primaryText: 'Approve',
           secondaryText: 'Reject',
-          primaryMessage: 'EMI Deduction Approved',
-          secondaryMessage: 'EMI Deduction Rejected',
+          primaryValidator: _validateBeforeEmiApprove,
           onPrimaryAction: _handleEmiDeductionApproval,
           onSecondaryAction: _handleEmiDeductionRejection,
         ),
@@ -372,6 +407,7 @@ class _UserApprovalState extends State<UserApproval> {
     );
   }
 
+  // Entry point: No user approval screen validation
   Widget _buildApprovalContent() {
     if (approvalRequest == null || approvalType == null) {
       return const Center(
@@ -415,7 +451,8 @@ class _UserApprovalState extends State<UserApproval> {
         ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color.fromRGBO(
+          98, 202, 102, 1.0),))
           : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -425,6 +462,28 @@ class _UserApprovalState extends State<UserApproval> {
             _buildApprovalContent(),
           ],
         ),
+      ),
+    );
+  }
+  void _showSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: isSuccess
+                ? const Color(0xFF388E3B)
+                : const Color(0xFFFA6262),
+          ),
+        ),
+        backgroundColor: isSuccess
+            ? const Color(0xFFD7FFD8)
+            : const Color(0xFFFFE3E3),
       ),
     );
   }
