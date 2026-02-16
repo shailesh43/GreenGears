@@ -11,12 +11,15 @@ import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class RequestVerificationModal extends StatefulWidget {
   final CarRequest request;
+  final BuildContext parentContext;
 
   const RequestVerificationModal({
     super.key,
+    required this.parentContext,
     required this.request,
   });
 
@@ -82,27 +85,11 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   bool _validateBeforeApprove() {
     // Comments validation
     if (_commentsCtrl.text.trim().isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Please enter your comments',
-        isSuccess: false,
+      _showValidationToast(
+        'Please enter your comments'
       );
       return false;
     }
-
-    // Document validation (optional - only validate if document upload is required)
-    // Uncomment the block below if document upload is mandatory
-    /*
-    if (uploadedDocumentFile == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Please upload a document',
-        isSuccess: false,
-      );
-      return false;
-    }
-    */
-
     return true;
   }
 
@@ -112,6 +99,10 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   Future<void> _handleUpload() async {
     // Skip if no document selected
     if (uploadedDocumentFile == null) {
+      _showSnackBar(
+        message: 'Missing request or ES&A details',
+        isSuccess: false,
+      );
       return;
     }
 
@@ -150,15 +141,11 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
 
   /// Handles approval action
   Future<void> _handleApprove() async {
-    // Validate before proceeding
-    if (!_validateBeforeApprove()) return;
-
     final requestId = widget.request.requestId;
     final empId = widget.request.empId;
 
     if (requestId == null || empId == null) {
       _showSnackBar(
-        context: context,
         message: 'Missing request or ES&A details',
         isSuccess: false,
       );
@@ -179,19 +166,11 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       if (!mounted) return;
 
       // Success feedback
-      _showSnackBar(
-        context: context,
-        message: 'Request approved and assigned to insurance',
-        isSuccess: true,
-      );
-
-      Navigator.pop(context, response);
+      Navigator.pop(context, 'approved');
     } catch (e) {
       if (!mounted) return;
+      Navigator.pop(context, 'rejected');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
     }
   }
 
@@ -203,7 +182,6 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
 
     if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) {
       _showSnackBar(
-        context: context,
         message: 'Missing request or employee details',
         isSuccess: false,
       );
@@ -217,12 +195,6 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       );
 
       if (!mounted) return;
-
-      _showSnackBar(
-        context: context,
-        message: 'Request rejected successfully',
-        isSuccess: true,
-      );
 
       Navigator.pop(context, response);
     } catch (e) {
@@ -243,7 +215,6 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
 
     if (requestId == null) {
       _showSnackBar(
-        context: context,
         message: 'Missing request details',
         isSuccess: false,
       );
@@ -272,25 +243,38 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   // ==================== UI HELPERS ====================
 
   void _showSnackBar({
-    required BuildContext context,
     required String message,
     required bool isSuccess,
   }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: isSuccess
-                ? const Color(0xFF388E3B)
-                : const Color(0xFFFA6262),
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: isSuccess
+                  ? const Color(0xFF388E3B)
+                  : const Color(0xFFFA6262),
+            ),
           ),
+          backgroundColor: isSuccess
+              ? const Color(0xFFD7FFD8)
+              : const Color(0xFFFFE3E3),
         ),
-        backgroundColor: isSuccess
-            ? const Color(0xFFD7FFD8)
-            : const Color(0xFFFFE3E3),
-      ),
+      );
+  }
+
+  void _showValidationToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 4,   // ⬅ increase duration (default ~2 sec)
+      backgroundColor: const Color(0xFFFFE3E3),
+      textColor: const Color(0xFFFA6262),
+      fontSize: 14.0,
     );
   }
 
@@ -409,11 +393,26 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryMessage: '${widget.request.requestId}: Request Approved',
-        secondaryMessage: '${widget.request.requestId}: Request Rejected',
-        onPrimaryAction: () => _handleApprove(),
-        onSecondaryAction: () => _handleReject(),
+        primaryValidator: () {
+          return _validateBeforeApprove();
+        },
+        onPrimaryAction: () async {
+          await _handleApprove();
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Approved',
+            isSuccess: true,
+          );
+        },
+        onSecondaryAction: () async {
+          await _handleReject();
+
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Rejected',
+            isSuccess: true,
+          );
+        },
       ),
+
     );
   }
 }

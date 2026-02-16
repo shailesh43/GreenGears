@@ -130,17 +130,29 @@ class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
       ),
       bottom: ActionButtonPair(
         primaryText: 'Proceed',
+        primaryValidator: () {
+          if (selectedEsnaName == null) {
+            _showSnackBar(
+              context: context,
+              message: 'Please select ESNA before proceeding',
+              isSuccess: false,
+            );
+            return false; // 🚨 Stops execution
+          }
+          return true;
+        },
+        onPrimaryAction: () async {
+          await _handleApprove();
 
-        primaryMessage: selectedEsnaName == null
-            ? null
-            : '$selectedEsnaName has been assigned to ${widget.request.requestId} request',
-
-        onPrimaryAction: selectedEsnaName == null
-            ? null // 👈 THIS prevents auto pop
-            : _handleApprove,
-
-        onSecondaryAction: null,
+          _showSnackBar(
+            context: context,
+            message:
+            '$selectedEsnaName has been assigned to ${widget.request.requestId} request',
+            isSuccess: true,
+          );
+        },
       ),
+
     );
   }
   // Action button actual functions

@@ -6,6 +6,9 @@ import '../../network/api_client.dart';
 import '../../core/utils/enum.dart';
 import '../../network/api_models/car_request.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
+import 'package:file/file.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
 
 // Customs
 import '../widgets/action_button_pair.dart';
@@ -38,6 +41,40 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   List<UploadedDocData> uploadedDocs = [];
   List<Document> documentList = [];
   Document? selectedDocument;
+
+  // Form field controllers
+  final _vehicleNumberCtrl = TextEditingController();
+  final _chassisNumberCtrl = TextEditingController();
+  final _engineNumberCtrl = TextEditingController();
+  final _fastTagNumberCtrl = TextEditingController();
+  final _vehicleHandoverDateCtrl = TextEditingController();
+
+
+  // TODO: For Document upload & Progress
+  PlatformFile? uploadedQuotationFile;
+  double _uploadProgress = 0.0;   // 0.0 → 1.0 for LinearProgressIndicator
+  bool _isUploading = false;
+
+
+  Map<String, dynamic> _bindUploadDocRequestBody() {
+    if (uploadedQuotationFile == null) {
+      throw Exception('No file selected');
+    }
+
+    return {
+      'emp_id': widget.request.empId.toString(),
+      'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
+      'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(),
+
+      // MUST be a LIST for multer.array("files")
+      'files': [
+        MultipartFile.fromBytes(
+          uploadedQuotationFile!.bytes!, // 🔴 buffer
+          filename: uploadedQuotationFile!.name, // 🔴 originalname
+        ),
+      ],
+    };
+  }
 
   @override
   void initState() {
@@ -76,17 +113,41 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
           DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
           DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
+          DetailRow(label: 'Comments by ES&A', value: commentsOnEsnaRto?.toString() ?? 'NULL'),
 
           const SizedBox(height: 16),
-          const FormTextField(label: 'Vehicle Number', hint: 'Enter Vehicle number', required: true,),
+          FormTextField(
+            label: 'Vehicle Number',
+            hint: 'Enter Vehicle number',
+            required: true,
+            controller: _vehicleNumberCtrl,
+          ),
           const SizedBox(height: 16),
-          const FormTextField(label: 'Chassis Number', hint: 'Enter Chassis number', required: true,),
+          FormTextField(
+            label: 'Chassis Number',
+            hint: 'Enter Chassis number',
+            required: true,
+            controller: _chassisNumberCtrl,
+          ),
           const SizedBox(height: 16),
-          const FormTextField(label: 'Engine Number', hint: 'Enter Engine number', required: true,),
+          FormTextField(
+            label: 'Engine Number',
+            hint: 'Enter Engine number',
+            required: true,
+            controller: _engineNumberCtrl,
+          ),
           const SizedBox(height: 16),
-          const FormTextField(label: 'Fastag Number', hint: 'Enter Fastag Number', required: true,),
+          FormTextField(
+            label: 'Fastag Number',
+            hint: 'Enter Fastag Number',
+            required: true,
+            controller: _fastTagNumberCtrl,
+          ),
           const SizedBox(height: 16),
-          const DatePickerField(label: 'Vehicle Handover Date'),
+          DatePickerField(
+            label: 'Vehicle Handover Date',
+            controller: _vehicleHandoverDateCtrl,
+          ),
           const SizedBox(height: 16),
           const FileUploadField(label: 'Upload Files'),
           const SizedBox(height: 16),
@@ -116,10 +177,9 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryMessage: '${widget.request.requestId} Request Approved',
-        secondaryMessage: '${widget.request.requestId} Request Rejected',
-        onPrimaryAction: () => _handleApprove(),
-        onSecondaryAction: () => _handleReject(),
+        primaryValidator: _validateBeforeApprove,
+        onPrimaryAction: _handleApprove,
+        onSecondaryAction: _handleReject,
       ),
     );
   }
@@ -136,10 +196,21 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
     }
 
     try {
+      // ---------------- STEP 1: Upload document ----------------
+      await _handleUpload();
+
+      // ---------------- STEP 2: Submit for approval ----------------
       final response = await _client.submitByEsnaRtoTaxReceipt(
         requestId: requestId,
         empId: empId,
         commentsAssignedToEsna: _commentsCtrl.text.trim(),
+        vehicleNumber: _vehicleNumberCtrl.text.trim(),
+        vehicleMake: widget.request.manufacturer ?? '',
+        vehicleModel: widget.request.carModel ?? '',
+        chassisNumber: _chassisNumberCtrl.text.trim(),
+        engineNumber: _engineNumberCtrl.text.trim(),
+        vehicleHandoverDate: _vehicleHandoverDateCtrl.text.trim(),
+        fastTagNumber: _fastTagNumberCtrl.text.trim(),
       );
 
       Navigator.pop(context, response); // success close
@@ -179,6 +250,63 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
     }
   }
 
+  Future<void> _handleUpload() async {
+    try {
+      final docReqBody = _bindUploadDocRequestBody();
+
+      setState(() {
+        _isUploading = true;
+        _uploadProgress = 0.0;
+      });
+
+      await _client.uploadDocument(
+        body: docReqBody,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() {
+            _uploadProgress = progress;
+          });
+        },
+      );
+
+      setState(() {
+        _isUploading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      // ⛔ propagate failure to caller
+      rethrow;
+    }
+  }
+
+  void _showSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: isSuccess
+                ? const Color(0xFF388E3B)
+                : const Color(0xFFFA6262),
+          ),
+        ),
+        backgroundColor: isSuccess
+            ? const Color(0xFFD7FFD8)
+            : const Color(0xFFFFE3E3),
+      ),
+    );
+  }
+
   Future<void> _getCommentsByRequestId() async {
     final request = widget.request;
     final requestId = request.requestId;
@@ -196,7 +324,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       );
 
       setState(() {
-        commentsOnEsnaRto = response.data?.commentsEmiUserApproval ?? 'NULL';
+        commentsOnEsnaRto = response.data?.commentsRtoTaxReceiptOtherDocsEsna ?? 'NULL';
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -238,6 +366,77 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
         SnackBar(content: Text(e.toString())),
       );
     }
+  }
+
+  bool _validateBeforeApprove() {
+    final vehicleNumber = _vehicleNumberCtrl.text.trim();
+    final chassisNumber = _chassisNumberCtrl.text.trim();
+    final engineNumber = _engineNumberCtrl.text.trim();
+    final fastTagNumber = _fastTagNumberCtrl.text.trim();
+    final vehicleHandoverDate = _vehicleHandoverDateCtrl.text.trim();
+    final comments = _commentsCtrl.text.trim();
+
+    // 1️⃣ Check vehicle number
+    if (vehicleNumber.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Vehicle Number is required',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // 2️⃣ Check chassis number
+    if (chassisNumber.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Chassis Number is required',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // 3️⃣ Check engine number
+    if (engineNumber.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Engine Number is required',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // 4️⃣ Check fastag number
+    if (fastTagNumber.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Fastag Number is required',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // 5️⃣ Check vehicle handover date
+    if (vehicleHandoverDate.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Vehicle Handover Date is required',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    // 6️⃣ Check comments
+    if (comments.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Comments are required before approving',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    return true; // 🔥 Safe to proceed
   }
 
 }

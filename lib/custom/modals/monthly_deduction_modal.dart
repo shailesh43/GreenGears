@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:excel/excel.dart';
-
 import '../../network/api_models/car_request.dart';
 import '../../network/api_client.dart';
 import '../../core/utils/enum.dart';
@@ -35,12 +34,17 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   // Form Controllers
   final _commentsCtrl = TextEditingController();
 
-  // Excel Data State
-  String? _total;
-  String? _carAllowance;
-  String? _companyContribution;
-  String? _emiTenure;
-  String? _monthlyEmi;
+  // Excel Data State - Based on Angular cell references
+  // G14 = Total EMI
+  // G15 = Car Allowance
+  // G16 = Company Contribution
+  // B3 = EMI Tenure (Years)
+  // G17 = Monthly EMI
+  double? _totalEmi;           // G14
+  double? _carAllowance;        // G15
+  double? _companyContribution; // G16
+  double? _emiTenure;           // B3
+  double? _monthlyEmi;          // G17
   bool _excelUploaded = false;
 
   // Document Upload State
@@ -99,11 +103,15 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
       return false;
     }
 
-    // Validate extracted data
-    if (_total == null || _monthlyEmi == null) {
+    // Validate all required Excel fields are extracted
+    if (_totalEmi == null ||
+        _carAllowance == null ||
+        _companyContribution == null ||
+        _emiTenure == null ||
+        _monthlyEmi == null) {
       _showSnackBar(
         context: context,
-        message: 'Excel data not properly extracted',
+        message: 'Excel data not properly extracted. Please check the file format.',
         isSuccess: false,
       );
       return false;
@@ -165,7 +173,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
       // Show success message
       _showSnackBar(
         context: context,
-        message: 'Template downloaded to: $filePath',
+        message: 'Template downloaded successfully',
         isSuccess: true,
       );
     } catch (e) {
@@ -181,132 +189,113 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
 
   // ==================== EXCEL PROCESSING ====================
 
-  /// Handles Excel file upload and data extraction
+  /// Parses Excel file and extracts data from specific cells
   Future<void> _handleExcelUpload(PlatformFile? file) async {
-    if (file == null) {
-      _showError("No file selected.");
+    if (file == null || file.bytes == null) {
+      _showSnackBar(
+        context: context,
+        message: 'Invalid file selected',
+        isSuccess: false,
+      );
       return;
     }
 
     try {
-      if (file.bytes == null) {
-        _showError("File data missing. Please re-upload.");
-        return;
-      }
-
+      // Parse Excel file
       final excel = Excel.decodeBytes(file.bytes!);
 
+      // Get the first sheet (or you can specify sheet name)
       if (excel.tables.isEmpty) {
-        _showError("Invalid Excel file.");
-        return;
+        throw Exception('Excel file is empty');
       }
 
-      String? total;
-      String? carAllowance;
-      String? companyContribution;
-      String? emiTenure;
-      String? monthlyEmi;
+      final sheetName = excel.tables.keys.first;
+      final sheet = excel.tables[sheetName];
 
-      for (var sheet in excel.tables.values) {
-        if (sheet == null) continue;
-
-        for (var row in sheet.rows) {
-          if (row.isEmpty) continue;
-
-          final firstCell =
-              row[0]?.value?.toString().trim().toLowerCase() ?? '';
-
-          if (firstCell.contains('total vehicle cost')) {
-            total = _formatCurrency(row[1]?.value);
-          }
-
-          if (firstCell.contains('car allowance')) {
-            carAllowance = _formatCurrency(row[1]?.value);
-          }
-
-          if (firstCell.contains('company contribution')) {
-            companyContribution =
-                _formatCurrency(row[1]?.value);
-          }
-
-          if (firstCell.contains('tenure')) {
-            final val = row[1]?.value?.toString();
-            if (val != null && val.isNotEmpty) {
-              emiTenure = "$val years";
-            }
-          }
-
-          if (firstCell.contains('monthly emi')) {
-            monthlyEmi =
-                _formatCurrency(row[1]?.value);
-          }
-        }
+      if (sheet == null) {
+        throw Exception('Could not read Excel sheet');
       }
 
-      // ✅ Strict template validation
-      if (total == null || monthlyEmi == null) {
-        _showError(
-            "Invalid EMI template. Please use official format.");
-        return;
+      // Extract data from specific cells based on Angular code
+      // G14 = Total EMI (Rs)
+      final totalEmiCell = sheet.cell(CellIndex.indexByString('G14'));
+      // G15 = Car Allowance (Rs)
+      final carAllowanceCell = sheet.cell(CellIndex.indexByString('G15'));
+      // G16 = Company Contribution (Rs)
+      final companyContributionCell = sheet.cell(CellIndex.indexByString('G16'));
+      // B3 = EMI Tenure (In Yrs)
+      final emiTenureCell = sheet.cell(CellIndex.indexByString('B3'));
+      // G17 = Monthly EMI (Rs)
+      final monthlyEmiCell = sheet.cell(CellIndex.indexByString('G17'));
+
+      // Parse and validate extracted values
+      final totalEmiValue = _parseNumericValue(totalEmiCell.value);
+      final carAllowanceValue = _parseNumericValue(carAllowanceCell.value);
+      final companyContributionValue = _parseNumericValue(companyContributionCell.value);
+      final emiTenureValue = _parseNumericValue(emiTenureCell.value);
+      final monthlyEmiValue = _parseNumericValue(monthlyEmiCell.value);
+
+      // Validate that all required fields have values
+      if (totalEmiValue == null ||
+          carAllowanceValue == null ||
+          companyContributionValue == null ||
+          emiTenureValue == null ||
+          monthlyEmiValue == null) {
+        throw Exception('One or more required cells are empty or invalid');
       }
 
+      // Update state with extracted data
       setState(() {
         uploadedExcelFile = file;
         _excelUploaded = true;
-        _total = total ?? '-';
-        _carAllowance = carAllowance ?? '-';
-        _companyContribution =
-            companyContribution ?? '-';
-        _emiTenure = emiTenure ?? '-';
-        _monthlyEmi = monthlyEmi ?? '-';
+        _totalEmi = totalEmiValue;
+        _carAllowance = carAllowanceValue;
+        _companyContribution = companyContributionValue;
+        _emiTenure = emiTenureValue;
+        _monthlyEmi = monthlyEmiValue;
       });
 
-      _showSuccess("Excel parsed successfully.");
+      if (!mounted) return;
 
+      _showSnackBar(
+        context: context,
+        message: 'Excel data extracted successfully',
+        isSuccess: true,
+      );
     } catch (e) {
-      debugPrint("Excel parsing error: $e");
-      _showError("Failed to read Excel file.");
+      if (!mounted) return;
+
+      setState(() {
+        _excelUploaded = false;
+        uploadedExcelFile = null;
+        _totalEmi = null;
+        _carAllowance = null;
+        _companyContribution = null;
+        _emiTenure = null;
+        _monthlyEmi = null;
+      });
+
+      _showSnackBar(
+        context: context,
+        message: 'Error parsing Excel file: $e',
+        isSuccess: false,
+      );
     }
   }
 
-  String _formatCurrency(dynamic value) {
-    if (value == null) return '-';
+  /// Safely parses numeric values from Excel cells
+  double? _parseNumericValue(Data? cellValue) {
+    if (cellValue == null || cellValue.value == null) return null;
 
-    double? number;
+    final value = cellValue.value;
 
     if (value is num) {
-      number = value.toDouble();
-    } else {
-      number = double.tryParse(value.toString());
+      return value.toDouble();
+    } else if (value is String) {
+      return double.tryParse(value);
     }
 
-    if (number == null) return '-';
-
-    final formatter = NumberFormat.currency(
-      locale: 'en_IN',
-      symbol: '₹ ',
-      decimalDigits: 0,
-    );
-
-    return formatter.format(number);
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-  void _showSuccess(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
-    );
+    return null;
   }
 
   // ==================== SUBMISSION HANDLERS ====================
@@ -347,51 +336,56 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   }
 
   /// Handles approval action
-  Future<bool> _handleApprove() async {
-    // STEP 1: Validate form
-    if (!_validateBeforeApprove()) {
-      return false;
-    }
+  Future<void> _handleApprove() async {
+    // Validate before proceeding
+    if (!_validateBeforeApprove()) return;
 
     final request = widget.request;
     final requestId = request.requestId;
     final empId = request.empId;
 
-    // STEP 2: Basic null safety check
     if (requestId == null || empId == null) {
       _showSnackBar(
         context: context,
         message: 'Missing request or employee details',
         isSuccess: false,
       );
-      return false;
+      return;
     }
 
     try {
-      // STEP 3: Upload Excel file
+      // STEP 1: Upload EMI calculation Excel document
       await _handleUpload();
 
-      // STEP 4: Submit EMI approval
-      await _client.submitByEsnaEmi(
+      // STEP 2: Submit for EMI approval with extracted data
+      final response = await _client.submitByEsnaEmi(
         requestId: requestId,
         empId: empId,
         commentsAssignedToEsna: _commentsCtrl.text.trim(),
+        // Optionally send extracted data to backend
+        // totalEmi: _totalEmi,
+        // carAllowance: _carAllowance,
+        // companyContribution: _companyContribution,
+        // emiTenure: _emiTenure?.toInt(),
+        // monthlyEmi: _monthlyEmi,
       );
 
-      if (!mounted) return false;
+      if (!mounted) return;
 
-      // ✅ Everything succeeded
-      return true;
-    } catch (e) {
-      if (!mounted) return false;
-
+      // Success feedback
       _showSnackBar(
         context: context,
-        message: e.toString(),
-        isSuccess: false,
+        message: 'EMI calculation submitted successfully',
+        isSuccess: true,
       );
 
-      return false;
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     }
   }
 
@@ -458,6 +452,23 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  /// Formats currency values for display
+  String _formatCurrency(double? value) {
+    if (value == null) return 'N/A';
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹ ',
+      decimalDigits: 2,
+    );
+    return formatter.format(value);
+  }
+
+  /// Formats tenure values for display
+  String _formatTenure(double? value) {
+    if (value == null) return 'N/A';
+    return '${value.toInt()} years';
   }
 
   // ==================== BUILD METHOD ====================
@@ -537,6 +548,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
             style: TextStyle(
               color: Color.fromRGBO(108, 108, 108, 1.0),
               fontFamily: 'Inter',
+              fontSize: 14,
             ),
           ),
           const SizedBox(height: 8),
@@ -562,7 +574,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
           ),
           const SizedBox(height: 24),
 
-          // Extracted Data Section
+          // Extracted Data Section - Based on Angular fields
           if (_excelUploaded) ...[
             const Text(
               'Extracted Data',
@@ -574,17 +586,37 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
               ),
             ),
             const SizedBox(height: 12),
-            DetailRow(label: 'Total', value: _total ?? 'N/A'),
-            DetailRow(label: 'Car Allowance', value: _carAllowance ?? 'N/A'),
+
+            // G14 - Total EMI (Rs)
             DetailRow(
-              label: 'Company Contr.',
-              value: _companyContribution ?? 'N/A',
+              label: 'Total EMI (Rs)',
+              value: _formatCurrency(_totalEmi),
             ),
+
+            // G15 - Car Allowance (Rs)
             DetailRow(
-              label: 'EMI Tenure in Years',
-              value: _emiTenure ?? 'N/A',
+              label: 'Car Allowance (Rs)',
+              value: _formatCurrency(_carAllowance),
             ),
-            DetailRow(label: 'Monthly EMI', value: _monthlyEmi ?? 'N/A'),
+
+            // G16 - Company Contribution (Rs)
+            DetailRow(
+              label: 'Company Contribution (Rs)',
+              value: _formatCurrency(_companyContribution),
+            ),
+
+            // B3 - EMI Tenure (In Yrs)
+            DetailRow(
+              label: 'EMI Tenure',
+              value: _formatTenure(_emiTenure),
+            ),
+
+            // G17 - Monthly EMI (Rs)
+            DetailRow(
+              label: 'Monthly EMI (Rs)',
+              value: _formatCurrency(_monthlyEmi),
+            ),
+
             const SizedBox(height: 24),
           ],
 
@@ -602,24 +634,9 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryMessage: '${widget.request.requestId}: Request Approved',
-        secondaryMessage: '${widget.request.requestId}: Request Rejected',
-        onPrimaryAction: () async {
-          final success = await _handleApprove();
-
-          if (!success) return;
-
-          if (!mounted) return;
-
-          Navigator.pop(context);
-
-          _showSnackBar(
-            context: context,
-            message: '${widget.request.requestId}: Request Approved',
-            isSuccess: true,
-          );
-        },
-        onSecondaryAction: () => _handleReject(),
+        primaryValidator: _validateBeforeApprove,
+        onPrimaryAction: _handleApprove,
+        onSecondaryAction: _handleReject,
       ),
     );
   }

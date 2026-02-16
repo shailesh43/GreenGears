@@ -35,6 +35,12 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   List<Document> documentList = [];
   Document? selectedDocument;
 
+  final _poNumberCtrl = TextEditingController();
+  final _poDateCtrl = TextEditingController();
+  final _disbursementAmountCtrl = TextEditingController();
+  final _paymentDateCtrl = TextEditingController();
+  final _utrCodeCtrl = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -78,15 +84,15 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
           const SizedBox(height: 16),
 
           // ES&A Input fields
-          const FormTextField(label: 'PO Number', hint: 'Enter Purchase Order No', required: true,),
+          FormTextField(label: 'PO Number', hint: 'Enter Purchase Order No', required: true, controller: _poNumberCtrl,),
           const SizedBox(height: 16),
-          const DatePickerField(label: 'PO Date'),
+          DatePickerField(label: 'PO Date' ,controller: _poDateCtrl),
           const SizedBox(height: 16),
-          const FormTextField(label: 'Disbursement Amount', hint: 'Enter Disbursement amount', required: true,),
+          FormTextField(label: 'Disbursement Amount', hint: 'Enter Disbursement amount', required: true, controller: _disbursementAmountCtrl,),
           const SizedBox(height: 16),
-          const DatePickerField(label: 'Payment Date'),
+          DatePickerField(label: 'Payment Date', controller: _paymentDateCtrl,),
           const SizedBox(height: 16),
-          const FormTextField(label: 'UTR', hint: 'Enter UTR code', required: true,),
+          FormTextField(label: 'UTR', hint: 'Enter UTR code', required: true, controller: _utrCodeCtrl,),
           const SizedBox(height: 16),
           const FileUploadField(label: 'Upload Document'),
           const SizedBox(height: 16),
@@ -117,8 +123,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryMessage: 'Request Approved',
-        secondaryMessage: 'Request Rejected',
+        primaryValidator: _validateBeforeApprove,
         onPrimaryAction: () => _handleApprove(),
         onSecondaryAction: () => _handleReject(),
       ),
@@ -150,6 +155,45 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
         SnackBar(content: Text(e.toString())),
       );
     }
+  }
+
+  bool _validateBeforeApprove() {
+    final request = widget.request!;
+    final comments = _commentsCtrl.text.trim();
+
+    if (comments.isEmpty) {
+      _showSnackBar(
+        context: context,
+        message: 'Comments are required',
+        isSuccess: false,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  void _showSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            color: isSuccess
+                ? const Color(0xFF388E3B)
+                : const Color(0xFFFA6262),
+          ),
+        ),
+        backgroundColor: isSuccess
+            ? const Color(0xFFD7FFD8)
+            : const Color(0xFFFFE3E3),
+      ),
+    );
   }
 
   Future<void> _handleReject() async {
@@ -204,7 +248,8 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
     }
   }
 
-  Future<void> _getDocumentsByRequestId() async {
+  Future<void> _getDocumentsByRequestId() async
+  {
     final requestId = widget.request.requestId;
 
     if (requestId == null) {
