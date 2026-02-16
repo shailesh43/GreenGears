@@ -41,7 +41,7 @@ dependencies:
   encrypt: ^5.0.3
   crypto: ^3.0.7
   collection: ^1.19.1
-
+  fluttertoast: ^9.0.0
   # Excel Processing (Stable Version)
   excel: 3.0.0
 
