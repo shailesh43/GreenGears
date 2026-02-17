@@ -273,7 +273,7 @@ class _SplashScreenState extends State<SplashScreen>
           // ✅ Full-width Lottie
           SizedBox(
             width: double.infinity,
-            height: 250,
+            height: 200,
             child: Lottie.asset(
               'assets/anims/moving_car_lottie.json',
               fit: BoxFit.cover, // important for full width feel

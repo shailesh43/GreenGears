@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import './uploaded_file_model.dart';
 
 class GetAllDocsResponseModel {
   final String message;
-  final List<UploadedDocData> data;
+  final List<UploadedFileModel> data;
 
   GetAllDocsResponseModel({
     required this.message,
@@ -11,9 +12,9 @@ class GetAllDocsResponseModel {
 
   factory GetAllDocsResponseModel.fromJson(Map<String, dynamic> json) {
     return GetAllDocsResponseModel(
-      message: json['message'] ?? '',
-      data: (json['data'] as List<dynamic>? ?? [])
-          .map((e) => UploadedDocData.fromJson(e))
+      message: json['message'] as String,
+      data: (json['data'] as List<dynamic>)
+          .map((e) => UploadedFileModel.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }
