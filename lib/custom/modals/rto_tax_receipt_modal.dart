@@ -6,6 +6,7 @@ import '../../network/api_client.dart';
 import '../../core/utils/enum.dart';
 import '../../network/api_models/car_request.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
+import '../../network/api_models/uploaded_file_model.dart';
 import 'package:file/file.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
@@ -38,7 +39,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   final _commentsCtrl = TextEditingController();
 
   String? commentsOnEsnaRto;
-  List<UploadedDocData> uploadedDocs = [];
+  List<UploadedFileModel> uploadedDocs = [];
   List<Document> documentList = [];
   Document? selectedDocument;
 

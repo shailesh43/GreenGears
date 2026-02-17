@@ -13,6 +13,7 @@ import '../../network/api_client.dart';
 import '../../core/utils/enum.dart';
 import '../../network/api_models/car_request.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
+import '../../network/api_models/uploaded_file_model.dart';
 
 
 class PaymentDetailsModal extends StatefulWidget {
@@ -31,7 +32,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   final _commentsCtrl = TextEditingController();
   String? commentsOnEsnaPayment;
 
-  List<UploadedDocData> uploadedDocs = [];
+  List<UploadedFileModel> uploadedDocs = [];
   List<Document> documentList = [];
   Document? selectedDocument;
 
