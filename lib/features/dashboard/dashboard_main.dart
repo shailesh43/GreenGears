@@ -471,15 +471,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: 'Quotation docs',
                       subtitle: 'List of uploaded quotation docs till now',
                       onTap: () {
+                        // widget.request?.requestId could be null if no active request.
+                        // Guard or use a fallback as needed.
+                        final reqId = widget.request?.requestId ?? '';
+                        if (reqId.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No active request found.')),
+                          );
+                          return;
+                        }
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const UploadedQuotations(),
+                            builder: (context) => UploadedQuotations(requestId: reqId),
                           ),
                         );
                       },
-                    ),
-                  ],
+                    ),                  ],
                 ),
               ),
             ),
