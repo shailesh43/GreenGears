@@ -646,6 +646,11 @@ class ApiClient {
     required String requestId,
     required String empId,
     required String commentsAssignedToEsna,
+    required String completeEmiTenure,
+    required String emiAmount,
+    required String totalEmi,
+    required String companyContribution,
+    required String carAllowance
   }) async
   {
     final endpointUrl =
@@ -657,6 +662,11 @@ class ApiClient {
       'emp_id': empId,
       'req_id': requestId,
       'comments_assigned_to_esna': commentsAssignedToEsna,
+      'complete_emi_tenure': completeEmiTenure,
+      'emi_amount' : emiAmount,
+      'total_emi' : totalEmi,
+      'company_contribution' : companyContribution,
+      'car_allowance': carAllowance,
     };
 
     final response = await _client.post(
