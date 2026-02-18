@@ -6,18 +6,14 @@ import 'package:flutter/material.dart';
 /// and an optional red asterisk for required fields.
 
 class FormTextField extends StatelessWidget {
-  /// The label text displayed above the text field
   final String label;
   final String hint;
-
-  /// Whether this field is required (shows red asterisk)
   final bool required;
-
-  /// Optional controller for the text field
   final TextEditingController? controller;
-
-  /// Maximum number of lines for the text field
   final int maxLines;
+
+  /// New: Optional errorText to trigger error border
+  final String? errorText;
 
   const FormTextField({
     super.key,
@@ -26,6 +22,7 @@ class FormTextField extends StatelessWidget {
     this.required = false,
     this.controller,
     this.maxLines = 1,
+    this.errorText, // <-- new
   });
 
   @override
@@ -74,15 +71,14 @@ class FormTextField extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+              borderSide: BorderSide(
+                  color: errorText != null ? Color.fromRGBO(250, 98, 98, 1.0) : Color(0xFFE0E0E0)),
             ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.red),
-            ),
+            errorText: errorText, // <-- shows red border automatically
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF848484)),
+              borderSide: BorderSide(
+                  color: errorText != null ? Color.fromRGBO(250, 98, 98, 1.0) : Color(0xFF848484)),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
