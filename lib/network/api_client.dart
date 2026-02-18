@@ -798,8 +798,7 @@ class ApiClient {
   // API Endpoint: /getAllUploadedDocuments
   Future<GetAllDocsResponseModel> getAllUploadedDocsFromS3({
     required String requestId,
-  }) async
-  {
+  }) async {
     final endpointUrl =
     await ApiConstants.getEndPointUrl('getAllUploadedDocuments');
 
@@ -817,7 +816,16 @@ class ApiClient {
 
     logger.d('${response.statusCode} > URL: $url');
 
+    // Handle 404 gracefully
+    if (response.statusCode == 404) {
+      return GetAllDocsResponseModel(
+        message: "No uploaded documents found for your request",
+        data: [],
+      );
+    }
+
     final data = _handleResponse(response, 'POST');
     return GetAllDocsResponseModel.fromJson(data);
   }
+
 }

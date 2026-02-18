@@ -2,13 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
-import 'package:dio/dio.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../core/utils/enum.dart';
 import '../../network/api_client.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
 import '../../network/api_models/uploaded_file_model.dart';
+import '../../core/helpers/file_downloader.dart';
 
 
 // ---------------------------------------------------------------------------
@@ -61,118 +59,6 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
         _isLoading = false;
       });
       debugPrint('Error loading docs: $e');
-    }
-  }
-
-  // ---- helpers -------------------------------------------------------
-
-  /// Strips the leading timestamp prefix (e.g. "1748941631668_") by dropping
-  /// everything up to and including the first '_'.
-  String _displayFileName(String raw) {
-    final idx = raw.indexOf('_');
-    if (idx != -1 && idx < raw.length - 1) {
-      return raw.substring(idx + 1);
-    }
-    return raw;
-  }
-
-  String _fileIcon(String fileName) {
-    final ext = fileName.split('.').last.toLowerCase();
-    switch (ext) {
-      case 'pdf':
-        return 'PDF';
-      case 'xlsx':
-      case 'xls':
-        return 'XLS';
-      default:
-        return 'DOC';
-    }
-  }
-
-  Color _fileColor(String fileName) {
-    final ext = fileName.split('.').last.toLowerCase();
-    switch (ext) {
-      case 'pdf':
-        return const Color(0xFFE53935);
-      case 'xlsx':
-      case 'xls':
-        return const Color(0xFF2E7D32);
-      default:
-        return const Color(0xFF1565C0);
-    }
-  }
-
-  /// Downloads a presigned S3 URL using Dio so we control the filename
-  /// ourselves — bypassing iOS Safari's broken MIME sniffing from the
-  /// `response-content-type` presigned param (which can wrongly report
-  /// `.xlsx` for a `.pdf`, or vice-versa, causing Safari to rename the file).
-  ///
-  /// Steps:
-  ///  1. Extract the true filename from the S3 path segment (before `?`).
-  ///  2. Download raw bytes via Dio (no browser involved).
-  ///  3. Save to the app's temp directory with the correct filename.
-  ///  4. Open with open_filex so the OS picks the right viewer.
-  Future<void> _downloadFile(String presignedUrl, String rawFileName) async {
-    // 1️⃣  Derive the correct filename from the S3 path, not from the
-    //     presigned content-type param which may be wrong.
-    final trueFileName = _displayFileName(rawFileName);
-
-    // Show a progress snackbar
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Downloading $trueFileName…',
-          style: const TextStyle(fontFamily: 'Inter'),
-        ),
-        duration: const Duration(seconds: 30),
-      ),
-    );
-
-    try {
-      // 2️⃣  Download bytes via Dio — this hits S3 directly with all the
-      //     presigned auth params intact, no browser/WebView in the loop.
-      final dir = await getTemporaryDirectory();
-      final savePath = '${dir.path}/$trueFileName';
-
-      await Dio().download(
-        presignedUrl,
-        savePath,
-        options: Options(
-          // Tell Dio to treat the response as binary regardless of
-          // what content-type S3 sends back.
-          responseType: ResponseType.bytes,
-        ),
-      );
-
-      // 3️⃣  Open the saved file with the OS default viewer.
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-      final result = await OpenFilex.open(savePath);
-
-      if (result.type != ResultType.done && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Could not open file: ${result.message}',
-              style: const TextStyle(fontFamily: 'Inter'),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Download failed: $e',
-            style: const TextStyle(fontFamily: 'Inter'),
-          ),
-        ),
-      );
-      debugPrint('Download error: $e');
     }
   }
 
@@ -292,7 +178,7 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
                 color: Colors.grey[400], size: 64),
             const SizedBox(height: 12),
             Text(
-              'No documents uploaded yet',
+              'No documents found for your request',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 16,
@@ -410,9 +296,9 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
   }
 
   Widget _buildDocTile(UploadedFileModel file) {
-    final displayName = _displayFileName(file.fileName);
-    final iconLabel = _fileIcon(file.fileName);
-    final iconColor = _fileColor(file.fileName);
+    final displayName = FileDownloader.displayFileName(file.fileName);
+    final iconLabel = FileDownloader.fileIcon(file.fileName);
+    final iconColor = FileDownloader.fileColor(file.fileName);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -467,7 +353,11 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
 
           // Download button — downloads via Dio, bypassing Safari MIME issues
           GestureDetector(
-            onTap: () => _downloadFile(file.downloadUrl, file.fileName),
+            onTap: () => FileDownloader.downloadAndOpenFile(
+              context: context,
+              presignedUrl: file.downloadUrl,
+              rawFileName: file.fileName,
+            ),
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(

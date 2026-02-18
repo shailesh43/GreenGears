@@ -260,7 +260,7 @@ class _SplashScreenState extends State<SplashScreen>
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 30,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: -0.8,
                   color: Color.fromRGBO(15, 111, 16, 1.0),
                 ),
