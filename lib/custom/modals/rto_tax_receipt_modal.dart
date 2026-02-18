@@ -23,39 +23,43 @@ import './base_modal.dart';
 class RtoTaxReceiptModal extends StatefulWidget {
   final CarRequest request;
 
-  RtoTaxReceiptModal({
+  const RtoTaxReceiptModal({
     super.key,
-    required this.request
+    required this.request,
   });
 
   @override
   State<RtoTaxReceiptModal> createState() => _RtoTaxReceiptModalState();
-
 }
 
 class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
-  String? selectedDocumentName;
   final ApiClient _client = ApiClient();
+
+  // Form Controllers
   final _commentsCtrl = TextEditingController();
-
-  String? commentsOnEsnaRto;
-  List<UploadedFileModel> uploadedDocs = [];
-  List<Document> documentList = [];
-  Document? selectedDocument;
-
-  // Form field controllers
   final _vehicleNumberCtrl = TextEditingController();
   final _chassisNumberCtrl = TextEditingController();
   final _engineNumberCtrl = TextEditingController();
   final _fastTagNumberCtrl = TextEditingController();
   final _vehicleHandoverDateCtrl = TextEditingController();
 
+  // Fetched data
+  String? commentsOnEsnaRto;
+  List<UploadedFileModel> uploadedDocs = [];
+  List<Document> documentList = [];
+  Document? selectedDocument;
 
-  // TODO: For Document upload & Progress
+  // Inline error texts for required FormTextFields
+  String? _vehicleNumberErrorText;
+  String? _chassisNumberErrorText;
+  String? _engineNumberErrorText;
+  String? _fastTagNumberErrorText;
+  String? _commentsErrorText;
+
+  // Document upload & progress
   PlatformFile? uploadedQuotationFile;
-  double _uploadProgress = 0.0;   // 0.0 → 1.0 for LinearProgressIndicator
+  double _uploadProgress = 0.0;
   bool _isUploading = false;
-
 
   Map<String, dynamic> _bindUploadDocRequestBody() {
     if (uploadedQuotationFile == null) {
@@ -66,12 +70,10 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       'emp_id': widget.request.empId.toString(),
       'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
       'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(),
-
-      // MUST be a LIST for multer.array("files")
       'files': [
         MultipartFile.fromBytes(
-          uploadedQuotationFile!.bytes!, // 🔴 buffer
-          filename: uploadedQuotationFile!.name, // 🔴 originalname
+          uploadedQuotationFile!.bytes!,
+          filename: uploadedQuotationFile!.name,
         ),
       ],
     };
@@ -85,7 +87,225 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       _getCommentsByRequestId();
       _getDocumentsByRequestId();
     });
+
+    _vehicleNumberCtrl.addListener(() {
+      if (_vehicleNumberErrorText != null &&
+          _vehicleNumberCtrl.text.trim().isNotEmpty) {
+        setState(() => _vehicleNumberErrorText = null);
+      }
+    });
+
+    _chassisNumberCtrl.addListener(() {
+      if (_chassisNumberErrorText != null &&
+          _chassisNumberCtrl.text.trim().isNotEmpty) {
+        setState(() => _chassisNumberErrorText = null);
+      }
+    });
+
+    _engineNumberCtrl.addListener(() {
+      if (_engineNumberErrorText != null &&
+          _engineNumberCtrl.text.trim().isNotEmpty) {
+        setState(() => _engineNumberErrorText = null);
+      }
+    });
+
+    _fastTagNumberCtrl.addListener(() {
+      if (_fastTagNumberErrorText != null &&
+          _fastTagNumberCtrl.text.trim().isNotEmpty) {
+        setState(() => _fastTagNumberErrorText = null);
+      }
+    });
+
+    _commentsCtrl.addListener(() {
+      if (_commentsErrorText != null &&
+          _commentsCtrl.text.trim().isNotEmpty) {
+        setState(() => _commentsErrorText = null);
+      }
+    });
   }
+
+  @override
+  void dispose() {
+    _commentsCtrl.dispose();
+    _vehicleNumberCtrl.dispose();
+    _chassisNumberCtrl.dispose();
+    _engineNumberCtrl.dispose();
+    _fastTagNumberCtrl.dispose();
+    _vehicleHandoverDateCtrl.dispose();
+    super.dispose();
+  }
+
+  // ==================== VALIDATION ====================
+
+  bool _validateBeforeApprove() {
+    bool isValid = true;
+
+    setState(() {
+      _vehicleNumberErrorText =
+      _vehicleNumberCtrl.text.trim().isEmpty ? 'Required' : null;
+      _chassisNumberErrorText =
+      _chassisNumberCtrl.text.trim().isEmpty ? 'Required' : null;
+      _engineNumberErrorText =
+      _engineNumberCtrl.text.trim().isEmpty ? 'Required' : null;
+      _fastTagNumberErrorText =
+      _fastTagNumberCtrl.text.trim().isEmpty ? 'Required' : null;
+      _commentsErrorText =
+      _commentsCtrl.text.trim().isEmpty ? 'Required' : null;
+
+      if (_vehicleNumberCtrl.text.trim().isEmpty ||
+          _chassisNumberCtrl.text.trim().isEmpty ||
+          _engineNumberCtrl.text.trim().isEmpty ||
+          _fastTagNumberCtrl.text.trim().isEmpty ||
+          _commentsCtrl.text.trim().isEmpty) {
+        isValid = false;
+      }
+    });
+
+    return isValid;
+  }
+
+  // ==================== SUBMISSION HANDLERS ====================
+
+  /// Pure API worker — no Navigator.pop, no snackbars.
+  Future<void> _handleApprove() async {
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
+
+    if (requestId == null || empId == null) return;
+
+    // STEP 1: Upload document (silently skip if no file selected)
+    await _handleUpload();
+
+    // STEP 2: Submit RTO tax receipt
+    await _client.submitByEsnaRtoTaxReceipt(
+      requestId: requestId,
+      empId: empId,
+      commentsAssignedToEsna: _commentsCtrl.text.trim(),
+      vehicleNumber: _vehicleNumberCtrl.text.trim(),
+      vehicleMake: widget.request.manufacturer ?? '',
+      vehicleModel: widget.request.carModel ?? '',
+      chassisNumber: _chassisNumberCtrl.text.trim(),
+      engineNumber: _engineNumberCtrl.text.trim(),
+      vehicleHandoverDate: _vehicleHandoverDateCtrl.text.trim(),
+      fastTagNumber: _fastTagNumberCtrl.text.trim(),
+    );
+  }
+
+  /// Pure API worker — no Navigator.pop, no snackbars.
+  Future<void> _handleReject() async {
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
+
+    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) return;
+
+    await _client.decrementStageOnReject(
+      requestId: requestId,
+      empId: empId,
+    );
+  }
+
+  /// Silently skips if no file selected — upload is optional.
+  Future<void> _handleUpload() async {
+    if (uploadedQuotationFile == null) return;
+
+    try {
+      final docReqBody = _bindUploadDocRequestBody();
+
+      setState(() {
+        _isUploading = true;
+        _uploadProgress = 0.0;
+      });
+
+      await _client.uploadDocument(
+        body: docReqBody,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() => _uploadProgress = progress);
+        },
+      );
+
+      setState(() => _isUploading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploading = false);
+      rethrow;
+    }
+  }
+
+  // ==================== DATA FETCHING ====================
+
+  Future<void> _getCommentsByRequestId() async {
+    final requestId = widget.request.requestId;
+    if (requestId == null) return;
+
+    try {
+      final response = await _client.getCommentsByRequestId(
+        requestId: requestId,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        commentsOnEsnaRto =
+            response.data?.commentsPaymentDetailsEsna ?? 'NULL';
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _getDocumentsByRequestId() async {
+    final requestId = widget.request.requestId;
+    if (requestId == null) return;
+
+    try {
+      final response = await _client.getAllUploadedDocsFromS3(
+        requestId: requestId,
+      );
+
+      if (!mounted) return;
+
+      final docs = response.data;
+
+      final List<Document> docsEnumList = docs
+          .map((e) => Document.fromDocId(e.docId ?? -1))
+          .whereType<Document>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.docId.compareTo(b.docId));
+
+      setState(() {
+        uploadedDocs = docs;
+        documentList = docsEnumList;
+      });
+    } catch (_) {}
+  }
+
+  // ==================== UI HELPERS ====================
+
+  void _showSnackBar({
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: isSuccess
+                  ? const Color(0xFF388E3B)
+                  : const Color(0xFFFA6262),
+            ),
+          ),
+          backgroundColor: isSuccess
+              ? const Color(0xFFD7FFD8)
+              : const Color(0xFFFFE3E3),
+        ),
+      );
+  }
+
+  // ==================== BUILD METHOD ====================
 
   @override
   Widget build(BuildContext context) {
@@ -114,14 +334,15 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
           DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
           DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
-          DetailRow(label: 'Comments by ES&A', value: commentsOnEsnaRto?.toString() ?? 'NULL'),
-
+          DetailRow(label: 'Comments by ES&A', value: commentsOnEsnaRto ?? 'NULL'),
           const SizedBox(height: 16),
+
           FormTextField(
             label: 'Vehicle Number',
             hint: 'Enter Vehicle number',
             required: true,
             controller: _vehicleNumberCtrl,
+            errorText: _vehicleNumberErrorText,
           ),
           const SizedBox(height: 16),
           FormTextField(
@@ -129,6 +350,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
             hint: 'Enter Chassis number',
             required: true,
             controller: _chassisNumberCtrl,
+            errorText: _chassisNumberErrorText,
           ),
           const SizedBox(height: 16),
           FormTextField(
@@ -136,6 +358,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
             hint: 'Enter Engine number',
             required: true,
             controller: _engineNumberCtrl,
+            errorText: _engineNumberErrorText,
           ),
           const SizedBox(height: 16),
           FormTextField(
@@ -143,6 +366,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
             hint: 'Enter Fastag Number',
             required: true,
             controller: _fastTagNumberCtrl,
+            errorText: _fastTagNumberErrorText,
           ),
           const SizedBox(height: 16),
           DatePickerField(
@@ -164,280 +388,47 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
                 orElse: () => throw Exception('Document not found'),
               );
 
-              setState(() {
-                selectedDocument = doc;
-              });
+              setState(() => selectedDocument = doc);
             },
             required: true,
           ),
           const SizedBox(height: 16),
-          FormTextField(label: 'Comments', hint: 'Your Comments', required: true, maxLines: 3, controller: _commentsCtrl,),
+          FormTextField(
+            label: 'Comments',
+            hint: 'Your Comments',
+            required: true,
+            maxLines: 3,
+            controller: _commentsCtrl,
+            errorText: _commentsErrorText,
+          ),
           const SizedBox(height: 24),
         ],
       ),
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryValidator: _validateBeforeApprove,
-        onPrimaryAction: _handleApprove,
-        onSecondaryAction: _handleReject,
-      ),
-    );
-  }
-
-  Future<void> _handleApprove() async {
-    final requestId = widget.request.requestId;
-    final empId = widget.request.empId;
-
-    if (requestId == null || empId == null ) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or ES&A details')),
-      );
-      return;
-    }
-
-    try {
-      // ---------------- STEP 1: Upload document ----------------
-      await _handleUpload();
-
-      // ---------------- STEP 2: Submit for approval ----------------
-      final response = await _client.submitByEsnaRtoTaxReceipt(
-        requestId: requestId,
-        empId: empId,
-        commentsAssignedToEsna: _commentsCtrl.text.trim(),
-        vehicleNumber: _vehicleNumberCtrl.text.trim(),
-        vehicleMake: widget.request.manufacturer ?? '',
-        vehicleModel: widget.request.carModel ?? '',
-        chassisNumber: _chassisNumberCtrl.text.trim(),
-        engineNumber: _engineNumberCtrl.text.trim(),
-        vehicleHandoverDate: _vehicleHandoverDateCtrl.text.trim(),
-        fastTagNumber: _fastTagNumberCtrl.text.trim(),
-      );
-
-      Navigator.pop(context, response); // success close
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  Future<void> _handleReject() async {
-    final request = widget.request;
-    final requestId = request.requestId;
-    final empId = request.empId;
-
-    if (requestId == null ||
-        requestId.isEmpty ||
-        empId == null ||
-        empId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
-
-    try {
-      final response = await _client.decrementStageOnReject(
-        requestId: requestId,
-        empId: empId,
-      );
-
-      Navigator.pop(context, response);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  Future<void> _handleUpload() async {
-    try {
-      final docReqBody = _bindUploadDocRequestBody();
-
-      setState(() {
-        _isUploading = true;
-        _uploadProgress = 0.0;
-      });
-
-      await _client.uploadDocument(
-        body: docReqBody,
-        onProgress: (progress) {
-          if (!mounted) return;
-          setState(() {
-            _uploadProgress = progress;
-          });
+        primaryValidator: () {
+          return _validateBeforeApprove();
         },
-      );
-
-      setState(() {
-        _isUploading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _isUploading = false;
-      });
-
-      // ⛔ propagate failure to caller
-      rethrow;
-    }
-  }
-
-  void _showSnackBar({
-    required BuildContext context,
-    required String message,
-    required bool isSuccess,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: isSuccess
-                ? const Color(0xFF388E3B)
-                : const Color(0xFFFA6262),
-          ),
-        ),
-        backgroundColor: isSuccess
-            ? const Color(0xFFD7FFD8)
-            : const Color(0xFFFFE3E3),
+        onPrimaryAction: () async {
+          await _handleApprove();
+          if (!mounted) return;
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Approved',
+            isSuccess: true,
+          );
+          Navigator.pop(context);
+        },
+        onSecondaryAction: () async {
+          await _handleReject();
+          if (!mounted) return;
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Rejected',
+            isSuccess: true,
+          );
+          Navigator.pop(context);
+        },
       ),
     );
   }
-
-  Future<void> _getCommentsByRequestId() async {
-    final request = widget.request;
-    final requestId = request.requestId;
-
-    if (requestId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
-
-    try {
-      final response = await _client.getCommentsByRequestId(
-        requestId: requestId,
-      );
-
-      setState(() {
-        commentsOnEsnaRto = response.data?.commentsRtoTaxReceiptOtherDocsEsna ?? 'NULL';
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  Future<void> _getDocumentsByRequestId() async {
-    final requestId = widget.request.requestId;
-
-    if (requestId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
-
-    try {
-      final response = await _client.getAllUploadedDocsFromS3(
-        requestId: requestId,
-      );
-
-      final docs = response.data; // List<UploadedDocData>
-
-      final List<Document> docsEnumList = docs
-          .map((e) => Document.fromDocId(e.docId ?? -1))
-          .whereType<Document>()
-          .toSet()
-          .toList()
-        ..sort((a, b) => a.docId.compareTo(b.docId));
-
-      setState(() {
-        uploadedDocs = docs;
-        documentList = docsEnumList;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  bool _validateBeforeApprove() {
-    final vehicleNumber = _vehicleNumberCtrl.text.trim();
-    final chassisNumber = _chassisNumberCtrl.text.trim();
-    final engineNumber = _engineNumberCtrl.text.trim();
-    final fastTagNumber = _fastTagNumberCtrl.text.trim();
-    final vehicleHandoverDate = _vehicleHandoverDateCtrl.text.trim();
-    final comments = _commentsCtrl.text.trim();
-
-    // 1️⃣ Check vehicle number
-    if (vehicleNumber.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Vehicle Number is required',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    // 2️⃣ Check chassis number
-    if (chassisNumber.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Chassis Number is required',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    // 3️⃣ Check engine number
-    if (engineNumber.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Engine Number is required',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    // 4️⃣ Check fastag number
-    if (fastTagNumber.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Fastag Number is required',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    // 5️⃣ Check vehicle handover date
-    if (vehicleHandoverDate.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Vehicle Handover Date is required',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    // 6️⃣ Check comments
-    if (comments.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Comments are required before approving',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    return true; // 🔥 Safe to proceed
-  }
-
 }
