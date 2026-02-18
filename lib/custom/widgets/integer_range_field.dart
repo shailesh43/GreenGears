@@ -8,6 +8,7 @@ class IntegerRangeField extends StatelessWidget {
   final double max;
   final TextEditingController controller;
   final ValueChanged<double>? onChanged;
+  final String? errorText;
 
   const IntegerRangeField({
     super.key,
@@ -17,6 +18,7 @@ class IntegerRangeField extends StatelessWidget {
     required this.max,
     required this.controller,
     this.onChanged,
+    this.errorText,
   });
 
   @override
@@ -47,17 +49,26 @@ class IntegerRangeField extends StatelessWidget {
               fontWeight: FontWeight.w400,
               color: Color(0xFF757575),
             ),
+            errorText: errorText,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+              borderSide: BorderSide(
+                color: errorText != null
+                    ? Theme.of(context).colorScheme.error
+                    : const Color(0xFFE0E0E0),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF848484)),
+              borderSide: BorderSide(
+                color: errorText != null
+                    ? Theme.of(context).colorScheme.error
+                    : const Color(0xFF848484),
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,

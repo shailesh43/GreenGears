@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../constants/local_prefs.dart';
 import 'package:file/file.dart';
 import 'package:file_picker/file_picker.dart';
@@ -200,61 +201,37 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
   bool _validateBeforeSubmit() {
     // Document validation
     if (uploadedQuotationFile == null) {
-      _showSnackBar(
-        context: context,
-        message: "Upload Quotation document",
-        isSuccess: false,
-      );
+      _showValidationToast('Upload Quotation document');
       return false;
     }
 
     // Manufacturer validation
     if (_manufacturerCtrl.text.trim().isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Please enter manufacturer",
-        isSuccess: false,
-      );
+      _showValidationToast('Please enter manufacturer');
       return false;
     }
 
     // Vehicle model validation
     if (_vehicleModelCtrl.text.trim().isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Please enter vehicle model",
-        isSuccess: false,
-      );
+      _showValidationToast('Please enter vehicle model');
       return false;
     }
 
     // Color validation
     if (_colourCtrl.text.trim().isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Please enter Vehicle color",
-        isSuccess: false,
-      );
+      _showValidationToast('Please enter Vehicle color');
       return false;
     }
 
     // Vehicle type validation
     if (selectedVehicleType == null || selectedVehicleType!.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Please select vehicle type",
-        isSuccess: false,
-      );
+      _showValidationToast('Please select vehicle type');
       return false;
     }
 
     // Quotation validation
     if (quotationAmountModalResult == '0' || quotationAmountModalResult!.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: "Open Quotation Form modal and fill the data",
-        isSuccess: false,
-      );
+      _showValidationToast('Open Quotation Form modal and fill the data');
       return false;
     }
 
@@ -279,9 +256,8 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
       if (!mounted) return;
 
-      // Success feedback
+      // ✅ Success — only snackbar in the entire flow
       _showSnackBar(
-        context: context,
         message: 'New Request Created successfully!',
         isSuccess: true,
       );
@@ -289,10 +265,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       Navigator.pop(context, response);
     } catch (e) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      _showValidationToast(e.toString());
     }
   }
 
@@ -349,27 +322,40 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     );
   }
 
+  void _showValidationToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 3,
+      backgroundColor: const Color(0xFFFFE3E3),
+      textColor: const Color(0xFFFA6262),
+      fontSize: 14.0,
+    );
+  }
+
   void _showSnackBar({
-    required BuildContext context,
     required String message,
     required bool isSuccess,
   }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: isSuccess
-                ? const Color(0xFF388E3B)
-                : const Color(0xFFFA6262),
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: isSuccess
+                  ? const Color(0xFF388E3B)
+                  : const Color(0xFFFA6262),
+            ),
           ),
+          backgroundColor: isSuccess
+              ? const Color(0xFFD7FFD8)
+              : const Color(0xFFFFE3E3),
         ),
-        backgroundColor: isSuccess
-            ? const Color(0xFFD7FFD8)
-            : const Color(0xFFFFE3E3),
-      ),
-    );
+      );
   }
 
   // ==================== BUILD METHOD ====================

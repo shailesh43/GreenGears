@@ -23,6 +23,50 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
   final TextEditingController _cgstController = TextEditingController();
   final TextEditingController _cessController = TextEditingController();
 
+  // Inline error texts for required fields
+  String? _baseCostErrorText;
+  String? _sgstErrorText;
+  String? _cgstErrorText;
+  String? _cessErrorText;
+  String? _corpRegErrorText;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _baseCostController.addListener(() {
+      if (_baseCostErrorText != null &&
+          _baseCostController.text.trim().isNotEmpty) {
+        setState(() => _baseCostErrorText = null);
+      }
+    });
+
+    _sgstController.addListener(() {
+      if (_sgstErrorText != null && _sgstController.text.trim().isNotEmpty) {
+        setState(() => _sgstErrorText = null);
+      }
+    });
+
+    _cgstController.addListener(() {
+      if (_cgstErrorText != null && _cgstController.text.trim().isNotEmpty) {
+        setState(() => _cgstErrorText = null);
+      }
+    });
+
+    _cessController.addListener(() {
+      if (_cessErrorText != null && _cessController.text.trim().isNotEmpty) {
+        setState(() => _cessErrorText = null);
+      }
+    });
+
+    _corpRegController.addListener(() {
+      if (_corpRegErrorText != null &&
+          _corpRegController.text.trim().isNotEmpty) {
+        setState(() => _corpRegErrorText = null);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _baseCostController.dispose();
@@ -34,24 +78,57 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
     super.dispose();
   }
 
+  // ==================== VALIDATION ====================
+
+  bool _validate() {
+    bool isValid = true;
+
+    setState(() {
+      _baseCostErrorText =
+      _baseCostController.text.trim().isEmpty ? 'Required' : null;
+      _sgstErrorText =
+      _sgstController.text.trim().isEmpty ? 'Required' : null;
+      _cgstErrorText =
+      _cgstController.text.trim().isEmpty ? 'Required' : null;
+      _cessErrorText =
+      _cessController.text.trim().isEmpty ? 'Required' : null;
+      _corpRegErrorText =
+      _corpRegController.text.trim().isEmpty ? 'Required' : null;
+
+      if (_baseCostController.text.trim().isEmpty ||
+          _sgstController.text.trim().isEmpty ||
+          _cgstController.text.trim().isEmpty ||
+          _cessController.text.trim().isEmpty ||
+          _corpRegController.text.trim().isEmpty) {
+        isValid = false;
+      }
+    });
+
+    return isValid;
+  }
+
+  // ==================== CONFIRM HANDLER ====================
+
   void _handleConfirm() {
-    double baseCost = double.tryParse(_baseCostController.text) ?? 0;
+    if (!_validate()) return;
 
-    double sgstPercent = double.tryParse(_sgstController.text) ?? 0;
-    double cgstPercent = double.tryParse(_cgstController.text) ?? 0;
-    double cessPercent = double.tryParse(_cessController.text) ?? 0;
+    final double baseCost = double.tryParse(_baseCostController.text) ?? 0;
+    final double sgstPercent = double.tryParse(_sgstController.text) ?? 0;
+    final double cgstPercent = double.tryParse(_cgstController.text) ?? 0;
+    final double cessPercent = double.tryParse(_cessController.text) ?? 0;
+    final double corpReg = double.tryParse(_corpRegController.text) ?? 0;
 
-    double corpReg = double.tryParse(_corpRegController.text) ?? 0;
+    final double sgst = baseCost * (sgstPercent / 100);
+    final double cgst = baseCost * (cgstPercent / 100);
+    final double cess = baseCost * (cessPercent / 100);
 
-    double sgst = baseCost * (sgstPercent / 100);
-    double cgst = baseCost * (cgstPercent / 100);
-    double cess = baseCost * (cessPercent / 100);
-
-    double total = baseCost + sgst + cgst + cess + corpReg;
+    final double total = baseCost + sgst + cgst + cess + corpReg;
 
     widget.onConfirm(total.toStringAsFixed(2));
     Navigator.pop(context);
   }
+
+  // ==================== BUILD METHOD ====================
 
   @override
   Widget build(BuildContext context) {
@@ -102,11 +179,13 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
                 min: 18,
                 max: 60,
                 controller: _baseCostController,
+                errorText: _baseCostErrorText,
               ),
               const SizedBox(height: 20),
 
               // SGST and CGST Row
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: IntegerRangeField(
@@ -115,6 +194,7 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
                       min: 1,
                       max: 30,
                       controller: _sgstController,
+                      errorText: _sgstErrorText,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -125,6 +205,7 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
                       min: 1,
                       max: 30,
                       controller: _cgstController,
+                      errorText: _cgstErrorText,
                     ),
                   ),
                 ],
@@ -138,6 +219,7 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
                 min: 1,
                 max: 30,
                 controller: _cessController,
+                errorText: _cessErrorText,
               ),
               const SizedBox(height: 20),
 
@@ -148,10 +230,11 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
                 min: 1,
                 max: 100000000,
                 controller: _corpRegController,
+                errorText: _corpRegErrorText,
               ),
               const SizedBox(height: 20),
 
-              // Miscellaneous
+              // Miscellaneous (not required)
               const SizedBox(height: 8),
               FormTextField(
                 label: 'Miscellaneous',
