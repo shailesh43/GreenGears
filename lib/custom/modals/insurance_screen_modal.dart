@@ -21,9 +21,11 @@ import '../../custom/widgets/file_uploader.dart';
 
 class InsuranceScreenModal extends StatefulWidget {
   final CarRequest request;
+  final BuildContext parentContext;
 
   const InsuranceScreenModal({
     super.key,
+    required this.parentContext,
     required this.request,
   });
 
@@ -42,9 +44,14 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   final _addOnSapphireCtrl = TextEditingController();
   final _commentsCtrl = TextEditingController();
 
-  // TODO: For Document upload & Progress
+  // Inline error texts for required FormTextFields
+  String? _baseInsuranceErrorText;
+  String? _addOnCoverErrorText;
+  String? _addOnSapphireErrorText;
+
+  // Document upload & progress
   PlatformFile? uploadedQuotationFile;
-  double _uploadProgress = 0.0;   // 0.0 → 1.0 for LinearProgressIndicator
+  double _uploadProgress = 0.0; // 0.0 → 1.0 for LinearProgressIndicator
   bool _isUploading = false;
 
   Map<String, dynamic> _bindUploadDocRequestBody() {
@@ -71,9 +78,49 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   void initState() {
     super.initState();
 
+    // Fetch comments after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getCommentsByRequestId();
     });
+
+    // Clear inline error as soon as user types in Base Insurance
+    _baseInsuranceCtrl.addListener(() {
+      if (_baseInsuranceErrorText != null &&
+          _baseInsuranceCtrl.text.trim().isNotEmpty) {
+        setState(() {
+          _baseInsuranceErrorText = null;
+        });
+      }
+    });
+
+    // Clear inline error as soon as user types in Addon Cover
+    _addOnCoverCtrl.addListener(() {
+      if (_addOnCoverErrorText != null &&
+          _addOnCoverCtrl.text.trim().isNotEmpty) {
+        setState(() {
+          _addOnCoverErrorText = null;
+        });
+      }
+    });
+
+    // Clear inline error as soon as user types in Addon Sapphire Plus
+    _addOnSapphireCtrl.addListener(() {
+      if (_addOnSapphireErrorText != null &&
+          _addOnSapphireCtrl.text.trim().isNotEmpty) {
+        setState(() {
+          _addOnSapphireErrorText = null;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _baseInsuranceCtrl.dispose();
+    _addOnCoverCtrl.dispose();
+    _addOnSapphireCtrl.dispose();
+    _commentsCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -113,6 +160,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
             hint: 'Enter Base Insurance',
             required: true,
             controller: _baseInsuranceCtrl,
+            errorText: _baseInsuranceErrorText,
           ),
           const SizedBox(height: 16),
 
@@ -122,6 +170,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
             hint: 'Enter Addon Cover',
             required: true,
             controller: _addOnCoverCtrl,
+            errorText: _addOnCoverErrorText,
           ),
           const SizedBox(height: 16),
 
@@ -131,6 +180,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
             hint: 'Enter Addon Saphire Plus',
             required: true,
             controller: _addOnSapphireCtrl,
+            errorText: _addOnSapphireErrorText,
           ),
           const SizedBox(height: 16),
 
@@ -139,16 +189,19 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
             label: 'Upload Quotation Document',
             allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
             onFileSelected: (file) {
-              uploadedQuotationFile = file; // 🔴 THIS is required
+              setState(() {
+                uploadedQuotationFile = file;
+              });
             },
           ),
           const SizedBox(height: 16),
 
-          /// Comments
-          const FormTextField(
+          /// Comments (not required — no errorText)
+          FormTextField(
             label: 'Comments',
             hint: 'Enter Comments',
             maxLines: 3,
+            controller: _commentsCtrl,
           ),
           const SizedBox(height: 16),
 
@@ -170,11 +223,28 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryValidator: _validateBeforeApprove,
-        onPrimaryAction: _handleApprove,
-        onSecondaryAction: _handleReject,
-      )
-
+        primaryValidator: () {
+          return _validateBeforeApprove();
+        },
+        onPrimaryAction: () async {
+          await _handleApprove();
+          // if (!mounted) return;
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Approved',
+            isSuccess: true,
+          );
+          // Navigator.pop(context);
+        },
+        onSecondaryAction: () async {
+          await _handleReject();
+          // if (!mounted) return;
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Rejected',
+            isSuccess: true,
+          );
+          // Navigator.pop(context);
+        },
+      ),
     );
   }
 
@@ -203,34 +273,25 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
       ],
     );
   }
-  // Action button actual functions
+
+  // ==================== SUBMISSION HANDLERS ====================
+
   Future<void> _handleReject() async {
-    final request = widget.request;
-    final requestId = request.requestId;
-    final empId = request.empId;
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
 
-    if (requestId == null || empId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
+    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) return;
 
-    try {
-      final response = await _client.decrementStageOnReject(
-        requestId: requestId,
-        empId: empId,
-      );
-
-      Navigator.pop(context, response); // success close
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
+    await _client.decrementStageOnReject(
+      requestId: requestId,
+      empId: empId,
+    );
   }
 
   Future<void> _handleUpload() async {
+    // Skip silently if no document selected — upload is optional
+    if (uploadedQuotationFile == null) return;
+
     try {
       final docReqBody = _bindUploadDocRequestBody();
 
@@ -259,167 +320,110 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
         _isUploading = false;
       });
 
-      // ⛔ propagate failure to caller
+      // ⛔ Propagate failure to caller
       rethrow;
     }
   }
 
-  void _showSnackBar({
-    required BuildContext context,
-    required String message,
-    required bool isSuccess,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: isSuccess
-                ? const Color(0xFF388E3B)
-                : const Color(0xFFFA6262),
-          ),
-        ),
-        backgroundColor: isSuccess
-            ? const Color(0xFFD7FFD8)
-            : const Color(0xFFFFE3E3),
-      ),
-    );
-  }
-
   Future<void> _handleApprove() async {
     final requestId = widget.request.requestId;
+    if (requestId == null) return;
+    try
+    {
+    // ---------------- STEP 1: Upload document (if selected) ----------------
+    await _handleUpload();
 
-    if (requestId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request')),
-      );
-      return;
+    // ---------------- STEP 2: Submit for insurance quote approval ----------------
+    await _client.SubmitForInsuranceQuoteApproval(
+      requestId: requestId,
+      baseInsurance: int.tryParse(_baseInsuranceCtrl.text.trim()) ?? 0,
+      addOnTataPower: int.tryParse(_addOnCoverCtrl.text.trim()) ?? 0,
+      addOnSapphirePlus: int.tryParse(_addOnSapphireCtrl.text.trim()) ?? 0,
+      commentsByGIT: _commentsCtrl.text.trim().isEmpty
+          ? 'Approved'
+          : _commentsCtrl.text.trim(),
+    );
+    if (!mounted) return;
+    Navigator.pop(context, 'Request approved');
     }
-
-    try {
-      // ---------------- STEP 1: Upload document ----------------
-      await _handleUpload();
-
-      // ---------------- STEP 2: Submit for approval ----------------
-      final response = await _client.SubmitForInsuranceQuoteApproval(
-        requestId: requestId,
-        baseInsurance: int.tryParse(_baseInsuranceCtrl.text.trim()) ?? 0,
-        addOnTataPower: int.tryParse(_addOnCoverCtrl.text.trim()) ?? 0,
-        addOnSapphirePlus:
-        int.tryParse(_addOnSapphireCtrl.text.trim()) ?? 0,
-        commentsByGIT: (_commentsCtrl.text.trim().isEmpty)
-            ? 'null'
-            : _commentsCtrl.text.trim(),
-      );
-
+    catch(e){
       if (!mounted) return;
-
-      // ---------------- SUCCESS ----------------
-      _showSnackBar(
-        context: context,
-        message: 'Document uploaded & approval submitted successfully',
-        isSuccess: true,
-      );
-
-      Navigator.pop(context, response);
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      Navigator.pop(context, 'Request failed');
     }
   }
 
-  Future<void> _getCommentsByRequestId() async {
-    final request = widget.request;
-    final requestId = request.requestId;
+  // ==================== DATA FETCHING ====================
 
-    if (requestId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
+  Future<void> _getCommentsByRequestId() async {
+    final requestId = widget.request.requestId;
+    if (requestId == null) return;
 
     try {
       final response = await _client.getCommentsByRequestId(
         requestId: requestId,
       );
 
+      if (!mounted) return;
+
       setState(() {
         commentsOnInsurance = response.data?.commentsAssignedToEsna ?? 'NULL';
       });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
+    } catch (_) {}
   }
+
+  // ==================== VALIDATION ====================
 
   bool _validateBeforeApprove() {
     final baseText = _baseInsuranceCtrl.text.trim();
     final tataText = _addOnCoverCtrl.text.trim();
     final sapphireText = _addOnSapphireCtrl.text.trim();
 
-    // 1️⃣ Check if all fields are empty
-    if (baseText.isEmpty &&
-        tataText.isEmpty &&
-        sapphireText.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Please enter at least one insurance amount',
-        isSuccess: false,
-      );
-      return false;
-    }
+    bool isValid = true;
 
-    // 2️⃣ Validate numeric values
-    final baseInsurance = int.tryParse(baseText);
-    final tataPower = int.tryParse(tataText);
-    final sapphirePlus = int.tryParse(sapphireText);
+    setState(() {
+      _baseInsuranceErrorText =
+      baseText.isEmpty ? 'Required' : null;
 
-    if (baseText.isNotEmpty && baseInsurance == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Base Insurance must be a valid number',
-        isSuccess: false,
-      );
-      return false;
-    }
+      _addOnCoverErrorText =
+      tataText.isEmpty ? 'Required' : null;
 
-    if (tataText.isNotEmpty && tataPower == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Tata Power Add-on must be a valid number',
-        isSuccess: false,
-      );
-      return false;
-    }
+      _addOnSapphireErrorText =
+      sapphireText.isEmpty ? 'Required' : null;
 
-    if (sapphireText.isNotEmpty && sapphirePlus == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Sapphire Plus Add-on must be a valid number',
-        isSuccess: false,
-      );
-      return false;
-    }
+      // If any one is empty → invalid
+      if (baseText.isEmpty ||
+          tataText.isEmpty ||
+          sapphireText.isEmpty) {
+        isValid = false;
+      }
+    });
 
-    // 3️⃣ Ensure at least one value is greater than zero
-    if ((baseInsurance ?? 0) <= 0 &&
-        (tataPower ?? 0) <= 0 &&
-        (sapphirePlus ?? 0) <= 0) {
-      _showSnackBar(
-        context: context,
-        message: 'At least one insurance amount must be greater than 0',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    return true; // 🔥 Safe to proceed
+    return isValid;
   }
 
+  // ==================== UI HELPERS ====================
+
+  void _showSnackBar({
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: isSuccess
+                  ? const Color(0xFF388E3B)
+                  : const Color(0xFFFA6262),
+            ),
+          ),
+          backgroundColor: isSuccess
+              ? const Color(0xFFD7FFD8)
+              : const Color(0xFFFFE3E3),
+        ),
+      );
+  }
 }

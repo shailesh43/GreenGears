@@ -108,7 +108,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => InsuranceScreenModal(request: request),
+      builder: (_) => InsuranceScreenModal(request: request, parentContext: context),
     );
   }
   @override
