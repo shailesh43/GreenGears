@@ -409,25 +409,102 @@ class _UserApprovalState extends State<UserApproval> {
 
   // Entry point: No user approval screen validation
   Widget _buildApprovalContent() {
-    if (approvalRequest == null || approvalType == null) {
-      return const Center(
-        child: SizedBox(
-          width: double.infinity,
-          height: 600,
-          child: Center(
-            child: Text('You have No approval request available'),
-          ),
-        ),
-      );
-    }
+    return FutureBuilder<int?>(
+      future: LocalPrefs.getRoleId(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.green),
+          );
+        }
 
-    // Display content based on approval type
-    switch (approvalType!) {
-      case ApprovalType.insuranceQuote:
-        return _buildInsuranceQuoteApprovalContent(approvalRequest!);
-      case ApprovalType.emiDeduction:
-        return _buildEmiDeductionApprovalContent(approvalRequest!);
-    }
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const Center(
+            child: Text(
+              "Unable to fetch role information.",
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+
+        final int roleId = snapshot.data!;
+
+        // 🚫 Only USER role allowed
+        if (roleId != 1) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline,
+                    color: Colors.red[300], size: 48),
+                const SizedBox(height: 12),
+                Text(
+                  "Request approval is restricted to employees with the USER role only.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 15,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // ❌ No approval request
+        if (approvalRequest == null || approvalType == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.close,
+                    color: Colors.red[300], size: 48),
+                const SizedBox(height: 12),
+                Text(
+                  "You don't have any active request for approval.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 15,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: _loadUserApprovals,
+                  icon: const Icon(Icons.refresh,
+                      color: Color(0xFF42B347)),
+                  label: const Text(
+                    'Retry',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      color: Color(0xFF42B347),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // ✅ Actual approval content
+        switch (approvalType!) {
+          case ApprovalType.insuranceQuote:
+            return _buildInsuranceQuoteApprovalContent(
+                approvalRequest!);
+
+          case ApprovalType.emiDeduction:
+            return _buildEmiDeductionApprovalContent(
+                approvalRequest!);
+        }
+      },
+    );
   }
 
   @override
@@ -451,20 +528,25 @@ class _UserApprovalState extends State<UserApproval> {
         ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color.fromRGBO(
-          98, 202, 102, 1.0),))
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            _buildApprovalContent(),
-          ],
+          ? const Center(
+        child: CircularProgressIndicator(
+          color: Color.fromRGBO(98, 202, 102, 1.0),
         ),
+      )
+          : LayoutBuilder(
+        builder: (context, constraints) {
+          return ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: _buildApprovalContent(),
+            ),
+          );
+        },
       ),
     );
   }
+
   void _showSnackBar({
     required BuildContext context,
     required String message,
