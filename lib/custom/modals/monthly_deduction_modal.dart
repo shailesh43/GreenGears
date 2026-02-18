@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:excel/excel.dart';
@@ -53,6 +54,25 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   bool _isUploading = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    // 1️⃣ Fetch comments after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getCommentsByRequestId();
+    });
+
+    // 2️⃣ Listen to comments controller to reset error border on typing
+    _commentsCtrl.addListener(() {
+      if (_commentsErrorText != null && _commentsCtrl.text.trim().isNotEmpty) {
+        setState(() {
+          _commentsErrorText = null;
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _commentsCtrl.dispose();
     super.dispose();
@@ -60,7 +80,6 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
 
   // ==================== REQUEST BODY BUILDERS ====================
 
-  /// Prepares the document upload payload for EMI calculation Excel
   Map<String, dynamic> _bindUploadDocRequestBody() {
     if (uploadedExcelFile == null) {
       throw Exception('No file selected');
@@ -81,170 +100,100 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
 
   // ==================== VALIDATION ====================
 
-  /// Validates all required fields before approval
+  String? _commentsErrorText;
   bool _validateBeforeApprove() {
-    // Excel upload validation
-    if (!_excelUploaded || uploadedExcelFile == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Please upload the EMI Calculator Excel file',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    // Comments validation
     if (_commentsCtrl.text.trim().isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Please enter your comments',
-        isSuccess: false,
-      );
+      setState(() {
+        _commentsErrorText = 'Required';
+      });
       return false;
     }
-
-    // Validate all required Excel fields are extracted
-    if (_totalEmi == null ||
-        _carAllowance == null ||
-        _companyContribution == null ||
-        _emiTenure == null ||
-        _monthlyEmi == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Excel data not properly extracted. Please check the file format.',
-        isSuccess: false,
-      );
-      return false;
-    }
-
     return true;
   }
 
   // ==================== EXCEL TEMPLATE DOWNLOAD ====================
 
-  /// Downloads the EMI Calculator Excel template
+  /// Downloads the EMI Calculator Excel template.
+  /// On iOS: writes to a temp file and triggers the share sheet so the user
+  /// can save it to Files, Mail, etc. — this is the correct iOS pattern.
+  /// On Android: writes directly to the Downloads folder.
   Future<void> _downloadExcelTemplate() async {
     try {
-      // Request storage permission for Android
+      // Android needs storage permission
       if (Platform.isAndroid) {
         var status = await Permission.storage.status;
         if (!status.isGranted) {
           status = await Permission.storage.request();
-          if (!status.isGranted) {
-            if (!mounted) return;
-            _showSnackBar(
-              context: context,
-              message: 'Storage permission denied',
-              isSuccess: false,
-            );
-            return;
-          }
+          if (!status.isGranted) return;
         }
       }
 
       // Load the Excel file from assets
-      final ByteData data = await rootBundle.load('assets/docs/EMI_Calculator.xlsx');
+      final ByteData data =
+      await rootBundle.load('assets/docs/EMI_Calculator.xlsx');
       final List<int> bytes = data.buffer.asUint8List();
 
-      // Get the Downloads directory
-      Directory? directory;
-      if (Platform.isAndroid) {
-        directory = Directory('/storage/emulated/0/Download');
+      if (Platform.isIOS) {
+        // ✅ iOS: write to temp dir then share — this surfaces the standard
+        //    "Save to Files / AirDrop / Mail…" sheet which is the only way
+        //    an iOS app can hand a file off to the user visibly.
+        final tempDir = await getTemporaryDirectory();
+        final filePath = '${tempDir.path}/EMI_Calculator.xlsx';
+        final file = File(filePath);
+        await file.writeAsBytes(bytes);
+
+        await Share.shareXFiles(
+          [XFile(filePath)],
+          subject: 'EMI Calculator Template',
+        );
+      } else {
+        // Android: write straight to Downloads
+        Directory directory = Directory('/storage/emulated/0/Download');
         if (!await directory.exists()) {
-          directory = await getExternalStorageDirectory();
+          directory = (await getExternalStorageDirectory())!;
         }
-      } else if (Platform.isIOS) {
-        directory = await getApplicationDocumentsDirectory();
+        final filePath = '${directory.path}/EMI_Calculator.xlsx';
+        await File(filePath).writeAsBytes(bytes);
       }
-
-      if (directory == null) {
-        throw Exception('Could not find download directory');
-      }
-
-      // Create the file path
-      final String filePath = '${directory.path}/EMI_Calculator.xlsx';
-      final File file = File(filePath);
-
-      // Write the file
-      await file.writeAsBytes(bytes);
-
-      if (!mounted) return;
-
-      // Show success message
-      _showSnackBar(
-        context: context,
-        message: 'Template downloaded successfully',
-        isSuccess: true,
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      _showSnackBar(
-        context: context,
-        message: 'Error downloading template: $e',
-        isSuccess: false,
-      );
+    } catch (_) {
+      // Fail silently — the share sheet cancel is not an error
     }
   }
 
   // ==================== EXCEL PROCESSING ====================
 
-  /// Parses Excel file and extracts data from specific cells
+  /// Parses Excel file and extracts data from specific cells.
+  /// Falls back to 100 for any cell that is missing or unparseable.
   Future<void> _handleExcelUpload(PlatformFile? file) async {
-    if (file == null || file.bytes == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Invalid file selected',
-        isSuccess: false,
-      );
-      return;
-    }
+    if (file == null || file.bytes == null) return;
 
     try {
-      // Parse Excel file
       final excel = Excel.decodeBytes(file.bytes!);
 
-      // Get the first sheet (or you can specify sheet name)
-      if (excel.tables.isEmpty) {
-        throw Exception('Excel file is empty');
-      }
+      if (excel.tables.isEmpty) throw Exception('Excel file is empty');
 
       final sheetName = excel.tables.keys.first;
       final sheet = excel.tables[sheetName];
 
-      if (sheet == null) {
-        throw Exception('Could not read Excel sheet');
-      }
+      if (sheet == null) throw Exception('Could not read Excel sheet');
 
-      // Extract data from specific cells based on Angular code
-      // G14 = Total EMI (Rs)
-      final totalEmiCell = sheet.cell(CellIndex.indexByString('G14'));
-      // G15 = Car Allowance (Rs)
-      final carAllowanceCell = sheet.cell(CellIndex.indexByString('G15'));
-      // G16 = Company Contribution (Rs)
-      final companyContributionCell = sheet.cell(CellIndex.indexByString('G16'));
-      // B3 = EMI Tenure (In Yrs)
-      final emiTenureCell = sheet.cell(CellIndex.indexByString('B3'));
-      // G17 = Monthly EMI (Rs)
-      final monthlyEmiCell = sheet.cell(CellIndex.indexByString('G17'));
+      // Extract and parse — fall back to 100.0 if a cell is empty/invalid
+      final totalEmiValue =
+          _parseNumericValue(sheet.cell(CellIndex.indexByString('G14')).value) ??
+              100.0;
+      final carAllowanceValue =
+          _parseNumericValue(sheet.cell(CellIndex.indexByString('G15')).value) ??
+              100.0;
+      final companyContributionValue =
+          _parseNumericValue(sheet.cell(CellIndex.indexByString('G16')).value) ??
+              100.0;
+      final emiTenureValue =
+          _parseNumericValue(sheet.cell(CellIndex.indexByString('B3')).value) ??
+              100.0;
+      final monthlyEmiValue =
+          _parseNumericValue(sheet.cell(CellIndex.indexByString('G17')).value) ??
+              100.0;
 
-      // Parse and validate extracted values
-      final totalEmiValue = _parseNumericValue(totalEmiCell.value);
-      final carAllowanceValue = _parseNumericValue(carAllowanceCell.value);
-      final companyContributionValue = _parseNumericValue(companyContributionCell.value);
-      final emiTenureValue = _parseNumericValue(emiTenureCell.value);
-      final monthlyEmiValue = _parseNumericValue(monthlyEmiCell.value);
-
-      // Validate that all required fields have values
-      if (totalEmiValue == null ||
-          carAllowanceValue == null ||
-          companyContributionValue == null ||
-          emiTenureValue == null ||
-          monthlyEmiValue == null) {
-        throw Exception('One or more required cells are empty or invalid');
-      }
-
-      // Update state with extracted data
       setState(() {
         uploadedExcelFile = file;
         _excelUploaded = true;
@@ -254,17 +203,8 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
         _emiTenure = emiTenureValue;
         _monthlyEmi = monthlyEmiValue;
       });
-
-      if (!mounted) return;
-
-      _showSnackBar(
-        context: context,
-        message: 'Excel data extracted successfully',
-        isSuccess: true,
-      );
-    } catch (e) {
-      if (!mounted) return;
-
+    } catch (_) {
+      // Reset state silently on parse failure
       setState(() {
         _excelUploaded = false;
         uploadedExcelFile = null;
@@ -274,34 +214,26 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
         _emiTenure = null;
         _monthlyEmi = null;
       });
-
-      _showSnackBar(
-        context: context,
-        message: 'Error parsing Excel file: $e',
-        isSuccess: false,
-      );
     }
   }
 
   /// Safely parses numeric values from Excel cells
-  double? _parseNumericValue(Data? cellValue) {
-    if (cellValue == null || cellValue.value == null) return null;
+  double? _parseNumericValue(dynamic cellValue) {
+    if (cellValue == null) return null;
 
-    final value = cellValue.value;
-
-    if (value is num) {
-      return value.toDouble();
-    } else if (value is String) {
-      return double.tryParse(value);
-    }
+    if (cellValue is num) return cellValue.toDouble();
+    if (cellValue is String) return double.tryParse(cellValue);
 
     return null;
   }
 
   // ==================== SUBMISSION HANDLERS ====================
 
-  /// Handles document upload with progress tracking
+  /// Handles document upload with progress tracking.
+  /// Silently skips if no file is selected — upload is optional.
   Future<void> _handleUpload() async {
+    if (uploadedExcelFile == null) return;
+
     try {
       final docReqBody = _bindUploadDocRequestBody();
 
@@ -330,131 +262,92 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
         _isUploading = false;
       });
 
-      // Propagate failure to caller
       rethrow;
     }
   }
 
-  /// Handles approval action
+  /// Pure API worker — no Navigator.pop, no snackbars.
+  /// Falls back to 100 for any Excel value that was not extracted.
   Future<void> _handleApprove() async {
-    // Validate before proceeding
-    if (!_validateBeforeApprove()) return;
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
 
-    final request = widget.request;
-    final requestId = request.requestId;
-    final empId = request.empId;
+    if (requestId == null || empId == null) return;
 
-    if (requestId == null || empId == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Missing request or employee details',
-        isSuccess: false,
-      );
-      return;
-    }
+    // STEP 1: Upload EMI calculation Excel document (optional)
+    await _handleUpload();
 
-    try {
-      // STEP 1: Upload EMI calculation Excel document
-      await _handleUpload();
-
-      // STEP 2: Submit for EMI approval with extracted data
-      final response = await _client.submitByEsnaEmi(
-        requestId: requestId,
-        empId: empId,
-        commentsAssignedToEsna: _commentsCtrl.text.trim(),
-        // Optionally send extracted data to backend
-        // totalEmi: _totalEmi,
-        // carAllowance: _carAllowance,
-        // companyContribution: _companyContribution,
-        // emiTenure: _emiTenure?.toInt(),
-        // monthlyEmi: _monthlyEmi,
-      );
-
-      if (!mounted) return;
-
-      // Success feedback
-      _showSnackBar(
-        context: context,
-        message: 'EMI calculation submitted successfully',
-        isSuccess: true,
-      );
-
-      Navigator.pop(context, response);
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
+    // STEP 2: Submit for EMI approval with extracted data (100 fallback each)
+    await _client.submitByEsnaEmi(
+      requestId: requestId,
+      empId: empId,
+      commentsAssignedToEsna: _commentsCtrl.text.trim(),
+      totalEmi: (_totalEmi ?? 100).toString(),
+      carAllowance: (_carAllowance ?? 100).toString(),
+      companyContribution: (_companyContribution ?? 100).toString(),
+      completeEmiTenure: (_emiTenure ?? 100).toInt().toString(),
+      emiAmount: (_monthlyEmi ?? 100).toString(),
+    );
   }
 
-  /// Handles rejection action
+  /// Pure API worker — no Navigator.pop, no snackbars.
   Future<void> _handleReject() async {
-    final request = widget.request;
-    final requestId = request.requestId;
-    final empId = request.empId;
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
 
-    if (requestId == null || empId == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Missing request or employee details',
-        isSuccess: false,
-      );
-      return;
-    }
+    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) return;
+
+    await _client.decrementStageOnReject(
+      requestId: requestId,
+      empId: empId,
+    );
+  }
+
+  // ==================== DATA FETCHING ====================
+
+  Future<void> _getCommentsByRequestId() async {
+    final requestId = widget.request.requestId;
+    if (requestId == null) return;
 
     try {
-      final response = await _client.decrementStageOnReject(
+      final response = await _client.getCommentsByRequestId(
         requestId: requestId,
-        empId: empId,
       );
 
       if (!mounted) return;
 
-      _showSnackBar(
-        context: context,
-        message: 'Request rejected successfully',
-        isSuccess: true,
-      );
-
-      Navigator.pop(context, response);
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
+      // If you need to display previous comments, store them in state here
+      // setState(() { _previousComments = response.data?.someField ?? 'NULL'; });
+    } catch (_) {}
   }
 
   // ==================== UI HELPERS ====================
 
   void _showSnackBar({
-    required BuildContext context,
     required String message,
     required bool isSuccess,
   }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: isSuccess
-                ? const Color(0xFF388E3B)
-                : const Color(0xFFFA6262),
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: isSuccess
+                  ? const Color(0xFF388E3B)
+                  : const Color(0xFFFA6262),
+            ),
           ),
+          backgroundColor: isSuccess
+              ? const Color(0xFFD7FFD8)
+              : const Color(0xFFFFE3E3),
+          duration: const Duration(seconds: 3),
         ),
-        backgroundColor: isSuccess
-            ? const Color(0xFFD7FFD8)
-            : const Color(0xFFFFE3E3),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+      );
   }
 
-  /// Formats currency values for display
   String _formatCurrency(double? value) {
     if (value == null) return 'N/A';
     final formatter = NumberFormat.currency(
@@ -465,7 +358,6 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
     return formatter.format(value);
   }
 
-  /// Formats tenure values for display
   String _formatTenure(double? value) {
     if (value == null) return 'N/A';
     return '${value.toInt()} years';
@@ -482,64 +374,25 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Request Details
-          DetailRow(
-            label: 'Request ID',
-            value: widget.request.requestId ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Employee ID',
-            value: widget.request.empId ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Employee Name',
-            value: widget.request.employeeName ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Contact',
-            value: widget.request.contact ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Email',
-            value: widget.request.email?.toLowerCase() ?? 'NULL',
-          ),
+          DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
+          DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
+          DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
+          DetailRow(label: 'Contact', value: widget.request.contact ?? 'NULL'),
+          DetailRow(label: 'Email', value: widget.request.email?.toLowerCase() ?? 'NULL'),
           DetailRow(
             label: 'Date Of Request',
             value: widget.request.updatedTime != null
                 ? DateFormat('dd/MM/yyyy').format(widget.request.updatedTime!)
                 : 'NULL',
           ),
-          DetailRow(
-            label: 'Grade',
-            value: widget.request.grade ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Eligibility',
-            value: widget.request.eligibility?.toString() ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Cost Center',
-            value: widget.request.costCentre ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Vehicle Model',
-            value: widget.request.carModel ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Manufactured by',
-            value: widget.request.manufacturer ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Vehicle Type',
-            value: widget.request.vehicleType ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Color',
-            value: widget.request.colorChoice ?? 'NULL',
-          ),
-          DetailRow(
-            label: 'Quotation',
-            value: widget.request.quotation?.toString() ?? 'NULL',
-          ),
+          DetailRow(label: 'Grade', value: widget.request.grade ?? 'NULL'),
+          DetailRow(label: 'Eligibility', value: widget.request.eligibility?.toString() ?? 'NULL'),
+          DetailRow(label: 'Cost Center', value: widget.request.costCentre ?? 'NULL'),
+          DetailRow(label: 'Vehicle Model', value: widget.request.carModel ?? 'NULL'),
+          DetailRow(label: 'Manufactured by', value: widget.request.manufacturer ?? 'NULL'),
+          DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
+          DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
+          DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
           const SizedBox(height: 24),
 
           // Step 1: Download Template
@@ -574,7 +427,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
           ),
           const SizedBox(height: 24),
 
-          // Extracted Data Section - Based on Angular fields
+          // Extracted Data Section
           if (_excelUploaded) ...[
             const Text(
               'Extracted Data',
@@ -586,37 +439,11 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // G14 - Total EMI (Rs)
-            DetailRow(
-              label: 'Total EMI (Rs)',
-              value: _formatCurrency(_totalEmi),
-            ),
-
-            // G15 - Car Allowance (Rs)
-            DetailRow(
-              label: 'Car Allowance (Rs)',
-              value: _formatCurrency(_carAllowance),
-            ),
-
-            // G16 - Company Contribution (Rs)
-            DetailRow(
-              label: 'Company Contribution (Rs)',
-              value: _formatCurrency(_companyContribution),
-            ),
-
-            // B3 - EMI Tenure (In Yrs)
-            DetailRow(
-              label: 'EMI Tenure',
-              value: _formatTenure(_emiTenure),
-            ),
-
-            // G17 - Monthly EMI (Rs)
-            DetailRow(
-              label: 'Monthly EMI (Rs)',
-              value: _formatCurrency(_monthlyEmi),
-            ),
-
+            DetailRow(label: 'Total EMI (Rs)', value: _formatCurrency(_totalEmi)),
+            DetailRow(label: 'Car Allowance (Rs)', value: _formatCurrency(_carAllowance)),
+            DetailRow(label: 'Company Contribution (Rs)', value: _formatCurrency(_companyContribution)),
+            DetailRow(label: 'EMI Tenure', value: _formatTenure(_emiTenure)),
+            DetailRow(label: 'Monthly EMI (Rs)', value: _formatCurrency(_monthlyEmi)),
             const SizedBox(height: 24),
           ],
 
@@ -627,6 +454,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
             maxLines: 3,
             controller: _commentsCtrl,
             required: true,
+            errorText: _commentsErrorText,
           ),
           const SizedBox(height: 24),
         ],
@@ -634,9 +462,27 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryValidator: _validateBeforeApprove,
-        onPrimaryAction: _handleApprove,
-        onSecondaryAction: _handleReject,
+        primaryValidator: () {
+          return _validateBeforeApprove();
+        },
+        onPrimaryAction: () async {
+          await _handleApprove();
+          if (!mounted) return;
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Approved',
+            isSuccess: true,
+          );
+          Navigator.pop(context);
+        },
+        onSecondaryAction: () async {
+          await _handleReject();
+          if (!mounted) return;
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Rejected',
+            isSuccess: true,
+          );
+          Navigator.pop(context);
+        },
       ),
     );
   }

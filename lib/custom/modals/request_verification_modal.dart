@@ -47,8 +47,18 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   void initState() {
     super.initState();
 
+    // 1️⃣ Fetch comments after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getCommentsByRequestId();
+    });
+
+    // 2️⃣ Listen to comments controller to reset error border on typing
+    _commentsCtrl.addListener(() {
+      if (_commentsErrorText != null && _commentsCtrl.text.trim().isNotEmpty) {
+        setState(() {
+          _commentsErrorText = null; // reset error as soon as user types
+        });
+      }
     });
   }
 
@@ -82,12 +92,12 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   // ==================== VALIDATION ====================
 
   /// Validates all required fields before approval
+  String? _commentsErrorText;
   bool _validateBeforeApprove() {
-    // Comments validation
     if (_commentsCtrl.text.trim().isEmpty) {
-      _showValidationToast(
-        'Please enter your comments'
-      );
+      setState(() {
+        _commentsErrorText = 'Required'; // shows inline error
+      });
       return false;
     }
     return true;
@@ -166,10 +176,10 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       if (!mounted) return;
 
       // Success feedback
-      Navigator.pop(context, 'approved');
+      Navigator.pop(context, 'Request approved');
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context, 'rejected');
+      Navigator.pop(context, 'Request failed');
 
     }
   }
@@ -271,7 +281,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       msg: message,
       toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.TOP,
-      timeInSecForIosWeb: 4,   // ⬅ increase duration (default ~2 sec)
+      timeInSecForIosWeb: 3,
       backgroundColor: const Color(0xFFFFE3E3),
       textColor: const Color(0xFFFA6262),
       fontSize: 14.0,
@@ -279,7 +289,6 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   }
 
   // ==================== BUILD METHOD ====================
-
   @override
   Widget build(BuildContext context) {
     return BaseModal(
@@ -360,6 +369,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
             maxLines: 3,
             controller: _commentsCtrl,
             required: true,
+            errorText: _commentsErrorText,
           ),
           const SizedBox(height: 16),
 

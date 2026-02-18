@@ -44,6 +44,7 @@ dependencies:
   fluttertoast: ^9.0.0
   # Excel Processing (Stable Version)
   excel: 3.0.0
+  share_plus: ^12.0.1
 
 dev_dependencies:
   flutter_test:
