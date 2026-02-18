@@ -19,6 +19,7 @@ import '../widgets/date_picker_field.dart';
 import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
+import '../../core/helpers/file_downloader.dart';
 
 class RtoTaxReceiptModal extends StatefulWidget {
   final CarRequest request;
@@ -279,6 +280,26 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
     } catch (_) {}
   }
 
+  // ==================== DOCUMENT HANDLING ====================
+
+  /// Opens the selected document by finding the first file with matching docId
+  /// and downloading it using the FileDownloader helper.
+  void _openSelectedDocument() {
+    if (selectedDocument == null) return;
+
+    // Find the first uploaded file that matches the selected document type
+    final file = uploadedDocs.firstWhere(
+          (doc) => doc.docId == selectedDocument!.docId,
+      orElse: () => throw Exception('No file found for selected document'),
+    );
+
+    FileDownloader.downloadAndOpenFile(
+      context: context,
+      presignedUrl: file.downloadUrl,
+      rawFileName: file.fileName,
+    );
+  }
+
   // ==================== UI HELPERS ====================
 
   void _showSnackBar({
@@ -376,21 +397,57 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
           const SizedBox(height: 16),
           const FileUploadField(label: 'Upload Files'),
           const SizedBox(height: 16),
-          DropdownField(
-            label: 'View Document',
-            hints: 'Select Document',
-            items: documentList.map((e) => e.docLabel).toList(),
-            onChanged: (value) {
-              if (value == null) return;
 
-              final doc = documentList.firstWhere(
-                    (e) => e.docLabel == value,
-                orElse: () => throw Exception('Document not found'),
-              );
+          // Document Viewer Dropdown with Download/View functionality
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: DropdownField(
+                  label: 'View Document',
+                  hints: 'Select Document',
+                  items: documentList.map((e) => e.docLabel).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
 
-              setState(() => selectedDocument = doc);
-            },
-            required: true,
+                    final doc = documentList.firstWhere(
+                          (e) => e.docLabel == value,
+                      orElse: () => throw Exception('Document not found'),
+                    );
+
+                    setState(() {
+                      selectedDocument = doc;
+                    });
+                  },
+                  required: false,
+                ),
+              ),
+              if (selectedDocument != null) ...[
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 0),
+                  child: GestureDetector(
+                    onTap: _openSelectedDocument,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFFFF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFDCDCDC),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.download,
+                        color: Color(0xFF9A9A9A),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 16),
           FormTextField(

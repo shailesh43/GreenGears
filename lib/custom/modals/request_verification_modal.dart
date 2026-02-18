@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import '../../network/api_models/car_request.dart';
 import '../../core/utils/enum.dart';
 import '../../network/api_client.dart';
+import '../../network/api_models/get_all_docs_response_model.dart';
+import '../../network/api_models/uploaded_file_model.dart';
 import '../widgets/form_detail_row.dart';
 import '../widgets/form_text_field.dart';
 import '../widgets/file_uploader.dart';
@@ -12,6 +14,7 @@ import '../widgets/drop_down.dart';
 import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../../core/helpers/file_downloader.dart';
 
 class RequestVerificationModal extends StatefulWidget {
   final CarRequest request;
@@ -38,6 +41,11 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   String? selectedDocumentName;
   String? commentsOnEsnaReqVerif;
 
+  // Document state
+  List<UploadedFileModel> uploadedDocs = [];
+  List<Document> documentList = [];
+  Document? selectedDocument;
+
   // Document Upload State
   PlatformFile? uploadedDocumentFile;
   double _uploadProgress = 0.0;
@@ -47,9 +55,10 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   void initState() {
     super.initState();
 
-    // 1️⃣ Fetch comments after first frame
+    // 1️⃣ Fetch comments and documents after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getCommentsByRequestId();
+      _getDocumentsByRequestId();
     });
 
     // 2️⃣ Listen to comments controller to reset error border on typing
@@ -250,6 +259,53 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
     }
   }
 
+  Future<void> _getDocumentsByRequestId() async {
+    final requestId = widget.request.requestId;
+    if (requestId == null) return;
+
+    try {
+      final response = await _client.getAllUploadedDocsFromS3(
+        requestId: requestId,
+      );
+
+      if (!mounted) return;
+
+      final docs = response.data;
+
+      final List<Document> docsEnumList = docs
+          .map((e) => Document.fromDocId(e.docId ?? -1))
+          .whereType<Document>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.docId.compareTo(b.docId));
+
+      setState(() {
+        uploadedDocs = docs;
+        documentList = docsEnumList;
+      });
+    } catch (_) {}
+  }
+
+  // ==================== DOCUMENT HANDLING ====================
+
+  /// Opens the selected document by finding the first file with matching docId
+  /// and downloading it using the FileDownloader helper.
+  void _openSelectedDocument() {
+    if (selectedDocument == null) return;
+
+    // Find the first uploaded file that matches the selected document type
+    final file = uploadedDocs.firstWhere(
+          (doc) => doc.docId == selectedDocument!.docId,
+      orElse: () => throw Exception('No file found for selected document'),
+    );
+
+    FileDownloader.downloadAndOpenFile(
+      context: context,
+      presignedUrl: file.downloadUrl,
+      rawFileName: file.fileName,
+    );
+  }
+
   // ==================== UI HELPERS ====================
 
   void _showSnackBar({
@@ -385,17 +441,56 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
           ),
           const SizedBox(height: 16),
 
-          // View Document Dropdown
-          DropdownField(
-            label: 'View Document',
-            hints: 'Select Document',
-            items: const ['User Quotation Document'],
-            onChanged: (value) {
-              setState(() {
-                selectedDocumentName = value;
-              });
-            },
-            required: false,
+          // Document Viewer Dropdown with Download/View functionality
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: DropdownField(
+                  label: 'View Document',
+                  hints: 'Select Document',
+                  items: documentList.map((e) => e.docLabel).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+
+                    final doc = documentList.firstWhere(
+                          (e) => e.docLabel == value,
+                      orElse: () => throw Exception('Document not found'),
+                    );
+
+                    setState(() {
+                      selectedDocument = doc;
+                    });
+                  },
+                  required: false,
+                ),
+              ),
+              if (selectedDocument != null) ...[
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 0),
+                  child: GestureDetector(
+                    onTap: _openSelectedDocument,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFFFF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFDCDCDC),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.download,
+                        color: Color(0xFF9A9A9A),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 24),
         ],

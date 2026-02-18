@@ -17,7 +17,10 @@ import '../../network/api_models/car_request.dart';
 
 import '../../core/utils/enum.dart';
 import '../../network/api_client.dart';
+import '../../network/api_models/get_all_docs_response_model.dart';
+import '../../network/api_models/uploaded_file_model.dart';
 import '../../custom/widgets/file_uploader.dart';
+import '../../core/helpers/file_downloader.dart';
 
 class InsuranceScreenModal extends StatefulWidget {
   final CarRequest request;
@@ -49,6 +52,11 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   String? _addOnCoverErrorText;
   String? _addOnSapphireErrorText;
 
+  // Document state
+  List<UploadedFileModel> uploadedDocs = [];
+  List<Document> documentList = [];
+  Document? selectedDocument;
+
   // Document upload & progress
   PlatformFile? uploadedQuotationFile;
   double _uploadProgress = 0.0; // 0.0 → 1.0 for LinearProgressIndicator
@@ -78,9 +86,10 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   void initState() {
     super.initState();
 
-    // Fetch comments after first frame
+    // Fetch comments and documents after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getCommentsByRequestId();
+      _getDocumentsByRequestId();
     });
 
     // Clear inline error as soon as user types in Base Insurance
@@ -205,17 +214,56 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
           ),
           const SizedBox(height: 16),
 
-          /// View Document
-          DropdownField(
-            label: 'View Document',
-            hints: 'Select Document',
-            items: const ['User Quotation Document'],
-            onChanged: (value) {
-              setState(() {
-                selectedDocumentName = value;
-              });
-            },
-            required: false,
+          /// Document Viewer Dropdown with Download/View functionality
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: DropdownField(
+                  label: 'View Document',
+                  hints: 'Select Document',
+                  items: documentList.map((e) => e.docLabel).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+
+                    final doc = documentList.firstWhere(
+                          (e) => e.docLabel == value,
+                      orElse: () => throw Exception('Document not found'),
+                    );
+
+                    setState(() {
+                      selectedDocument = doc;
+                    });
+                  },
+                  required: false,
+                ),
+              ),
+              if (selectedDocument != null) ...[
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 0),
+                  child: GestureDetector(
+                    onTap: _openSelectedDocument,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFFFF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFDCDCDC),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.download,
+                        color: Color(0xFF9A9A9A),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 24),
         ],
@@ -233,7 +281,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
             message: '${widget.request.requestId}: Request Approved',
             isSuccess: true,
           );
-          // Navigator.pop(context);
+          Navigator.pop(context);
         },
         onSecondaryAction: () async {
           await _handleReject();
@@ -242,7 +290,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
             message: '${widget.request.requestId}: Request Rejected',
             isSuccess: true,
           );
-          // Navigator.pop(context);
+          Navigator.pop(context);
         },
       ),
     );
@@ -330,21 +378,21 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
     if (requestId == null) return;
     try
     {
-    // ---------------- STEP 1: Upload document (if selected) ----------------
-    await _handleUpload();
+      // ---------------- STEP 1: Upload document (if selected) ----------------
+      await _handleUpload();
 
-    // ---------------- STEP 2: Submit for insurance quote approval ----------------
-    await _client.SubmitForInsuranceQuoteApproval(
-      requestId: requestId,
-      baseInsurance: int.tryParse(_baseInsuranceCtrl.text.trim()) ?? 0,
-      addOnTataPower: int.tryParse(_addOnCoverCtrl.text.trim()) ?? 0,
-      addOnSapphirePlus: int.tryParse(_addOnSapphireCtrl.text.trim()) ?? 0,
-      commentsByGIT: _commentsCtrl.text.trim().isEmpty
-          ? 'Approved'
-          : _commentsCtrl.text.trim(),
-    );
-    if (!mounted) return;
-    Navigator.pop(context, 'Request approved');
+      // ---------------- STEP 2: Submit for insurance quote approval ----------------
+      await _client.SubmitForInsuranceQuoteApproval(
+        requestId: requestId,
+        baseInsurance: int.tryParse(_baseInsuranceCtrl.text.trim()) ?? 0,
+        addOnTataPower: int.tryParse(_addOnCoverCtrl.text.trim()) ?? 0,
+        addOnSapphirePlus: int.tryParse(_addOnSapphireCtrl.text.trim()) ?? 0,
+        commentsByGIT: _commentsCtrl.text.trim().isEmpty
+            ? 'Approved'
+            : _commentsCtrl.text.trim(),
+      );
+      if (!mounted) return;
+      Navigator.pop(context, 'Request approved');
     }
     catch(e){
       if (!mounted) return;
@@ -369,6 +417,53 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
         commentsOnInsurance = response.data?.commentsAssignedToEsna ?? 'NULL';
       });
     } catch (_) {}
+  }
+
+  Future<void> _getDocumentsByRequestId() async {
+    final requestId = widget.request.requestId;
+    if (requestId == null) return;
+
+    try {
+      final response = await _client.getAllUploadedDocsFromS3(
+        requestId: requestId,
+      );
+
+      if (!mounted) return;
+
+      final docs = response.data;
+
+      final List<Document> docsEnumList = docs
+          .map((e) => Document.fromDocId(e.docId ?? -1))
+          .whereType<Document>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.docId.compareTo(b.docId));
+
+      setState(() {
+        uploadedDocs = docs;
+        documentList = docsEnumList;
+      });
+    } catch (_) {}
+  }
+
+  // ==================== DOCUMENT HANDLING ====================
+
+  /// Opens the selected document by finding the first file with matching docId
+  /// and downloading it using the FileDownloader helper.
+  void _openSelectedDocument() {
+    if (selectedDocument == null) return;
+
+    // Find the first uploaded file that matches the selected document type
+    final file = uploadedDocs.firstWhere(
+          (doc) => doc.docId == selectedDocument!.docId,
+      orElse: () => throw Exception('No file found for selected document'),
+    );
+
+    FileDownloader.downloadAndOpenFile(
+      context: context,
+      presignedUrl: file.downloadUrl,
+      rawFileName: file.fileName,
+    );
   }
 
   // ==================== VALIDATION ====================
