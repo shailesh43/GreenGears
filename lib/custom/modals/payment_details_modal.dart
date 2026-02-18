@@ -18,9 +18,10 @@ import '../../network/api_models/uploaded_file_model.dart';
 
 class PaymentDetailsModal extends StatefulWidget {
   final CarRequest request;
-  PaymentDetailsModal({
+
+  const PaymentDetailsModal({
     super.key,
-    required this.request
+    required this.request,
   });
 
   @override
@@ -29,18 +30,28 @@ class PaymentDetailsModal extends StatefulWidget {
 
 class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   final ApiClient _client = ApiClient();
+
+  // Form Controllers
   final _commentsCtrl = TextEditingController();
-  String? commentsOnEsnaPayment;
-
-  List<UploadedFileModel> uploadedDocs = [];
-  List<Document> documentList = [];
-  Document? selectedDocument;
-
   final _poNumberCtrl = TextEditingController();
   final _poDateCtrl = TextEditingController();
   final _disbursementAmountCtrl = TextEditingController();
   final _paymentDateCtrl = TextEditingController();
   final _utrCodeCtrl = TextEditingController();
+
+  // Fetched data
+  String? commentsOnEsnaPayment;
+
+  // Document state
+  List<UploadedFileModel> uploadedDocs = [];
+  List<Document> documentList = [];
+  Document? selectedDocument;
+
+  // Inline error texts for required FormTextFields
+  String? _poNumberErrorText;
+  String? _disbursementAmountErrorText;
+  String? _utrCodeErrorText;
+  String? _commentsErrorText;
 
   @override
   void initState() {
@@ -50,7 +61,179 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
       _getCommentsByRequestId();
       _getDocumentsByRequestId();
     });
+
+    // Clear inline errors as soon as user types in each required field
+    _poNumberCtrl.addListener(() {
+      if (_poNumberErrorText != null && _poNumberCtrl.text.trim().isNotEmpty) {
+        setState(() => _poNumberErrorText = null);
+      }
+    });
+
+    _disbursementAmountCtrl.addListener(() {
+      if (_disbursementAmountErrorText != null &&
+          _disbursementAmountCtrl.text.trim().isNotEmpty) {
+        setState(() => _disbursementAmountErrorText = null);
+      }
+    });
+
+    _utrCodeCtrl.addListener(() {
+      if (_utrCodeErrorText != null && _utrCodeCtrl.text.trim().isNotEmpty) {
+        setState(() => _utrCodeErrorText = null);
+      }
+    });
+
+    _commentsCtrl.addListener(() {
+      if (_commentsErrorText != null && _commentsCtrl.text.trim().isNotEmpty) {
+        setState(() => _commentsErrorText = null);
+      }
+    });
   }
+
+  @override
+  void dispose() {
+    _commentsCtrl.dispose();
+    _poNumberCtrl.dispose();
+    _poDateCtrl.dispose();
+    _disbursementAmountCtrl.dispose();
+    _paymentDateCtrl.dispose();
+    _utrCodeCtrl.dispose();
+    super.dispose();
+  }
+
+  // ==================== VALIDATION ====================
+
+  bool _validateBeforeApprove() {
+    bool isValid = true;
+
+    setState(() {
+      _poNumberErrorText =
+      _poNumberCtrl.text.trim().isEmpty ? 'Required' : null;
+      _disbursementAmountErrorText =
+      _disbursementAmountCtrl.text.trim().isEmpty ? 'Required' : null;
+      _utrCodeErrorText =
+      _utrCodeCtrl.text.trim().isEmpty ? 'Required' : null;
+      _commentsErrorText =
+      _commentsCtrl.text.trim().isEmpty ? 'Required' : null;
+
+      if (_poNumberCtrl.text.trim().isEmpty ||
+          _disbursementAmountCtrl.text.trim().isEmpty ||
+          _utrCodeCtrl.text.trim().isEmpty ||
+          _commentsCtrl.text.trim().isEmpty) {
+        isValid = false;
+      }
+    });
+
+    return isValid;
+  }
+
+  // ==================== SUBMISSION HANDLERS ====================
+
+  /// Pure API worker — no Navigator.pop, no snackbars.
+  Future<void> _handleApprove() async {
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
+
+    if (requestId == null || empId == null) return;
+
+    await _client.submitByEsnaPayment(
+      requestId: requestId,
+      empId: empId,
+      commentsAssignedToEsna: _commentsCtrl.text.trim(),
+      poNumber: _poNumberCtrl.text.trim(),
+      poDateOfIssue: _poDateCtrl.text.trim(),
+      disbursementAmount: _disbursementAmountCtrl.text.trim(),
+      paymentDate: _paymentDateCtrl.text.trim(),
+      utr: _utrCodeCtrl.text.trim(),
+    );
+  }
+
+  /// Pure API worker — no Navigator.pop, no snackbars.
+  Future<void> _handleReject() async {
+    final requestId = widget.request.requestId;
+    final empId = widget.request.empId;
+
+    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) return;
+
+    await _client.decrementStageOnReject(
+      requestId: requestId,
+      empId: empId,
+    );
+  }
+
+  // ==================== DATA FETCHING ====================
+
+  Future<void> _getCommentsByRequestId() async {
+    final requestId = widget.request.requestId;
+    if (requestId == null) return;
+
+    try {
+      final response = await _client.getCommentsByRequestId(
+        requestId: requestId,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        commentsOnEsnaPayment =
+            response.data?.commentsEmiUserApproval ?? 'NULL';
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _getDocumentsByRequestId() async {
+    final requestId = widget.request.requestId;
+    if (requestId == null) return;
+
+    try {
+      final response = await _client.getAllUploadedDocsFromS3(
+        requestId: requestId,
+      );
+
+      if (!mounted) return;
+
+      final docs = response.data;
+
+      final List<Document> docsEnumList = docs
+          .map((e) => Document.fromDocId(e.docId ?? -1))
+          .whereType<Document>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.docId.compareTo(b.docId));
+
+      setState(() {
+        uploadedDocs = docs;
+        documentList = docsEnumList;
+      });
+    } catch (_) {}
+  }
+
+  // ==================== UI HELPERS ====================
+
+  void _showSnackBar({
+    required String message,
+    required bool isSuccess,
+  }) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: isSuccess
+                  ? const Color(0xFF388E3B)
+                  : const Color(0xFFFA6262),
+            ),
+          ),
+          backgroundColor: isSuccess
+              ? const Color(0xFFD7FFD8)
+              : const Color(0xFFFFE3E3),
+        ),
+      );
+  }
+
+  // ==================== BUILD METHOD ====================
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +243,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ES&A Data fields
+          // Request Details
           DetailRow(label: 'Request ID', value: widget.request.requestId ?? 'NULL'),
           DetailRow(label: 'Employee ID', value: widget.request.empId ?? 'NULL'),
           DetailRow(label: 'Employee Name', value: widget.request.employeeName ?? 'NULL'),
@@ -80,20 +263,40 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
           DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
           DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
-          DetailRow(label: 'EMI approval comments', value: commentsOnEsnaPayment?.toString() ?? 'NULL'),
-
+          DetailRow(
+            label: 'EMI approval comments',
+            value: commentsOnEsnaPayment ?? 'NULL',
+          ),
           const SizedBox(height: 16),
 
-          // ES&A Input fields
-          FormTextField(label: 'PO Number', hint: 'Enter Purchase Order No', required: true, controller: _poNumberCtrl,),
+          // Input Fields
+          FormTextField(
+            label: 'PO Number',
+            hint: 'Enter Purchase Order No',
+            required: true,
+            controller: _poNumberCtrl,
+            errorText: _poNumberErrorText,
+          ),
           const SizedBox(height: 16),
-          DatePickerField(label: 'PO Date' ,controller: _poDateCtrl),
+          DatePickerField(label: 'PO Date', controller: _poDateCtrl),
           const SizedBox(height: 16),
-          FormTextField(label: 'Disbursement Amount', hint: 'Enter Disbursement amount', required: true, controller: _disbursementAmountCtrl,),
+          FormTextField(
+            label: 'Disbursement Amount',
+            hint: 'Enter Disbursement amount',
+            required: true,
+            controller: _disbursementAmountCtrl,
+            errorText: _disbursementAmountErrorText,
+          ),
           const SizedBox(height: 16),
-          DatePickerField(label: 'Payment Date', controller: _paymentDateCtrl,),
+          DatePickerField(label: 'Payment Date', controller: _paymentDateCtrl),
           const SizedBox(height: 16),
-          FormTextField(label: 'UTR', hint: 'Enter UTR code', required: true, controller: _utrCodeCtrl,),
+          FormTextField(
+            label: 'UTR',
+            hint: 'Enter UTR code',
+            required: true,
+            controller: _utrCodeCtrl,
+            errorText: _utrCodeErrorText,
+          ),
           const SizedBox(height: 16),
           const FileUploadField(label: 'Upload Document'),
           const SizedBox(height: 16),
@@ -115,174 +318,43 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
             },
             required: true,
           ),
-
           const SizedBox(height: 16),
-          FormTextField(label: 'Comments', hint: 'Your Comments', maxLines: 3, required: true, controller: _commentsCtrl,),
+          FormTextField(
+            label: 'Comments',
+            hint: 'Your Comments',
+            maxLines: 3,
+            required: true,
+            controller: _commentsCtrl,
+            errorText: _commentsErrorText,
+          ),
           const SizedBox(height: 24),
         ],
       ),
       bottom: ActionButtonPair(
         primaryText: 'Approve',
         secondaryText: 'Reject',
-        primaryValidator: _validateBeforeApprove,
-        onPrimaryAction: () => _handleApprove(),
-        onSecondaryAction: () => _handleReject(),
+        primaryValidator: () {
+          return _validateBeforeApprove();
+        },
+        onPrimaryAction: () async {
+          await _handleApprove();
+          if (!mounted) return;
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Approved',
+            isSuccess: true,
+          );
+          Navigator.pop(context);
+        },
+        onSecondaryAction: () async {
+          await _handleReject();
+          if (!mounted) return;
+          _showSnackBar(
+            message: '${widget.request.requestId}: Request Rejected',
+            isSuccess: true,
+          );
+          Navigator.pop(context);
+        },
       ),
     );
   }
-
-  Future<void> _handleApprove() async {
-    final request = widget.request;
-    final requestId = request.requestId;
-    final empId = request.empId;
-
-    if (requestId == null || empId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
-
-    try {
-      final response = await _client.submitByEsnaPayment(
-        requestId: requestId,
-        empId: empId,
-        commentsAssignedToEsna: _commentsCtrl.text.trim(),
-      );
-
-      Navigator.pop(context, response); // success close
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  bool _validateBeforeApprove() {
-    final request = widget.request!;
-    final comments = _commentsCtrl.text.trim();
-
-    if (comments.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Comments are required',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    return true;
-  }
-
-  void _showSnackBar({
-    required BuildContext context,
-    required String message,
-    required bool isSuccess,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: isSuccess
-                ? const Color(0xFF388E3B)
-                : const Color(0xFFFA6262),
-          ),
-        ),
-        backgroundColor: isSuccess
-            ? const Color(0xFFD7FFD8)
-            : const Color(0xFFFFE3E3),
-      ),
-    );
-  }
-
-  Future<void> _handleReject() async {
-    final request = widget.request;
-    final requestId = request.requestId;
-    final empId = request.empId;
-
-    if (requestId == null || empId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
-
-    try {
-      final response = await _client.decrementStageOnReject(
-        requestId: requestId,
-        empId: empId,
-      );
-
-      Navigator.pop(context, response); // success close
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  Future<void> _getCommentsByRequestId() async {
-    final request = widget.request;
-    final requestId = request.requestId;
-
-    if (requestId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
-
-    try {
-      final response = await _client.getCommentsByRequestId(
-        requestId: requestId,
-      );
-
-      setState(() {
-        commentsOnEsnaPayment = response.data?.commentsEmiUserApproval ?? 'NULL';
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
-  Future<void> _getDocumentsByRequestId() async
-  {
-    final requestId = widget.request.requestId;
-
-    if (requestId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
-
-    try {
-      final response = await _client.getAllUploadedDocsFromS3(
-        requestId: requestId,
-      );
-
-      final docs = response.data; // List<UploadedDocData>
-
-      final List<Document> docsEnumList = docs
-          .map((e) => Document.fromDocId(e.docId ?? -1))
-          .whereType<Document>()
-          .toSet()
-          .toList()
-        ..sort((a, b) => a.docId.compareTo(b.docId));
-
-      setState(() {
-        uploadedDocs = docs;
-        documentList = docsEnumList;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-
 }
