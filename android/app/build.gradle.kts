@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.greengears"
+    namespace = "com.tatapower.greengears"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID
-        applicationId = "com.example.greengears"
+        applicationId = "com.tatapower.greengears"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
