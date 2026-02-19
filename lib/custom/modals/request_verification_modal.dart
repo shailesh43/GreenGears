@@ -172,19 +172,17 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
     }
 
     try {
-      // STEP 1: Upload document if file is selected
-      await _handleUpload();
-
-      // STEP 2: Assign to insurance
+      // STEP 1: Assign to insurance
       final response = await _client.assignToInsurance(
         requestId: requestId,
         empId: empId,
         commentsAssignedToEsna: _commentsCtrl.text.trim(),
       );
+      // STEP 2: Upload document if file is selected
+      await _handleUpload();
+      // Success feedback
 
       if (!mounted) return;
-
-      // Success feedback
       Navigator.pop(context, 'Request approved');
     } catch (e) {
       if (!mounted) return;

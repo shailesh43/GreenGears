@@ -173,23 +173,30 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
     final empId = widget.request.empId;
 
     if (requestId == null || empId == null) return;
+    try {
+      // STEP 1: Submit RTO tax receipt
+      await _client.submitByEsnaRtoTaxReceipt(
+        requestId: requestId,
+        empId: empId,
+        commentsAssignedToEsna: _commentsCtrl.text.trim(),
+        vehicleNumber: _vehicleNumberCtrl.text.trim(),
+        vehicleMake: widget.request.manufacturer ?? '',
+        vehicleModel: widget.request.carModel ?? '',
+        chassisNumber: _chassisNumberCtrl.text.trim(),
+        engineNumber: _engineNumberCtrl.text.trim(),
+        vehicleHandoverDate: _vehicleHandoverDateCtrl.text.trim(),
+        fastTagNumber: _fastTagNumberCtrl.text.trim(),
+      );
 
-    // STEP 1: Upload document (silently skip if no file selected)
-    await _handleUpload();
-
-    // STEP 2: Submit RTO tax receipt
-    await _client.submitByEsnaRtoTaxReceipt(
-      requestId: requestId,
-      empId: empId,
-      commentsAssignedToEsna: _commentsCtrl.text.trim(),
-      vehicleNumber: _vehicleNumberCtrl.text.trim(),
-      vehicleMake: widget.request.manufacturer ?? '',
-      vehicleModel: widget.request.carModel ?? '',
-      chassisNumber: _chassisNumberCtrl.text.trim(),
-      engineNumber: _engineNumberCtrl.text.trim(),
-      vehicleHandoverDate: _vehicleHandoverDateCtrl.text.trim(),
-      fastTagNumber: _fastTagNumberCtrl.text.trim(),
-    );
+      // STEP 2: Upload document (silently skip if no file selected)
+      await _handleUpload();
+      if (!mounted) return;
+      Navigator.pop(context, 'Request approved');
+    }
+    catch(e) {
+      if (!mounted) return;
+      Navigator.pop(context, 'Request failed');
+    }
   }
 
   /// Pure API worker — no Navigator.pop, no snackbars.
@@ -469,7 +476,6 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
         },
         onPrimaryAction: () async {
           await _handleApprove();
-          if (!mounted) return;
           _showSnackBar(
             message: '${widget.request.requestId}: Request Approved',
             isSuccess: true,

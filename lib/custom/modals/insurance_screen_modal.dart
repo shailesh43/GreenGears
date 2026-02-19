@@ -10,7 +10,7 @@ import '../widgets/action_button_pair.dart';
 import '../widgets/request_card.dart';
 import '../widgets/form_detail_row.dart';
 import '../widgets/form_text_field.dart';
-import '../widgets/file_uploader.dart';
+import '../widgets/multiple_file_upload_field.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
 import '../../network/api_models/car_request.dart';
@@ -19,7 +19,6 @@ import '../../core/utils/enum.dart';
 import '../../network/api_client.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
 import '../../network/api_models/uploaded_file_model.dart';
-import '../../custom/widgets/file_uploader.dart';
 import '../../core/helpers/file_downloader.dart';
 
 class InsuranceScreenModal extends StatefulWidget {
@@ -57,28 +56,36 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   List<Document> documentList = [];
   Document? selectedDocument;
 
-  // Document upload & progress
-  PlatformFile? uploadedQuotationFile;
-  double _uploadProgress = 0.0; // 0.0 → 1.0 for LinearProgressIndicator
+  // Document upload & progress - ✅ NOW SUPPORTS MULTIPLE FILES
+  List<PlatformFile> uploadedFiles = []; // ✅ Changed from single file to list
+  double _uploadProgress = 0.0;
   bool _isUploading = false;
 
+  /// Prepares the document upload payload for MULTIPLE files
   Map<String, dynamic> _bindUploadDocRequestBody() {
-    if (uploadedQuotationFile == null) {
-      throw Exception('No file selected');
+    if (uploadedFiles.isEmpty) {
+      throw Exception('No files selected');
+    }
+
+    // ✅ Validate that all files have bytes available
+    for (var file in uploadedFiles) {
+      if (file.bytes == null) {
+        throw Exception('File data not available for ${file.name}. Please select the file again.');
+      }
     }
 
     return {
-      'emp_id': widget.request.empId.toString(),
-      'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
-      'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(),
+      'emp_id': widget.request.empId,
+      'process_stage': widget.request.processStage ?? Stage.assignedToInsurance.stageNo,
+      'doc_id': 4, // Document ID for insurance quotation
 
-      // MUST be a LIST for multer.array("files")
-      'files': [
-        MultipartFile.fromBytes(
-          uploadedQuotationFile!.bytes!, // 🔴 buffer
-          filename: uploadedQuotationFile!.name, // 🔴 originalname
-        ),
-      ],
+      // ✅ Convert ALL files to MultipartFile
+      'files': uploadedFiles.map((file) {
+        return MultipartFile.fromBytes(
+          file.bytes!,
+          filename: file.name,
+        );
+      }).toList(),
     };
   }
 
@@ -193,13 +200,15 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
           ),
           const SizedBox(height: 16),
 
-          /// Upload Document
-          FileUploadField(
-            label: 'Upload Quotation Document',
-            allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
-            onFileSelected: (file) {
+          /// Upload Multiple Documents ✅
+          MultipleFileUploadField(
+            label: 'Upload Insurance Documents',
+            allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+            maxFiles: 5,
+            required: false,
+            onFilesChanged: (files) {
               setState(() {
-                uploadedQuotationFile = file;
+                uploadedFiles = files;
               });
             },
           ),
@@ -337,10 +346,12 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   }
 
   Future<void> _handleUpload() async {
-    // Skip silently if no document selected — upload is optional
-    if (uploadedQuotationFile == null) return;
+    // Skip silently if no documents selected — upload is optional
+    if (uploadedFiles.isEmpty) return;
 
     try {
+      debugPrint('📤 Uploading ${uploadedFiles.length} file(s)...');
+
       final docReqBody = _bindUploadDocRequestBody();
 
       setState(() {
@@ -358,10 +369,14 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
         },
       );
 
+      debugPrint('✅ Successfully uploaded ${uploadedFiles.length} file(s)');
+
       setState(() {
         _isUploading = false;
       });
     } catch (e) {
+      debugPrint('❌ Upload failed: $e');
+
       if (!mounted) return;
 
       setState(() {
@@ -379,18 +394,24 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
     try
     {
       // ---------------- STEP 1: Upload document (if selected) ----------------
-      await _handleUpload();
-
       // ---------------- STEP 2: Submit for insurance quote approval ----------------
-      await _client.SubmitForInsuranceQuoteApproval(
+      final response = await _client.SubmitForInsuranceQuoteApproval(
         requestId: requestId,
-        baseInsurance: int.tryParse(_baseInsuranceCtrl.text.trim()) ?? 0,
-        addOnTataPower: int.tryParse(_addOnCoverCtrl.text.trim()) ?? 0,
-        addOnSapphirePlus: int.tryParse(_addOnSapphireCtrl.text.trim()) ?? 0,
+        baseInsurance: _baseInsuranceCtrl.text.trim().isEmpty
+            ? "0"
+            : _baseInsuranceCtrl.text.trim(),
+        addOnTataPower: _addOnCoverCtrl.text.trim().isEmpty
+            ? "0"
+            : _addOnCoverCtrl.text.trim(),
+        addOnSapphirePlus: _addOnSapphireCtrl.text.trim().isEmpty
+            ? "0"
+            : _addOnSapphireCtrl.text.trim(),
         commentsByGIT: _commentsCtrl.text.trim().isEmpty
             ? 'Approved'
             : _commentsCtrl.text.trim(),
       );
+      await _handleUpload();
+
       if (!mounted) return;
       Navigator.pop(context, 'Request approved');
     }
