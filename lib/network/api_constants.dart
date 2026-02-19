@@ -12,7 +12,13 @@ class ApiConstants {
   // SAMAL auth credentials & URL params
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
   static String get clientId => dotenv.env['CLIENT_ID'] ?? '';
-  static String get redirectUri => dotenv.env['REDIRECT_URI'] ?? '';
+  static String get redirectUri {
+    if (Platform.isIOS) {
+      return dotenv.env['REDIRECT_URI_IOS']!;
+    } else {
+      return dotenv.env['REDIRECT_URI_ANDROID']!;
+    }
+  }
   static String get scope => dotenv.env['SCOPE'] ?? 'User.Read offline_access';
   static String get userGraphUrl => dotenv.env['USER_GRAPH_URL'] ?? 'https://graph.microsoft.com/beta/me';
   static String get authorizationEndpoint =>

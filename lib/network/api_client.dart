@@ -280,39 +280,49 @@ class ApiClient {
 
   // TODO: Test & Rewrite this endpoint
   // 4.3) API Endpoint: /uploadDocument
+  // ==========================================
+  // FIXED uploadDocument METHOD FOR ApiClient
+  // ==========================================
+  // Place this inside your ApiClient class
+
   Future<UploadDocumentResponseModel> uploadDocument({
     required Map<String, dynamic> body,
     required void Function(double progress) onProgress,
   }) async
   {
-    final endpointUrl =
-    await ApiConstants.getEndPointUrl('uploadDocument');
+    try {
+      final endpointUrl =
+      await ApiConstants.getEndPointUrl('uploadDocument');
 
-    final formData = FormData.fromMap({
-      'emp_id': body['emp_id'],
-      'process_stage': body['process_stage'],
-      'doc_id': body['doc_id'],
-      'files': body['files'], // 🔴 MUST be list
-    });
+      final formData = FormData.fromMap({
+        'emp_id': body['emp_id'],
+        'process_stage': body['process_stage'],
+        'doc_id': body['doc_id'],
+        'files': body['files'],
+      });
 
-    final response = await _dio.post(
-      endpointUrl,
-      data: formData,
-      options: Options(
-        headers: {
-          ..._defaultHeaders(),
-          // ❌ NEVER set Content-Type manually
+      final response = await _dio.post(
+        endpointUrl,
+        data: formData,
+        options: Options(
+          headers: _defaultHeaders(),
+        ),
+        onSendProgress: (sent, total) {
+          if (total > 0) {
+            final progress = sent / total;
+            onProgress(progress);
+            logger.d(
+                'Upload Progress: ${(progress * 100).toStringAsFixed(1)}%');
+          }
         },
-      ),
-      onSendProgress: (sent, total) {
-        if (total > 0) {
-          final progress = sent / total;
-          onProgress(progress); // 0.0 → 1.0
-        }
-      },
-    );
+      );
 
-    return UploadDocumentResponseModel.fromJson(response.data);
+      return UploadDocumentResponseModel.fromJson(response.data);
+
+    } catch (e) {
+      logger.e("Error occurred");
+      rethrow; // Keeps original error but no custom handling
+    }
   }
 
   // 5. Fetch All Requests - ROLES: User, Admin, ES&A, Insurance based on ENUMS: UserRole, Stage
@@ -544,9 +554,9 @@ class ApiClient {
   // API Endpoint: /updateInsuranceQuotes
   Future<InsuranceQuoteApprovalModel> SubmitForInsuranceQuoteApproval({
     required String requestId,
-    required int baseInsurance,
-    required int addOnTataPower,
-    required int addOnSapphirePlus,
+    required String baseInsurance,
+    required String addOnTataPower,
+    required String addOnSapphirePlus,
     required String commentsByGIT,
   }) async
   {
