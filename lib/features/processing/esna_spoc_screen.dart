@@ -91,12 +91,6 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadEsnaSpocScreenRequests() async {
     setState(() {
       isLoading = true;
@@ -224,7 +218,7 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'ES&A spoc',
+          'ES&A SPOC',
           style: TextStyle(
             fontFamily: 'Inter',
             color: Colors.black,
@@ -359,5 +353,11 @@ class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

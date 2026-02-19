@@ -115,7 +115,7 @@ class _ActiveRequestPageState extends State<ActiveRequestPage> {
 
       _showSnackBar(
         context: context,
-        message: response.message ?? 'Request deleted successfully',
+        message: 'Request deleted successfully',
         isSuccess: true,
       );
 

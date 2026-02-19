@@ -169,10 +169,12 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       "choice_of_lease": "Employee Official Purpose",
       "color_choice": _colourCtrl.text.trim(),
       "vehicle_type": selectedVehicleType,
-      "quotation": quotationAmountModalResult,
-      "cooling_period": "90 days",
+      "quotation": double.tryParse(quotationAmountModalResult ?? '0') ?? 0.0, // ✅ Convert to number
+      "cooling_period": 90, // ✅ Send as number (days)
       "updated_by": empCode,
-      "comments": _commentsCtrl.text.trim(),
+      "comments": _commentsCtrl.text.trim().isEmpty
+          ? null
+          : _commentsCtrl.text.trim(), // ✅ Send null if empty
     };
   }
 
@@ -182,10 +184,15 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       throw Exception('No file selected');
     }
 
+    // ✅ Validate that bytes are available
+    if (uploadedQuotationFile!.bytes == null) {
+      throw Exception('File data not available. Please select the file again.');
+    }
+
     return {
-      'emp_id': empCode.toString(),
-      'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
-      'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(),
+      'emp_id': empCode,
+      'process_stage': Stage.requested?.stageNo ?? 20,
+      'doc_id': 1, // Document ID for quotation
       'files': [
         MultipartFile.fromBytes(
           uploadedQuotationFile!.bytes!,
@@ -243,29 +250,26 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
   /// Main submission handler - orchestrates the three-step process
   Future<void> _handleSubmit() async {
     try {
-      // STEP 1: Upload document to S3
-      await _handleUpload();
-
-      // STEP 2: Create/update employee record
+      // STEP 1: Create/update employee record
       final newEmpRequestBody = _bindNewEmployeeRequestBody();
       await _client.createNewEmployee(newEmpRequestBody);
 
-      // STEP 3: Create vehicle request
+      // STEP 2: Create vehicle request
       final carRequestBody = _bindCreateVehicleRequestBody();
       final response = await _client.createNewVehicleRequest(carRequestBody);
 
       if (!mounted) return;
-
-      // ✅ Success — only snackbar in the entire flow
+      Navigator.pop(context, response);
       _showSnackBar(
-        message: 'New Request Created successfully!',
+        message: 'Your Request registered successfully',
         isSuccess: true,
       );
 
-      Navigator.pop(context, response);
+      // STEP 3: Upload document (now the request exists)
+      await _handleUpload();
     } catch (e) {
+      logger.e('Error during submission: $e');
       if (!mounted) return;
-      _showValidationToast(e.toString());
     }
   }
 
