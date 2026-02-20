@@ -8,7 +8,8 @@ import '../widgets/date_picker_field.dart';
 import '../widgets/action_button_pair.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
-
+import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
 import '../../network/api_client.dart';
 import '../../core/utils/enum.dart';
 import '../../network/api_models/car_request.dart';
@@ -47,6 +48,29 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   List<UploadedFileModel> uploadedDocs = [];
   List<Document> documentList = [];
   Document? selectedDocument;
+
+  // Document Upload State
+  PlatformFile? uploadedDocumentFile;
+  double _uploadProgress = 0.0;
+  bool _isUploading = false;
+
+  Map<String, dynamic> _bindUploadDocRequestBody() {
+    if (uploadedDocumentFile == null) {
+      throw Exception('No file selected');
+    }
+
+    return {
+      'emp_id': widget.request.empId.toString(),
+      'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
+      'doc_id': (Document.rtoTaxReceiptDoc?.docId ?? 8).toString(),
+      'files': [
+        MultipartFile.fromBytes(
+          uploadedDocumentFile!.bytes!,
+          filename: uploadedDocumentFile!.name,
+        ),
+      ],
+    };
+  }
 
   // Inline error texts for required FormTextFields
   String? _poNumberErrorText;
@@ -128,6 +152,33 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   }
 
   // ==================== SUBMISSION HANDLERS ====================
+
+  Future<void> _handleUpload() async {
+    if (uploadedDocumentFile == null) return;
+
+    try {
+      final docReqBody = _bindUploadDocRequestBody();
+
+      setState(() {
+        _isUploading = true;
+        _uploadProgress = 0.0;
+      });
+
+      await _client.uploadDocument(
+        body: docReqBody,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() => _uploadProgress = progress);
+        },
+      );
+
+      setState(() => _isUploading = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploading = false);
+      rethrow;
+    }
+  }
 
   /// Pure API worker – no Navigator.pop, no snackbars.
   Future<void> _handleApprove() async {
@@ -319,7 +370,15 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
             errorText: _utrCodeErrorText,
           ),
           const SizedBox(height: 16),
-          const FileUploadField(label: 'Upload Document'),
+          FileUploadField(
+            label: 'Upload Document - File Type Allowed: .pdf/.txt/.docx',
+            allowedExtensions: const ['pdf', 'txt', 'doc', 'docx'],
+            onFileSelected: (file) {
+              setState(() {
+                uploadedDocumentFile = file;
+              });
+            },
+          ),
           const SizedBox(height: 16),
 
           // Document Viewer Dropdown with Download/View functionality

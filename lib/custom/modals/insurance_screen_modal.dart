@@ -77,7 +77,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
     return {
       'emp_id': widget.request.empId,
       'process_stage': widget.request.processStage ?? Stage.assignedToInsurance.stageNo,
-      'doc_id': 4, // Document ID for insurance quotation
+      'doc_id': (Document.insuranceSupportDoc?.docId ?? 3).toString(), // Document ID for insurance quotation
 
       // ✅ Convert ALL files to MultipartFile
       'files': uploadedFiles.map((file) {

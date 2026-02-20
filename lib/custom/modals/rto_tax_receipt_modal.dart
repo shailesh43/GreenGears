@@ -58,23 +58,23 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   String? _commentsErrorText;
 
   // Document upload & progress
-  PlatformFile? uploadedQuotationFile;
+  PlatformFile? uploadedRtoFile;
   double _uploadProgress = 0.0;
   bool _isUploading = false;
 
   Map<String, dynamic> _bindUploadDocRequestBody() {
-    if (uploadedQuotationFile == null) {
+    if (uploadedRtoFile == null) {
       throw Exception('No file selected');
     }
 
     return {
       'emp_id': widget.request.empId.toString(),
       'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
-      'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(),
+      'doc_id': (Document.rtoTaxReceiptDoc?.docId ?? 8).toString(),
       'files': [
         MultipartFile.fromBytes(
-          uploadedQuotationFile!.bytes!,
-          filename: uploadedQuotationFile!.name,
+          uploadedRtoFile!.bytes!,
+          filename: uploadedRtoFile!.name,
         ),
       ],
     };
@@ -214,7 +214,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
 
   /// Silently skips if no file selected — upload is optional.
   Future<void> _handleUpload() async {
-    if (uploadedQuotationFile == null) return;
+    if (uploadedRtoFile == null) return;
 
     try {
       final docReqBody = _bindUploadDocRequestBody();

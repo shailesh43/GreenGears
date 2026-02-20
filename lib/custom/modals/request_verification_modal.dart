@@ -38,7 +38,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   final _commentsCtrl = TextEditingController();
 
   // Form State
-  String? selectedDocumentName;
+  // String? selectedDocumentName;
   String? commentsOnEsnaReqVerif;
 
   // Document state
@@ -192,7 +192,8 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   }
 
   /// Handles rejection action
-  Future<void> _handleReject() async {
+  Future<void> _handleReject() async
+  {
     final request = widget.request;
     final requestId = request.requestId;
     final empId = request.empId;
@@ -450,12 +451,10 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
                   items: documentList.map((e) => e.docLabel).toList(),
                   onChanged: (value) {
                     if (value == null) return;
-
                     final doc = documentList.firstWhere(
                           (e) => e.docLabel == value,
                       orElse: () => throw Exception('Document not found'),
                     );
-
                     setState(() {
                       selectedDocument = doc;
                     });
