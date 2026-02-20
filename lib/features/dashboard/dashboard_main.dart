@@ -49,8 +49,6 @@ class _MainDashboard extends State<MainDashboard> {
   // Employee Vehicle Request (if exist i.e. Active Request)
   CarRequest? employeeRequest;
   final List<CarRequest> activeRequests = [];
-
-
   int roleId = 0;
   bool isLoading = true;
   @override
@@ -434,7 +432,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => UserApproval()),
+                                MaterialPageRoute(builder: (_) => UserApproval(approvalRequest: widget.request!,)),
                               );
                             },
                           ),

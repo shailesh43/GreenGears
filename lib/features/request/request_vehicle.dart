@@ -170,7 +170,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       "color_choice": _colourCtrl.text.trim(),
       "vehicle_type": selectedVehicleType,
       "quotation": double.tryParse(quotationAmountModalResult ?? '0') ?? 0.0, // ✅ Convert to number
-      "cooling_period": 90, // ✅ Send as number (days)
+      "cooling_period": DateTime.now().add(const Duration(days: 90)), // ✅ Send as number (current datetime after 90 days)
       "updated_by": empCode,
       "comments": _commentsCtrl.text.trim().isEmpty
           ? null
@@ -192,7 +192,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     return {
       'emp_id': empCode,
       'process_stage': Stage.requested?.stageNo ?? 20,
-      'doc_id': 1, // Document ID for quotation
+      'doc_id': (Document.initialQuotationDoc?.docId ?? 1).toString(), // Document ID for quotation
       'files': [
         MultipartFile.fromBytes(
           uploadedQuotationFile!.bytes!,

@@ -7,8 +7,15 @@ import '../../custom/widgets/drop_down.dart';
 import '../../custom/widgets/action_button_pair.dart';
 import '../../network/api_models/car_request.dart';
 import '../../network/api_client.dart';
+import '../../network/api_models/get_all_docs_response_model.dart';
+import '../../network/api_models/uploaded_file_model.dart';
 import '../../network/api_models/user_approval_model.dart';
 import '../../constants/local_prefs.dart';
+import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
+import '../../core/utils/enum.dart';
+import '../../core/helpers/file_downloader.dart';
 
 enum ApprovalType {
   insuranceQuote,
@@ -17,11 +24,10 @@ enum ApprovalType {
 
 class UserApproval extends StatefulWidget {
 
-  final CarRequest? approvalRequest;
-
+  final CarRequest approvalRequest;
   const UserApproval({
     super.key,
-    this.approvalRequest,
+    required this.approvalRequest,
   });
 
   @override
@@ -31,21 +37,36 @@ class UserApproval extends StatefulWidget {
 class _UserApprovalState extends State<UserApproval> {
   final ApiClient _client = ApiClient();
   bool isLoading = true;
-  final _commentsInsuranceCtrl = TextEditingController();
-  final _commentsEmiCtrl = TextEditingController();
-  String? addOnTataPowerValue;
-  String? addOnSapphirePlusValue;
+
   // State variable to hold the approval request
-  CarRequest? approvalRequest;
+  CarRequest? mainApprovalRequest;
   // Single approval request and its type
   ApprovalType? approvalType;
+  // Select one insurance value
+  String? addOnTataPowerValue;
+  String? addOnSapphirePlusValue;
   String? selectedInsuranceType;
+  String? commentsOnInsuranceQuote;
 
-  final _chassisNumberCtrl = TextEditingController();
-  final _engineNumberCtrl = TextEditingController();
-  final _fastTagNumberCtrl = TextEditingController();
-  final _vehicleHandoverDateCtrl = TextEditingController();
+  // TextFormField Controllers
+  final _commentsInsuranceCtrl = TextEditingController();
+  final _commentsEmiCtrl = TextEditingController();
 
+  // ErrorText for TextControllers (TextFormFields which are required)
+  String? _commentsInsuranceErrorText;
+  String? _commentsEmiErrorText;
+
+  // Document state
+  List<UploadedFileModel> uploadedDocs = [];
+  List<Document> documentList = [];
+  Document? selectedDocument;
+
+  // Document Upload State
+  PlatformFile? uploadedDocumentFile;
+  double _uploadProgress = 0.0;
+  bool _isUploading = false;
+
+  // Load user ApprovalType
   Future<void> _loadUserApprovals() async {
     setState(() => isLoading = true);
 
@@ -59,8 +80,7 @@ class _UserApprovalState extends State<UserApproval> {
       return;
     }
 
-    try
-    {
+    try {
       // API call
       final response = await _client.getApprovalStages(
         empId: empId,
@@ -74,7 +94,7 @@ class _UserApprovalState extends State<UserApproval> {
       final List<CarRequest> emiList =
           response.data['EMI_APPROVAL_USER'] ?? [];
 
-      late CarRequest request;
+      CarRequest? request;
       ApprovalType? type;
 
       // Determine which approval to display (priority: Insurance Quote first)
@@ -88,7 +108,7 @@ class _UserApprovalState extends State<UserApproval> {
 
       // Update state
       setState(() {
-        approvalRequest = request;
+        mainApprovalRequest = request;
         approvalType = type;
         isLoading = false;
       });
@@ -98,116 +118,270 @@ class _UserApprovalState extends State<UserApproval> {
     }
   }
 
+  // Get Comments by esna
+  Future<void> _getCommentsByRequestId() async {
+    if (mainApprovalRequest == null) return;
+
+    final request = mainApprovalRequest!;
+    final requestId = request.requestId;
+
+    if (requestId == null) {
+      _showSnackBar(
+        message: 'Missing request details',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.getCommentsByRequestId(
+        requestId: requestId,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        commentsOnInsuranceQuote = response.data?.commentsAssignedToGit ?? 'NULL';
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  // View Document handlers
+  void _openSelectedDocument() {
+    if (selectedDocument == null) return;
+
+    // Find the first uploaded file that matches the selected document type
+    final file = uploadedDocs.firstWhere(
+          (doc) => doc.docId == selectedDocument!.docId,
+      orElse: () => throw Exception('No file found for selected document'),
+    );
+
+    FileDownloader.downloadAndOpenFile(
+      context: context,
+      presignedUrl: file.downloadUrl,
+      rawFileName: file.fileName,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    // Initialize from widget property if provided
-    approvalRequest = widget.approvalRequest;
-    _loadUserApprovals();
+    mainApprovalRequest = widget.approvalRequest;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserApprovals();
+      _getDocumentsByRequestId();
+    });
+    //! Validator listeners here (for both the widgets)
+    _commentsInsuranceCtrl.addListener(() {
+      if (_commentsInsuranceErrorText != null &&
+          _commentsInsuranceCtrl.text.trim().isNotEmpty) {
+        setState(() => _commentsInsuranceErrorText = null);
+      }
+    });
+
+    _commentsEmiCtrl.addListener(() {
+      if (_commentsEmiErrorText != null &&
+          _commentsEmiCtrl.text.trim().isNotEmpty) {
+        setState(() => _commentsEmiErrorText = null);
+      }
+    });
   }
 
+  Future<void> _getDocumentsByRequestId() async {
+    final requestId = widget.approvalRequest.requestId;
+    if (requestId == null) return;
+
+    try {
+      final response = await _client.getAllUploadedDocsFromS3(
+        requestId: requestId,
+      );
+
+      if (!mounted) return;
+
+      final docs = response.data;
+
+      final List<Document> docsEnumList = docs
+          .map((e) => Document.fromDocId(e.docId ?? -1))
+          .whereType<Document>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.docId.compareTo(b.docId));
+
+      setState(() {
+        uploadedDocs = docs;
+        documentList = docsEnumList;
+      });
+    } catch (_) {}
+  }
+
+  // UPLOAD REQUEST BODY & handler - As per what approval stage is
+  Map<String, dynamic> _bindUploadDocRequestBodyForEmiApproval() {
+    if (uploadedDocumentFile == null) {
+      throw Exception('No file selected');
+    }
+    return {
+      'emp_id': widget.approvalRequest.empId.toString() ?? '',
+      'process_stage': (Stage.assignedToEsna.stageNo).toString(),
+      'doc_id': (Document.emiApprovalDoc?.docId ?? 6).toString(),
+      'files': [
+        MultipartFile.fromBytes(
+          uploadedDocumentFile!.bytes!,
+          filename: uploadedDocumentFile!.name,
+        ),
+      ],
+    };
+  }
+
+  Map<String, dynamic> _bindUploadDocRequestBodyForInsurance() {
+    if (uploadedDocumentFile == null) {
+      throw Exception('No file selected');
+    }
+    return {
+      'emp_id': widget.approvalRequest.empId.toString() ?? '',
+      'process_stage': (Stage.insuranceQuoteApproval.stageNo).toString(),
+      'doc_id': (Document.insuranceQuoteApprovalDoc?.docId ?? 4).toString(),
+      'files': [
+        MultipartFile.fromBytes(
+          uploadedDocumentFile!.bytes!,
+          filename: uploadedDocumentFile!.name,
+        ),
+      ],
+    };
+  }
+
+  Future<void> _handleUpload() async {
+    // Skip if no document selected
+    try {
+      final docReqBody = approvalType == ApprovalType.insuranceQuote
+          ? _bindUploadDocRequestBodyForInsurance()
+          : _bindUploadDocRequestBodyForEmiApproval();
+
+      setState(() {
+        _isUploading = true;
+        _uploadProgress = 0.0;
+      });
+
+      await _client.uploadDocument(
+        body: docReqBody,
+        onProgress: (progress) {
+          setState(() {
+            _uploadProgress = progress;
+          });
+        },
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isUploading = false;
+        uploadedDocumentFile = null;
+      });
+
+      _showSnackBar(
+        message: 'Document uploaded successfully',
+        isSuccess: true,
+      );
+
+      // Reload documents
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      _showSnackBar(
+        message: 'Upload failed: ${e.toString()}',
+        isSuccess: false,
+      );
+    }
+  }
+
+  void _showSnackBar({required String message, required bool isSuccess}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
+  // Validators
+  bool _validateBeforeInsuranceApprove() {
+    bool isValid = true;
+
+    if (_commentsInsuranceCtrl.text.trim().isEmpty) {
+      setState(() {
+        _commentsInsuranceErrorText = 'Comments are required';
+      });
+      isValid = false;
+    }
+
+    if (selectedInsuranceType == null || selectedInsuranceType!.isEmpty) {
+      _showSnackBar(
+        message: 'Please select insurance type',
+        isSuccess: false,
+      );
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  bool _validateBeforeEmiApprove() {
+    bool isValid = true;
+
+    if (_commentsEmiCtrl.text.trim().isEmpty) {
+      setState(() {
+        _commentsEmiErrorText = 'Comments are required';
+      });
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  // Show Declaration Modal
   void _showDeclarationModal() {
-    if (approvalRequest == null) {
-      debugPrint('No approval request available');
+    if (!_validateBeforeEmiApprove()) {
+      return;
+    }
+
+    if (mainApprovalRequest == null) {
+      _showSnackBar(
+        message: 'Request data not available',
+        isSuccess: false,
+      );
       return;
     }
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return DeclarationAcceptanceModal(
-          request: approvalRequest!,
-          onAccept: () {
-            Navigator.pop(context);
-            // Handle approval after declaration acceptance
-          },
-        );
-      },
+      builder: (context) => DeclarationAcceptanceModal(
+        request: mainApprovalRequest!,
+        onAccept: () async {
+          // Close the modal first
+          Navigator.pop(context);
+          // Then call the approval handler
+          await _handleEmiDeductionApproval();
+        },
+      ),
     );
   }
 
-  // First Approval
-  bool _validateBeforeInsuranceApprove() {
-    final request = approvalRequest!;
-    final comments = _commentsInsuranceCtrl.text.trim();
-
-    if (selectedInsuranceType == null) {
-      _showSnackBar(
-        context: context,
-        message: 'Please select Insurance Type',
-        isSuccess: false,
-      );
-      return false;
+  // API Handlers
+  Widget _buildInsuranceQuoteApprovalContent(CarRequest? request) {
+    if (request == null) {
+      return const Center(child: Text('Request data not available'));
     }
-
-    addOnTataPowerValue =
-    selectedInsuranceType == 'Add on Tata Power'
-        ? (request.addOnCoverTataPower?.toString() ?? '')
-        : '';
-
-    addOnSapphirePlusValue =
-    selectedInsuranceType == 'Add on Sapphire plus'
-        ? (request.addOnSapphirePlus?.toString() ?? '')
-        : '';
-
-    if (comments.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Comments are required',
-        isSuccess: false,
-      );
-      return false;
-    }
-
-    return true;
-  }
-  Future<void> _handleInsuranceQuoteApproval() async {
-    final request = approvalRequest!;
-    final requestId = request.requestId!;
-    // Handle insurance quote approval logic
-      try {
-        final response = await _client.firstUserApproval(
-          requestId: requestId,
-          userApprovalComments: _commentsInsuranceCtrl.text.trim(),
-          addOnTataPower: addOnTataPowerValue!,
-          addOnSapphirePlus: addOnSapphirePlusValue!,
-        );
-
-        Navigator.pop(context, response); // success close
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
-  }
-  Future<void> _handleInsuranceQuoteRejection() async {
-    // Handle insurance quote rejection logic
-    final request = approvalRequest!;
-    final requestId = request.requestId;
-    final empId = request.empId;
-
-    if (requestId == null || empId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
-      );
-      return;
-    }
-
-    try {
-      final response = await _client.decrementStageOnReject(
-        requestId: requestId,
-        empId: empId,
-      );
-
-      Navigator.pop(context, response); // success close
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-  }
-  Widget _buildInsuranceQuoteApprovalContent(CarRequest request) {
 
     final String insuranceValue =
     selectedInsuranceType == 'Add on Tata Power'
@@ -234,10 +408,25 @@ class _UserApprovalState extends State<UserApproval> {
         DetailRow(label: 'Mobile No', value: request.contact ?? ''),
         DetailRow(label: 'Request ID', value: request.requestId ?? ''),
         DetailRow(label: 'Grade', value: request.grade ?? ''),
+        DetailRow(label: 'Eligibility (₹)', value: request.eligibility?.toString() ?? ''),
         DetailRow(label: 'Email', value: request.email ?? ''),
-        DetailRow(label: 'Quoatation Amount', value: request.quotation?.toString() ?? 'NAN'),
         const SizedBox(height: 16),
-        DetailRow(label: 'Base Insurance', value: request.baseInsurancePremium?.toString() ?? 'NAN'),
+        DetailRow(
+          label: 'Base Insurance Premium (₹)',
+          value: request.baseInsurancePremium?.toString() ?? '',
+        ),
+        DetailRow(
+          label: 'Add-on Cover Tata Power',
+          value: request.addOnCoverTataPower?.toString() ?? '',
+        ),
+        DetailRow(
+          label: 'Add-on Sapphire Plus',
+          value: request.addOnSapphirePlus?.toString() ?? '',
+        ),
+        DetailRow(
+          label: 'Final Insurance Quotation (₹)',
+          value: request.finalInsuranceQuotation?.toString() ?? '',
+        ),
         const SizedBox(height: 16),
         DropdownField(
           label: 'Insurance add on',
@@ -256,80 +445,131 @@ class _UserApprovalState extends State<UserApproval> {
             label: selectedInsuranceType ?? '',
             value: insuranceValue,
           ),
-
         const SizedBox(height: 16),
-        const FileUploadField(label: 'Upload Document'),
+        FileUploadField(
+          label: 'Upload Quotation Document',
+          allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+          onFileSelected: (file) {
+            setState(() {
+              uploadedDocumentFile = file;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+
+            Expanded(
+              child: DropdownField(
+                label: 'View Document',
+                hints: 'Select Document',
+                items: documentList.map((e) => e.docLabel).toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  final doc = documentList.firstWhere(
+                        (e) => e.docLabel == value,
+                    orElse: () => throw Exception('Document not found'),
+                  );
+
+                  setState(() {
+                    selectedDocument = doc;
+                  });
+                },
+                required: false,
+              ),
+            ),
+            if (selectedDocument != null) ...[
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 0),
+                child: GestureDetector(
+                  onTap: _openSelectedDocument,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFFFF),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFDCDCDC),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.download,
+                      color: Color(0xFF9A9A9A),
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         const SizedBox(height: 16),
         FormTextField(
           label: 'Comments',
-          hint: 'Your comments',
+          hint: 'Add your comments',
           maxLines: 3,
           required: true,
           controller: _commentsInsuranceCtrl,
-        ),
-        const SizedBox(height: 24),
-        ActionButtonPair(
-          primaryText: 'Approve',
-          secondaryText: 'Reject',
-          primaryValidator: _validateBeforeInsuranceApprove,
-          onPrimaryAction: _handleInsuranceQuoteApproval,
-          onSecondaryAction: _handleInsuranceQuoteRejection,
+          errorText: _commentsInsuranceErrorText,
         ),
       ],
     );
   }
 
-  // Second Approval
-  bool _validateBeforeEmiApprove() {
-    final comments = _commentsEmiCtrl.text.trim();
+  Future<void> _handleInsuranceQuoteApproval() async {
+    if (mainApprovalRequest == null) return;
 
-    // Check comments
-    if (comments.isEmpty) {
-      _showSnackBar(
-        context: context,
-        message: 'Enter Comments',
-        isSuccess: false,
-      );
-      return false;
-
-    }
-    return true;
-  }
-  Future<void> _handleEmiDeductionApproval() async {
-      final request = approvalRequest!;
-      final requestId = request.requestId;
-      final empId = request.empId;
-
-      if (requestId == null || empId == null ) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Missing request or ES&A details')),
-        );
-        return;
-      }
-
-      try {
-        final response = await _client.secondUserApproval(
-          requestId: requestId,
-          empId: empId,
-          commentsAssignedToEsna: _commentsEmiCtrl.text.trim(),
-        );
-
-        Navigator.pop(context, response); // success close
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
-    }
-  Future<void> _handleEmiDeductionRejection() async {
-    // Handle EMI deduction rejection logic
-    final request = approvalRequest!;
+    final request = mainApprovalRequest!;
     final requestId = request.requestId;
     final empId = request.empId;
 
     if (requestId == null || empId == null) {
+      _showSnackBar(
+        message: 'Missing request details',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.firstUserApproval(
+        requestId: requestId,
+        userApprovalComments: _commentsInsuranceCtrl.text.trim(),
+        addOnTataPower: addOnTataPowerValue!,
+        addOnSapphirePlus: addOnSapphirePlusValue!,
+      );
+
+      if (!mounted) return;
+
+      _showSnackBar(
+        message: 'Insurance quote approved successfully',
+        isSuccess: true,
+      );
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing request or employee details')),
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _handleInsuranceQuoteRejection() async {
+    if (mainApprovalRequest == null) return;
+
+    final request = mainApprovalRequest!;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null || empId == null) {
+      _showSnackBar(
+        message: 'Missing request details',
+        isSuccess: false,
       );
       return;
     }
@@ -340,19 +580,100 @@ class _UserApprovalState extends State<UserApproval> {
         empId: empId,
       );
 
-      // Navigator.pop(context, response); // success close
+      if (!mounted) return;
+
+      Navigator.pop(context, response);
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
     }
   }
-  Widget _buildEmiDeductionApprovalContent(CarRequest request) {
+
+  Future<void> _handleEmiDeductionApproval() async {
+    if (mainApprovalRequest == null) return;
+
+    final request = mainApprovalRequest!;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null || empId == null) {
+      _showSnackBar(
+        message: 'Missing request details',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.secondUserApproval(
+        requestId: requestId,
+        empId: empId,
+        commentsAssignedToEsna: _commentsEmiCtrl.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      _showSnackBar(
+        message: 'EMI deduction approved successfully',
+        isSuccess: true,
+      );
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _handleEmiDeductionRejection() async {
+    if (mainApprovalRequest == null) return;
+
+    final request = mainApprovalRequest!;
+    final requestId = request.requestId;
+    final empId = request.empId;
+
+    if (requestId == null || empId == null) {
+      _showSnackBar(
+        message: 'Missing request details',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Widget _buildEmiDeductionApprovalContent(CarRequest? request) {
+    if (request == null) {
+      return const Center(child: Text('Request data not available'));
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'EMI Deduction Approval (Stage 25)',
+          'EMI Deduction Approval',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
@@ -386,7 +707,15 @@ class _UserApprovalState extends State<UserApproval> {
           value: request.completeEmiTenure?.toString() ?? '',
         ),
         const SizedBox(height: 16),
-        const FileUploadField(label: 'Upload Document'),
+        FileUploadField(
+          label: 'Upload Quotation Document',
+          allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+          onFileSelected: (file) {
+            setState(() {
+              uploadedDocumentFile = file;
+            });
+          },
+        ),
         const SizedBox(height: 16),
         FormTextField(
           label: 'Employee Comments',
@@ -394,20 +723,13 @@ class _UserApprovalState extends State<UserApproval> {
           maxLines: 3,
           required: true,
           controller: _commentsEmiCtrl,
-        ),
-        const SizedBox(height: 24),
-        ActionButtonPair(
-          primaryText: 'Approve',
-          secondaryText: 'Reject',
-          primaryValidator: _validateBeforeEmiApprove,
-          onPrimaryAction: _handleEmiDeductionApproval,
-          onSecondaryAction: _handleEmiDeductionRejection,
+          errorText: _commentsEmiErrorText,
         ),
       ],
     );
   }
 
-  // Entry point: No user approval screen validation
+  // Entry point widgets: No user approval screen validation
   Widget _buildApprovalContent() {
     return FutureBuilder<int?>(
       future: LocalPrefs.getRoleId(),
@@ -437,8 +759,7 @@ class _UserApprovalState extends State<UserApproval> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline,
-                    color: Colors.red[300], size: 48),
+                Icon(Icons.error_outline, color: Colors.red[300], size: 48),
                 const SizedBox(height: 12),
                 Text(
                   "Request approval is restricted to employees with the USER role only.",
@@ -455,15 +776,14 @@ class _UserApprovalState extends State<UserApproval> {
         }
 
         // ❌ No approval request
-        if (approvalRequest == null || approvalType == null) {
+        if (mainApprovalRequest == null || approvalType == null) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.close,
-                    color: Colors.red[300], size: 48),
+                Icon(Icons.close, color: Colors.red[300], size: 48),
                 const SizedBox(height: 12),
                 Text(
                   "You don't have any active request for approval.",
@@ -477,8 +797,7 @@ class _UserApprovalState extends State<UserApproval> {
                 const SizedBox(height: 16),
                 TextButton.icon(
                   onPressed: _loadUserApprovals,
-                  icon: const Icon(Icons.refresh,
-                      color: Color(0xFF42B347)),
+                  icon: const Icon(Icons.refresh, color: Color(0xFF42B347)),
                   label: const Text(
                     'Retry',
                     style: TextStyle(
@@ -496,17 +815,48 @@ class _UserApprovalState extends State<UserApproval> {
         // ✅ Actual approval content
         switch (approvalType!) {
           case ApprovalType.insuranceQuote:
-            return _buildInsuranceQuoteApprovalContent(
-                approvalRequest!);
+            return _buildInsuranceQuoteApprovalContent(mainApprovalRequest);
 
           case ApprovalType.emiDeduction:
-            return _buildEmiDeductionApprovalContent(
-                approvalRequest!);
+            return _buildEmiDeductionApprovalContent(mainApprovalRequest);
         }
       },
     );
   }
 
+  Widget? _buildActionButtons() {
+    if (mainApprovalRequest == null || approvalType == null) {
+      return null;
+    }
+
+    switch (approvalType!) {
+      case ApprovalType.insuranceQuote:
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: ActionButtonPair(
+            primaryText: 'Approve',
+            secondaryText: 'Reject',
+            primaryValidator: _validateBeforeInsuranceApprove,
+            onPrimaryAction: () async => await _handleInsuranceQuoteApproval(),
+            onSecondaryAction: () async => await _handleInsuranceQuoteRejection(),
+          ),
+        );
+
+      case ApprovalType.emiDeduction:
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: ActionButtonPair(
+            primaryText: 'Approve',
+            secondaryText: 'Reject',
+            primaryValidator: _validateBeforeEmiApprove,
+            onPrimaryAction: () async => _showDeclarationModal(),
+            onSecondaryAction: () async => await _handleEmiDeductionRejection(),
+          ),
+        );
+    }
+  }
+
+  // MAIN
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -533,39 +883,18 @@ class _UserApprovalState extends State<UserApproval> {
           color: Color.fromRGBO(98, 202, 102, 1.0),
         ),
       )
-          : LayoutBuilder(
-        builder: (context, constraints) {
-          return ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: _buildApprovalContent(),
+          : Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: _buildApprovalContent(),
+              ),
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showSnackBar({
-    required BuildContext context,
-    required String message,
-    required bool isSuccess,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: isSuccess
-                ? const Color(0xFF388E3B)
-                : const Color(0xFFFA6262),
           ),
-        ),
-        backgroundColor: isSuccess
-            ? const Color(0xFFD7FFD8)
-            : const Color(0xFFFFE3E3),
+          if (_buildActionButtons() != null) _buildActionButtons()!,
+        ],
       ),
     );
   }
