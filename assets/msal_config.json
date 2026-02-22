@@ -1,5 +1,0 @@
-{
-  "clientId": "474f8122-57b6-4393-bed5-a05cb9145494",
-  "authority": "https://login.microsoftonline.com/04ea39e3-ac5b-4971-937c-8344c97a4509",
-  "redirectUri": "msal474f8122-57b6-4393-bed5-a05cb9145494://auth"
-}

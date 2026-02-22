@@ -591,8 +591,8 @@ class ApiClient {
   Future<FirstUserApprovalModel> firstUserApproval({
     required String requestId,
     required String userApprovalComments,
-    required String addOnTataPower,
-    required String addOnSapphirePlus,
+    String? addOnTataPower,
+    String? addOnSapphirePlus,
   }) async
   {
     final endpointUrl =
@@ -600,12 +600,18 @@ class ApiClient {
 
     final url = Uri.parse(endpointUrl);
 
-    final body = {
+    final Map<String, dynamic> body = {
       "request_id": requestId,
-      "add_on_cover_tata_power": addOnTataPower,
-      "add_on_sapphire_plus": addOnSapphirePlus,
       "insurance_quote_approval_user": userApprovalComments,
     };
+
+    if (addOnTataPower != null) {
+      body["add_on_cover_tata_power"] = addOnTataPower;
+    }
+
+    if (addOnSapphirePlus != null) {
+      body["add_on_sapphire_plus"] = addOnSapphirePlus;
+    }
 
     final response = await _client.post(
       url,

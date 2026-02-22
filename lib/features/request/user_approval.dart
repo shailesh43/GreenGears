@@ -16,6 +16,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import '../../core/utils/enum.dart';
 import '../../core/helpers/file_downloader.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 enum ApprovalType {
   insuranceQuote,
@@ -228,7 +229,7 @@ class _UserApprovalState extends State<UserApproval> {
     }
     return {
       'emp_id': widget.approvalRequest.empId.toString() ?? '',
-      'process_stage': (Stage.assignedToEsna.stageNo).toString(),
+      'process_stage': (Stage.emiApproval?.stageNo ?? 25).toString(),
       'doc_id': (Document.emiApprovalDoc?.docId ?? 6).toString(),
       'files': [
         MultipartFile.fromBytes(
@@ -245,7 +246,7 @@ class _UserApprovalState extends State<UserApproval> {
     }
     return {
       'emp_id': widget.approvalRequest.empId.toString() ?? '',
-      'process_stage': (Stage.insuranceQuoteApproval.stageNo).toString(),
+      'process_stage': (Stage.insuranceQuoteApproval?.stageNo ?? 23).toString(),
       'doc_id': (Document.insuranceQuoteApprovalDoc?.docId ?? 4).toString(),
       'files': [
         MultipartFile.fromBytes(
@@ -313,6 +314,18 @@ class _UserApprovalState extends State<UserApproval> {
     );
   }
 
+  void _showValidationToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 3,
+      backgroundColor: const Color(0xFFFFE3E3),
+      textColor: const Color(0xFFFA6262),
+      fontSize: 14.0,
+    );
+  }
+
   // Validators
   bool _validateBeforeInsuranceApprove() {
     bool isValid = true;
@@ -325,10 +338,7 @@ class _UserApprovalState extends State<UserApproval> {
     }
 
     if (selectedInsuranceType == null || selectedInsuranceType!.isEmpty) {
-      _showSnackBar(
-        message: 'Please select insurance type',
-        isSuccess: false,
-      );
+      _showValidationToast('Upload Quotation document');
       isValid = false;
     }
 
@@ -354,13 +364,6 @@ class _UserApprovalState extends State<UserApproval> {
       return;
     }
 
-    if (mainApprovalRequest == null) {
-      _showSnackBar(
-        message: 'Request data not available',
-        isSuccess: false,
-      );
-      return;
-    }
 
     showDialog(
       context: context,
@@ -423,10 +426,6 @@ class _UserApprovalState extends State<UserApproval> {
           label: 'Add-on Sapphire Plus',
           value: request.addOnSapphirePlus?.toString() ?? '',
         ),
-        DetailRow(
-          label: 'Final Insurance Quotation (₹)',
-          value: request.finalInsuranceQuotation?.toString() ?? '',
-        ),
         const SizedBox(height: 16),
         DropdownField(
           label: 'Insurance add on',
@@ -447,7 +446,7 @@ class _UserApprovalState extends State<UserApproval> {
           ),
         const SizedBox(height: 16),
         FileUploadField(
-          label: 'Upload Quotation Document',
+          label: 'Upload Document',
           allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
           onFileSelected: (file) {
             setState(() {
@@ -526,21 +525,30 @@ class _UserApprovalState extends State<UserApproval> {
     final requestId = request.requestId;
     final empId = request.empId;
 
-    if (requestId == null || empId == null) {
-      _showSnackBar(
-        message: 'Missing request details',
-        isSuccess: false,
-      );
-      return;
-    }
 
     try {
-      final response = await _client.firstUserApproval(
-        requestId: requestId,
-        userApprovalComments: _commentsInsuranceCtrl.text.trim(),
-        addOnTataPower: addOnTataPowerValue!,
-        addOnSapphirePlus: addOnSapphirePlusValue!,
-      );
+      late final response;
+
+      if (selectedInsuranceType == 'Add on Tata Power') {
+        final insuranceValue =
+            request.addOnCoverTataPower?.toString() ?? 'NAN';
+
+        response = await _client.firstUserApproval(
+          requestId: requestId!,
+          userApprovalComments: _commentsInsuranceCtrl.text.trim(),
+          addOnTataPower: insuranceValue,
+        );
+
+      } else if (selectedInsuranceType == 'Add on Sapphire plus') {
+        final insuranceValue =
+            request.addOnSapphirePlus?.toString() ?? 'NAN';
+
+        response = await _client.firstUserApproval(
+          requestId: requestId!,
+          userApprovalComments: _commentsInsuranceCtrl.text.trim(),
+          addOnSapphirePlus: insuranceValue,
+        );
+      }
 
       if (!mounted) return;
 
@@ -550,12 +558,10 @@ class _UserApprovalState extends State<UserApproval> {
       );
 
       Navigator.pop(context, response);
+      await _handleUpload();
     } catch (e) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      print(e);
     }
   }
 
@@ -708,7 +714,7 @@ class _UserApprovalState extends State<UserApproval> {
         ),
         const SizedBox(height: 16),
         FileUploadField(
-          label: 'Upload Quotation Document',
+          label: 'Upload Document',
           allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
           onFileSelected: (file) {
             setState(() {
@@ -730,99 +736,99 @@ class _UserApprovalState extends State<UserApproval> {
   }
 
   // Entry point widgets: No user approval screen validation
-  Widget _buildApprovalContent() {
-    return FutureBuilder<int?>(
-      future: LocalPrefs.getRoleId(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.green),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const Center(
-            child: Text(
-              "Unable to fetch role information.",
-              textAlign: TextAlign.center,
-            ),
-          );
-        }
-
-        final int roleId = snapshot.data!;
-
-        // 🚫 Only USER role allowed
-        if (roleId != 1) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error_outline, color: Colors.red[300], size: 48),
-                const SizedBox(height: 12),
-                Text(
-                  "Request approval is restricted to employees with the USER role only.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        // ❌ No approval request
-        if (mainApprovalRequest == null || approvalType == null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.close, color: Colors.red[300], size: 48),
-                const SizedBox(height: 12),
-                Text(
-                  "You don't have any active request for approval.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton.icon(
-                  onPressed: _loadUserApprovals,
-                  icon: const Icon(Icons.refresh, color: Color(0xFF42B347)),
-                  label: const Text(
-                    'Retry',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      color: Color(0xFF42B347),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        // ✅ Actual approval content
-        switch (approvalType!) {
-          case ApprovalType.insuranceQuote:
-            return _buildInsuranceQuoteApprovalContent(mainApprovalRequest);
-
-          case ApprovalType.emiDeduction:
-            return _buildEmiDeductionApprovalContent(mainApprovalRequest);
-        }
-      },
-    );
-  }
+  // Widget _buildApprovalContent() {
+  //   return FutureBuilder<int?>(
+  //     future: LocalPrefs.getRoleId(),
+  //     builder: (context, snapshot) {
+  //       if (snapshot.connectionState == ConnectionState.waiting) {
+  //         return const Center(
+  //           child: CircularProgressIndicator(color: Colors.green),
+  //         );
+  //       }
+  //
+  //       if (!snapshot.hasData || snapshot.data == null) {
+  //         return const Center(
+  //           child: Text(
+  //             "Unable to fetch role information.",
+  //             textAlign: TextAlign.center,
+  //           ),
+  //         );
+  //       }
+  //
+  //       final int roleId = snapshot.data!;
+  //
+  //       // 🚫 Only USER role allowed
+  //       if (roleId != 1) {
+  //         return Center(
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.center,
+  //             crossAxisAlignment: CrossAxisAlignment.center,
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Icon(Icons.error_outline, color: Colors.red[300], size: 48),
+  //               const SizedBox(height: 12),
+  //               Text(
+  //                 "Request approval is restricted to employees with the USER role only.",
+  //                 textAlign: TextAlign.center,
+  //                 style: TextStyle(
+  //                   fontFamily: 'Inter',
+  //                   fontSize: 15,
+  //                   color: Colors.grey[600],
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       }
+  //
+  //       // ❌ No approval request
+  //       if (mainApprovalRequest == null || approvalType == null) {
+  //         return Center(
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.center,
+  //             crossAxisAlignment: CrossAxisAlignment.center,
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Icon(Icons.close, color: Colors.red[300], size: 48),
+  //               const SizedBox(height: 12),
+  //               Text(
+  //                 "You don't have any active request for approval.",
+  //                 textAlign: TextAlign.center,
+  //                 style: TextStyle(
+  //                   fontFamily: 'Inter',
+  //                   fontSize: 15,
+  //                   color: Colors.grey[600],
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 16),
+  //               TextButton.icon(
+  //                 onPressed: _loadUserApprovals,
+  //                 icon: const Icon(Icons.refresh, color: Color(0xFF42B347)),
+  //                 label: const Text(
+  //                   'Retry',
+  //                   style: TextStyle(
+  //                     fontFamily: 'Inter',
+  //                     color: Color(0xFF42B347),
+  //                     fontWeight: FontWeight.w600,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       }
+  //
+  //       // ✅ Actual approval content
+  //       switch (approvalType!) {
+  //         case ApprovalType.insuranceQuote:
+  //           return _buildInsuranceQuoteApprovalContent(mainApprovalRequest);
+  //
+  //         case ApprovalType.emiDeduction:
+  //           return _buildEmiDeductionApprovalContent(mainApprovalRequest);
+  //       }
+  //     },
+  //   );
+  // }
 
   Widget? _buildActionButtons() {
     if (mainApprovalRequest == null || approvalType == null) {
@@ -883,17 +889,106 @@ class _UserApprovalState extends State<UserApproval> {
           color: Color.fromRGBO(98, 202, 102, 1.0),
         ),
       )
-          : Column(
+          : FutureBuilder<int?>(
+        future: LocalPrefs.getRoleId(),
+        builder: (context, snapshot) {
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.green),
+            );
+          }
+
+          if (!snapshot.hasData || snapshot.data == null) {
+            return _centerMessage(
+              icon: Icons.error_outline,
+              message: "Unable to fetch role information.",
+            );
+          }
+
+          final roleId = snapshot.data!;
+
+          if (roleId != 1) {
+            return _centerMessage(
+              icon: Icons.error_outline,
+              message:
+              "Only USER role can approve or reject this request.",
+            );
+          }
+
+          if (mainApprovalRequest == null || approvalType == null) {
+            return _centerMessage(
+              icon: Icons.not_interested,
+              message:
+              "You don't have any active request for approval.",
+              showRetry: true,
+            );
+          }
+
+          // MAIN Content (scrollable)
+          return Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: approvalType == ApprovalType.insuranceQuote
+                        ? _buildInsuranceQuoteApprovalContent(
+                        mainApprovalRequest)
+                        : _buildEmiDeductionApprovalContent(
+                        mainApprovalRequest),
+                  ),
+                ),
+              ),
+              if (_buildActionButtons() != null)
+                _buildActionButtons()!,
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _centerMessage({
+    required IconData icon,
+    required String message,
+    bool showRetry = false,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: _buildApprovalContent(),
+          Icon(icon, color: Colors.grey[400], size: 64),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
               ),
             ),
           ),
-          if (_buildActionButtons() != null) _buildActionButtons()!,
+          if (showRetry) ...[
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: _loadUserApprovals,
+              icon: const Icon(Icons.refresh,
+                  color: Color(0xFF42B347)),
+              label: const Text(
+                'Retry',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: Color(0xFF42B347),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
