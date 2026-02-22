@@ -1,4 +1,4 @@
-package com.example.greengears
+package com.tatapower.greengears
 
 import io.flutter.embedding.android.FlutterActivity
 
