@@ -32,10 +32,11 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- MSAL Redirect Handler -->
+        <!-- Flutter Web Auth 2 Callback Activity -->
         <activity
-            android:name="com.microsoft.identity.client.BrowserTabActivity"
-            android:exported="true">
+            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -43,7 +44,7 @@
                 <data
                     android:scheme="msauth"
                     android:host="com.tatapower.greengears"
-                    android:path="/fwX9a9GPV9I3xuDOLwxkrh63k3w=" />
+                    android:path="/fwX9a9GPV9I3xuDOLwxkrh63k3w="/>
             </intent-filter>
         </activity>
 
@@ -53,6 +54,12 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Allow opening browsers for authentication -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 

@@ -59,7 +59,6 @@ flutter:
     - assets/docs/CarPolicy.pdf
     - assets/docs/EMI_Calculator.xlsx
     - assets/anims/moving_car_lottie.json
-    - assets/msal_config.json
     - .env
 
   fonts:

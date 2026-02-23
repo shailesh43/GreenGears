@@ -1,43 +1,60 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:flutter/services.dart'; // For PlatformException
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 import '../network/api_constants.dart';
 import '../constants/local_prefs.dart';
 import './token.dart';
 import 'package:logger/logger.dart';
+import 'dart:io'; // For SocketException
+import 'dart:async'; // For TimeoutException
+import 'dart:convert'; // For jsonDecode
 
 class AuthenticationService {
   // LOGIN - Returns empId only
   static Future<String?> login() async {
     try {
-      final authUrl =
-          '${ApiConstants.authorizationEndpoint}?'
-          'client_id=${ApiConstants.clientId}'
-          '&response_type=code'
-          '&redirect_uri=${Uri.encodeComponent(ApiConstants.redirectUri)}'
-          '&response_mode=query'
-          '&scope=${Uri.encodeComponent(ApiConstants.scope)}'
-          '&prompt=select_account';
-
-      final result = await FlutterWebAuth2.authenticate(
-        url: authUrl,
-        callbackUrlScheme: 'msauth',
+      // Step 1: Build authorization URL
+      final authUri = Uri.parse(ApiConstants.authorizationEndpoint).replace(
+        queryParameters: {
+          'client_id': ApiConstants.clientId,
+          'response_type': 'code',
+          'redirect_uri': ApiConstants.redirectUri,
+          'response_mode': 'query',
+          'scope': ApiConstants.scope,
+          'prompt': 'select_account',
+        },
       );
 
+      debugPrint('🔐 Starting authentication...');
+      debugPrint('Auth URL: ${authUri.toString()}');
+      debugPrint('Redirect URI: ${ApiConstants.redirectUri}');
+
+      // Step 2: Authenticate with Microsoft
+      // IMPORTANT: Use 'msauth' for signature hash format
+      final result = await FlutterWebAuth2.authenticate(
+        url: authUri.toString(),
+        callbackUrlScheme: 'msauth',  // Changed from 'msauth.com.tatapower.greengears'
+      );
+
+      debugPrint('✅ Authentication callback received');
+      debugPrint('Result: $result');
+
+      // Step 3: Extract authorization code
       final code = Uri.parse(result).queryParameters['code'];
       if (code == null) {
-        throw Exception('Authorization failed');
+        debugPrint('❌ Authorization code missing');
+        throw Exception('Authorization code not found in callback');
       }
 
-      // Exchange code for token
+      debugPrint('✅ Authorization code received');
+
+      // Step 4: Exchange code for access token
       final tokenResponse = await http.post(
         Uri.parse(ApiConstants.tokenEndpoint),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'client_id': ApiConstants.clientId,
           'scope': ApiConstants.scope,
@@ -47,15 +64,24 @@ class AuthenticationService {
         },
       );
 
+      if (tokenResponse.statusCode != 200) {
+        debugPrint('❌ Token exchange failed: ${tokenResponse.statusCode}');
+        debugPrint('Response: ${tokenResponse.body}');
+        throw Exception('Failed to exchange token: ${tokenResponse.statusCode}');
+      }
+
       final tokenData = jsonDecode(tokenResponse.body);
       final accessToken = tokenData['access_token'];
 
       if (accessToken == null) {
-        throw Exception('Access token missing');
+        debugPrint('❌ Access token missing from response');
+        throw Exception('Access token not found in token response');
       }
 
-      // Fetch user info from Graph
-      final response = await http.get(
+      debugPrint('✅ Access token received');
+
+      // Step 5: Fetch user info from Microsoft Graph
+      final userResponse = await http.get(
         Uri.parse(ApiConstants.userGraphUrl),
         headers: {
           'Authorization': 'Bearer $accessToken',
@@ -63,29 +89,51 @@ class AuthenticationService {
         },
       );
 
-      final userData = jsonDecode(response.body);
-
-      final empId = userData[
-      'extension_6d1109881ca84719973dbff443d7b820_employeeNumber'
-      ]?.toString();
-
-      if (empId == null || empId.isEmpty) {
-        throw Exception('Employee ID not found');
+      if (userResponse.statusCode != 200) {
+        debugPrint('❌ User info fetch failed: ${userResponse.statusCode}');
+        debugPrint('Response: ${userResponse.body}');
+        throw Exception('Failed to fetch user info: ${userResponse.statusCode}');
       }
 
-      print('Employee ID from SAMAL: $empId');
+      final userData = jsonDecode(userResponse.body);
 
+      // Step 6: Extract employee ID
+      const extensionKey = 'extension_6d1109881ca84719973dbff443d7b820_employeeNumber';
+      final empId = userData[extensionKey]?.toString();
+
+      if (empId == null || empId.isEmpty) {
+        debugPrint('❌ Employee ID not found in user data');
+        debugPrint('Available keys: ${userData.keys.join(", ")}');
+        throw Exception('Employee ID not found in user profile');
+      }
+
+      debugPrint('✅ Login successful - Employee ID: $empId');
       return empId;
-    } catch (err) {
-      Logger(
-        printer: PrettyPrinter(
-          methodCount: 2,
-          errorMethodCount: 8,
-          lineLength: 120,
-          dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
-        ),
-      ).e('Login failed: $err');
 
+    } on PlatformException catch (e) {
+      debugPrint('❌ Platform error: ${e.code} - ${e.message}');
+      if (e.code == 'CANCELED') {
+        debugPrint('ℹ️ User canceled login');
+      } else {
+        debugPrint('Details: ${e.details}');
+      }
+      return null;
+
+    } on TimeoutException catch (e) {
+      debugPrint('❌ Timeout error: $e');
+      return null;
+
+    } on FormatException catch (e) {
+      debugPrint('❌ JSON parsing error: $e');
+      return null;
+
+    } on SocketException catch (e) {
+      debugPrint('❌ Network error: $e');
+      return null;
+
+    } catch (e, stackTrace) {
+      debugPrint('❌ Unexpected error: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
   }
