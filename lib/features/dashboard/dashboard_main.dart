@@ -54,6 +54,9 @@ class _MainDashboard extends State<MainDashboard> with RouteAware {
   int roleId = 0;
   bool isLoading = true;
 
+  // 🔥 Flag to track if this is the first load
+  bool _isInitialLoad = true;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,13 @@ class _MainDashboard extends State<MainDashboard> with RouteAware {
   @override
   void didPopNext() {
     super.didPopNext();
+
+    // Skip refresh if this is the initial load (app startup)
+    if (_isInitialLoad) {
+      _isInitialLoad = false;
+      return;
+    }
+
     // Use post-frame callback to avoid calling during navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshPageSilent(); // Silent refresh without dialog
