@@ -65,7 +65,6 @@ class _ActiveRequestPageState extends State<ActiveRequestPage> {
           TextButton(
             onPressed: () async {
               final request = widget.request;
-
               // Safety check: prefs must be loaded
               if (roleId == null || empCode == null) {
                 _showSnackBar(

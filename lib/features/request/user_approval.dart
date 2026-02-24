@@ -25,7 +25,7 @@ enum ApprovalType {
 
 class UserApproval extends StatefulWidget {
 
-  final CarRequest approvalRequest;
+  final CarRequest? approvalRequest;
   const UserApproval({
     super.key,
     required this.approvalRequest,
@@ -173,13 +173,19 @@ class _UserApprovalState extends State<UserApproval> {
   @override
   void initState() {
     super.initState();
+
     mainApprovalRequest = widget.approvalRequest;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserApprovals();
-      _getDocumentsByRequestId();
+
+      // ✅ Only call if approvalRequest is not null
+      if (widget.approvalRequest != null) {
+        _getDocumentsByRequestId();
+      }
     });
-    //! Validator listeners here (for both the widgets)
+
+    // Validators
     _commentsInsuranceCtrl.addListener(() {
       if (_commentsInsuranceErrorText != null &&
           _commentsInsuranceCtrl.text.trim().isNotEmpty) {
@@ -196,7 +202,11 @@ class _UserApprovalState extends State<UserApproval> {
   }
 
   Future<void> _getDocumentsByRequestId() async {
-    final requestId = widget.approvalRequest.requestId;
+    final request = widget.approvalRequest;
+
+    if (request == null) return;
+
+    final requestId = request.requestId;
     if (requestId == null) return;
 
     try {
@@ -219,7 +229,9 @@ class _UserApprovalState extends State<UserApproval> {
         uploadedDocs = docs;
         documentList = docsEnumList;
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("Error fetching documents: $e");
+    }
   }
 
   // UPLOAD REQUEST BODY & handler - As per what approval stage is
@@ -227,8 +239,15 @@ class _UserApprovalState extends State<UserApproval> {
     if (uploadedDocumentFile == null) {
       throw Exception('No file selected');
     }
+
+    final request = widget.approvalRequest;
+
+    if (request == null) {
+      throw Exception('No active approval request found');
+    }
+
     return {
-      'emp_id': widget.approvalRequest.empId.toString() ?? '',
+      'emp_id': request.empId.toString() ?? '',
       'process_stage': (Stage.emiApproval?.stageNo ?? 25).toString(),
       'doc_id': (Document.emiApprovalDoc?.docId ?? 6).toString(),
       'files': [
@@ -244,8 +263,15 @@ class _UserApprovalState extends State<UserApproval> {
     if (uploadedDocumentFile == null) {
       throw Exception('No file selected');
     }
+
+    final request = widget.approvalRequest;
+
+    if (request == null) {
+      throw Exception('No active approval request found');
+    }
+
     return {
-      'emp_id': widget.approvalRequest.empId.toString() ?? '',
+      'emp_id': request.empId.toString() ?? '',
       'process_stage': (Stage.insuranceQuoteApproval?.stageNo ?? 23).toString(),
       'doc_id': (Document.insuranceQuoteApprovalDoc?.docId ?? 4).toString(),
       'files': [
@@ -865,6 +891,8 @@ class _UserApprovalState extends State<UserApproval> {
   // MAIN
   @override
   Widget build(BuildContext context) {
+    final request = widget.approvalRequest;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -883,7 +911,16 @@ class _UserApprovalState extends State<UserApproval> {
           ),
         ),
       ),
-      body: isLoading
+
+      // 🚨 FIRST: Handle NULL request safely
+      body: request == null
+          ? _centerMessage(
+        icon: Icons.not_interested,
+        message: "You don't have any active request for approval.",
+      )
+
+      // If request is NOT null → continue normal flow
+          : isLoading
           ? const Center(
         child: CircularProgressIndicator(
           color: Color.fromRGBO(98, 202, 102, 1.0),
@@ -892,10 +929,11 @@ class _UserApprovalState extends State<UserApproval> {
           : FutureBuilder<int?>(
         future: LocalPrefs.getRoleId(),
         builder: (context, snapshot) {
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: Colors.green),
+              child:
+              CircularProgressIndicator(color: Colors.green),
             );
           }
 
@@ -916,7 +954,8 @@ class _UserApprovalState extends State<UserApproval> {
             );
           }
 
-          if (mainApprovalRequest == null || approvalType == null) {
+          if (mainApprovalRequest == null ||
+              approvalType == null) {
             return _centerMessage(
               icon: Icons.not_interested,
               message:
@@ -932,7 +971,8 @@ class _UserApprovalState extends State<UserApproval> {
                 child: SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
-                    child: approvalType == ApprovalType.insuranceQuote
+                    child: approvalType ==
+                        ApprovalType.insuranceQuote
                         ? _buildInsuranceQuoteApprovalContent(
                         mainApprovalRequest)
                         : _buildEmiDeductionApprovalContent(
