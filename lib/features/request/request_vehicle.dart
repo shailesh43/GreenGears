@@ -170,7 +170,10 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       "color_choice": _colourCtrl.text.trim(),
       "vehicle_type": selectedVehicleType,
       "quotation": double.tryParse(quotationAmountModalResult ?? '0') ?? 0.0, // ✅ Convert to number
-      "cooling_period": DateTime.now().add(const Duration(days: 90)), // ✅ Send as number (current datetime after 90 days)
+      "cooling_period": DateTime.now()
+          .toUtc()
+          .add(const Duration(days: 90))
+          .toIso8601String(),
       "updated_by": empCode,
       "comments": _commentsCtrl.text.trim().isEmpty
           ? null
@@ -250,27 +253,39 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
   /// Main submission handler - orchestrates the three-step process
   Future<void> _handleSubmit() async {
     try {
-      // STEP 1: Create/update employee record
+      // STEP 1
       final newEmpRequestBody = _bindNewEmployeeRequestBody();
-      await _client.createNewEmployee(newEmpRequestBody);
+      final response1 = await _client.createNewEmployee(newEmpRequestBody);
+      logger.d('Updating Employee: $response1');
 
-      // STEP 2: Create vehicle request
+      // STEP 2
       final carRequestBody = _bindCreateVehicleRequestBody();
-      final response = await _client.createNewVehicleRequest(carRequestBody);
+      final response2 = await _client.createNewVehicleRequest(carRequestBody);
+      logger.d('New Request created: $response2');
+
+      // STEP 3 (fire & forget)
+      _handleUploadSafely();
 
       if (!mounted) return;
-      Navigator.pop(context, response);
-      _showSnackBar(
-        message: 'Your Request registered successfully',
-        isSuccess: true,
-      );
 
-      // STEP 3: Upload document (now the request exists)
-      await _handleUpload();
+      // Exit screen immediately
+      Navigator.pop(context);
+
     } catch (e) {
       logger.e('Error during submission: $e');
       if (!mounted) return;
     }
+  }
+
+  void _handleUploadSafely() {
+    Future(() async {
+      try {
+        await _handleUpload();
+        logger.d("Upload completed in background");
+      } catch (e) {
+        logger.e("Background upload failed: $e");
+      }
+    });
   }
 
   /// Handles document upload with progress tracking
@@ -522,15 +537,16 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                   onPressed: _isUploading
                       ? null
                       : () async {
-                    if (!_formKey.currentState!.validate()) return;
+                    // if (!_formKey.currentState!.validate()) return;
                     if (!_validateBeforeSubmit()) return;
-
                     try {
                       setState(() {
                         _isUploading = true;
                       });
 
                       await _handleSubmit();
+                      Navigator.pop(context);
+                      _showSnackBar(message: "New Request Created successfully", isSuccess: true);
                     } finally {
                       if (mounted) {
                         setState(() {
