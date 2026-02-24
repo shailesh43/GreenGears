@@ -18,13 +18,15 @@ import '../../core/utils/enum.dart';
 import '../../network/api_client.dart';
 import '../../constants/local_prefs.dart';
 
-
 import '../../network/api_models/car_request.dart';
+
+// 🔥 Import for RouteObserver
+import '../../app.dart';
 
 class MainDashboard extends StatefulWidget {
   final UserRole role;
 
-  const   MainDashboard({
+  const MainDashboard({
     super.key,
     required this.role,
   });
@@ -33,7 +35,7 @@ class MainDashboard extends StatefulWidget {
   State<MainDashboard> createState() => _MainDashboard();
 }
 
-class _MainDashboard extends State<MainDashboard> {
+class _MainDashboard extends State<MainDashboard> with RouteAware {
   final ApiClient _client = ApiClient();
 
   // Employee data
@@ -51,10 +53,49 @@ class _MainDashboard extends State<MainDashboard> {
   final List<CarRequest> activeRequests = [];
   int roleId = 0;
   bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    _init();
+    _init(); // Load data immediately without dialog
+  }
+
+  // 🔥 RouteAware: Subscribe to route observer
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  // 🔥 RouteAware: Auto-refresh when returning to this screen
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    // Use post-frame callback to avoid calling during navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshPageSilent(); // Silent refresh without dialog
+    });
+  }
+
+  // 🔥 RouteAware: Unsubscribe on dispose
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  // Initial refresh with dialog (for pull-to-refresh)
+  Future<void> _refreshPage() async {
+    await _init();
+    setState(() {});
+  }
+
+  // Silent refresh without dialog (for auto-refresh)
+  Future<void> _refreshPageSilent() async {
+    await _init();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _init() async {
@@ -64,10 +105,12 @@ class _MainDashboard extends State<MainDashboard> {
     await _fetchCarEligibility();
     await _loadFilterBasedRequests();
   }
+
   // 1. Load Employee Code
   Future<void> _loadEmpCode() async {
     empCode = await LocalPrefs.getEmpCode();
   }
+
   // 2. Fetch Employee Profile
   Future<void> _fetchEmployeeProfile() async {
     if (empCode == null || empCode!.isEmpty) {
@@ -98,16 +141,16 @@ class _MainDashboard extends State<MainDashboard> {
         );
       } else {
         debugPrint('Employee profile not found');
-        setState(() => isLoading = false); //
+        setState(() => isLoading = false);
       }
     } catch (e) {
       debugPrint('Error fetching employee profile: $e');
       setState(() => isLoading = false);
     }
   }
+
   // 3. Fetch Car Eligibility
   Future<void> _fetchCarEligibility() async {
-    // You can also load from LocalPrefs if needed
     final workLevel = empGrade ?? await LocalPrefs.getEmpGrade();
 
     if (workLevel == null || workLevel.isEmpty) {
@@ -133,6 +176,7 @@ class _MainDashboard extends State<MainDashboard> {
       debugPrint('Error fetching car eligibility: $e');
     }
   }
+
   // 4. Check for Active request
   Future<void> _loadFilterBasedRequests() async {
     setState(() {
@@ -168,15 +212,16 @@ class _MainDashboard extends State<MainDashboard> {
           ..clear()
           ..addAll(response.active);
 
-
         isLoading = false;
       });
 
       if (activeRequests.isNotEmpty) {
         setState(() {
-          employeeRequest = activeRequests.firstWhere(
-                (request) => request.empId == empId
-          );
+          final matched = activeRequests
+              .where((r) => r.empId == empId && r.status == 31)
+              .toList();
+
+          employeeRequest = matched.isNotEmpty ? matched.first : null;
         });
       }
     } catch (e) {
@@ -194,10 +239,12 @@ class _MainDashboard extends State<MainDashboard> {
       empGrade: empGrade ?? '',
       empRole: empRole ?? '',
       empEligibility: empEligibility ?? '',
-      empCostCenter: empCostCenter?? '',
+      empCostCenter: empCostCenter ?? '',
       empMobileNo: empMobileNo ?? '',
       role: widget.role,
       request: employeeRequest,
+      isLoading: isLoading, // 🔥 Pass loading state
+      onRefresh: _refreshPage, // 🔥 Pass refresh callback
     );
   }
 }
@@ -213,6 +260,8 @@ class DashboardScreen extends StatefulWidget {
   final String? empMobileNo;
   final UserRole role;
   final CarRequest? request;
+  final bool isLoading; // 🔥 Loading state
+  final Future<void> Function() onRefresh; // 🔥 Refresh callback
 
   const DashboardScreen({
     super.key,
@@ -226,6 +275,8 @@ class DashboardScreen extends StatefulWidget {
     required this.empMobileNo,
     required this.role,
     required this.request,
+    required this.isLoading,
+    required this.onRefresh,
   });
 
   @override
@@ -233,7 +284,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -242,7 +292,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: Container(
         child: Column(
           children: [
-            // Header
+            // 🔥 YOUR ORIGINAL HEADER (Unchanged)
             Container(
               height: 130,
               width: double.infinity,
@@ -285,207 +335,238 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Content
+            // 🔥 Content with Loading State
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Welcome Section
-                    Row(
-                      children: [
-                        const Text(
-                          'Welcome,',
-                          style: TextStyle(
-                            fontSize: 24,
-                            letterSpacing: -0.4,
-                            color: Color(0xFF000000),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          (widget.empName ?? '').split(' ').first,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.4,
-                            color: Color(0xFF000000),
-                          ),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      (widget.empMail ?? '').toLowerCase(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        letterSpacing: -0.2,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Info Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.black, width: 0.25),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.20),
-                            offset: const Offset(3, 3),
-                            blurRadius: 6,
-                            spreadRadius: -1,
-                          ),
-                        ],
-                      ),
-                      child: Column(
+              child: widget.isLoading
+                  ? const Center(
+                child: CircularProgressIndicator(
+                  color: Color.fromRGBO(41, 183, 69, 1),
+                ),
+              )
+                  : RefreshIndicator(
+                onRefresh: widget.onRefresh,
+                color: const Color.fromRGBO(41, 183, 69, 1),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Welcome Section
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoItem('EMP code', widget.empId ?? ''),
-                              ),
-                              Expanded(
-                                child: _buildInfoItem('Grade', widget.empGrade ?? ''),
-                              ),
-                              Expanded(
-                                child: _buildInfoItem('Role', widget.role?.label ?? '',),
-                              ),
-                            ],
+                          const Text(
+                            'Welcome,',
+                            style: TextStyle(
+                              fontSize: 24,
+                              letterSpacing: -0.4,
+                              color: Color(0xFF000000),
+                            ),
                           ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoItem('Phone', widget.empMobileNo ?? ''),
-                              ),
-                              Expanded(
-                                child: _buildInfoItem(
-                                  'Cost Center',
-                                  widget.empCostCenter ?? '',
-                                ),
-                              ),
-                            ],
-                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            (widget.empName ?? '').split(' ').first,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.4,
+                              color: Color(0xFF000000),
+                            ),
+                          )
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Quick Actions
-                    const Text(
-                      'Quick Actions',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
-                        color: Color.fromRGBO(41, 183, 69, 0.50),
+                      const SizedBox(height: 4),
+                      Text(
+                        (widget.empMail ?? '').toLowerCase(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          letterSpacing: -0.2,
+                          color: Colors.grey[600],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Create request only if they
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ActionCard(
-                          icon: widget.request != null ? Icons.remove_red_eye : Icons.edit,
-                            title: widget.request != null
-                                ? 'View Your \n Active Request'
-                                : 'Create Request\nfor your Vehicle',
-                            color: const Color.fromRGBO(41, 183, 69, 0.55),
-                            titleColor: const Color.fromRGBO(248, 248, 248, 1.0),
-                            iconColor: const Color.fromRGBO(248, 248, 248, 1.0),
-                            onTap: () {
-                              if (widget.request != null) {
+                      const SizedBox(height: 24),
+
+                      // Info Card
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black, width: 0.25),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.20),
+                              offset: const Offset(3, 3),
+                              blurRadius: 6,
+                              spreadRadius: -1,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildInfoItem(
+                                      'EMP code', widget.empId ?? ''),
+                                ),
+                                Expanded(
+                                  child: _buildInfoItem(
+                                      'Grade', widget.empGrade ?? ''),
+                                ),
+                                Expanded(
+                                  child: _buildInfoItem(
+                                    'Role',
+                                    widget.role.label,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildInfoItem(
+                                      'Phone', widget.empMobileNo ?? ''),
+                                ),
+                                Expanded(
+                                  child: _buildInfoItem(
+                                    'Cost Center',
+                                    widget.empCostCenter ?? '',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Quick Actions
+                      const Text(
+                        'Quick Actions',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.2,
+                          color: Color.fromRGBO(41, 183, 69, 0.50),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Create request only if they
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ActionCard(
+                              icon: widget.request != null
+                                  ? Icons.remove_red_eye
+                                  : Icons.edit,
+                              title: widget.request != null
+                                  ? 'View Your \n Active Request'
+                                  : 'Create Request\nfor your Vehicle',
+                              color: const Color.fromRGBO(41, 183, 69, 0.55),
+                              titleColor:
+                              const Color.fromRGBO(248, 248, 248, 1.0),
+                              iconColor:
+                              const Color.fromRGBO(248, 248, 248, 1.0),
+                              onTap: () {
+                                if (widget.request != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ActiveRequestPage(
+                                        request: widget.request!,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                      const VehicleRequestPage(),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ActionCard(
+                              icon: Icons.check_circle_outline,
+                              title: 'Approve/Reject\nRequests',
+                              color: const Color.fromRGBO(242, 241, 249, 1.0),
+                              titleColor:
+                              const Color.fromRGBO(152, 152, 152, 1.0),
+                              iconColor:
+                              const Color.fromRGBO(152, 152, 152, 1.0),
+                              onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ActiveRequestPage(
-                                      request: widget.request!, // ✅ pass request
+                                    builder: (_) => UserApproval(
+                                      approvalRequest: widget.request,
                                     ),
                                   ),
                                 );
-                              } else {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const VehicleRequestPage(),
-                                  ),
-                                );
-                              }
-                            },
+                              },
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+
+                      // Search Requests
+                      if (widget.role.label != "User") ...[
+                        ActionCardWide(
+                          icon: Icons.search,
+                          title: 'Search Requests',
+                          subtitle: 'Browse through all the requests',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    SearchScreen(role: widget.role),
+                              ),
+                            );
+                          },
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ActionCard(
-                            icon: Icons.check_circle_outline,
-                            title: 'Approve/Reject\nRequests',
-                            color: const Color.fromRGBO(242, 241, 249, 1.0),
-                            titleColor: const Color.fromRGBO(152, 152, 152, 1.0),
-                            iconColor: const Color.fromRGBO(152, 152, 152, 1.0),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => UserApproval(approvalRequest: widget.request!,)),
-                              );
-                            },
-                          ),
+                        const Divider(
+                          height: 0.5,
+                          thickness: 1,
+                          color: Color.fromRGBO(229, 231, 235, 1),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 18),
 
-                    // Search Requests
-                    if (widget.role?.label != "User") ...[
+                      // Quotation docs
                       ActionCardWide(
-                        icon: Icons.search,
-                        title: 'Search Requests',
-                        subtitle: 'Browse through all the requests',
+                        icon: Icons.description_outlined,
+                        title: 'Quotation docs',
+                        subtitle: 'List of uploaded quotation docs till now',
                         onTap: () {
+                          final reqId = widget.request?.requestId ?? '';
+                          if (reqId.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('No active request found.')),
+                            );
+                            return;
+                          }
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SearchScreen(role: widget.role),
+                              builder: (context) =>
+                                  UploadedQuotations(requestId: reqId),
                             ),
                           );
                         },
                       ),
-                      const Divider(
-                        height: 0.5,
-                        thickness: 1,
-                        color: Color.fromRGBO(229, 231, 235, 1),
-                      ),
                     ],
-
-                    // Quotation docs
-                    ActionCardWide(
-                      icon: Icons.description_outlined,
-                      title: 'Quotation docs',
-                      subtitle: 'List of uploaded quotation docs till now',
-                      onTap: () {
-                        // widget.request?.requestId could be null if no active request.
-                        // Guard or use a fallback as needed.
-                        final reqId = widget.request?.requestId ?? '';
-                        if (reqId.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('No active request found.')),
-                          );
-                          return;
-                        }
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => UploadedQuotations(requestId: reqId),
-                          ),
-                        );
-                      },
-                    ),                  ],
+                  ),
                 ),
               ),
             ),

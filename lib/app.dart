@@ -14,6 +14,8 @@ import './constants/local_prefs.dart';
 import './network/api_client.dart';
 import './core/utils/enum.dart';
 
+// Change this line in app.dart
+final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -48,7 +50,6 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-
   // Initialize app with splash screen delay
   Future<String?> _initializeApp() async {
     // Ensure splash shows for minimum duration
@@ -57,7 +58,6 @@ class _MyAppState extends State<MyApp> {
     // Then check login status
     return _checkLoginStatus();
   }
-
 
   // Check if user is already logged in
   Future<String?> _checkLoginStatus() async {
@@ -84,7 +84,6 @@ class _MyAppState extends State<MyApp> {
       // Save login status as true
       await LocalPrefs.saveLoginStatus(isLoggedIn: true);
     }
-
     return empId;
   }
 
@@ -117,6 +116,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,
       ),
+      navigatorObservers: [routeObserver],
       home: FutureBuilder<String?>(
         future: _initFuture,
         builder: (context, snapshot) {
