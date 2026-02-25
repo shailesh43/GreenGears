@@ -16,7 +16,7 @@ import '../../network/api_models/car_request.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
 import '../../network/api_models/uploaded_file_model.dart';
 import '../../core/helpers/file_downloader.dart';
-
+import 'package:fluttertoast/fluttertoast.dart';
 
 class PaymentDetailsModal extends StatefulWidget {
   final CarRequest request;
@@ -130,23 +130,30 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   bool _validateBeforeApprove() {
     bool isValid = true;
 
+    if (_poNumberCtrl.text.trim().isEmpty ||
+        _disbursementAmountCtrl.text.trim().isEmpty ||
+        _utrCodeCtrl.text.trim().isEmpty ||
+        _commentsCtrl.text.trim().isEmpty) {
+      isValid = false;
+    }
+
     setState(() {
       _poNumberErrorText =
       _poNumberCtrl.text.trim().isEmpty ? 'Required' : null;
+
       _disbursementAmountErrorText =
       _disbursementAmountCtrl.text.trim().isEmpty ? 'Required' : null;
+
       _utrCodeErrorText =
       _utrCodeCtrl.text.trim().isEmpty ? 'Required' : null;
+
       _commentsErrorText =
       _commentsCtrl.text.trim().isEmpty ? 'Required' : null;
-
-      if (_poNumberCtrl.text.trim().isEmpty ||
-          _disbursementAmountCtrl.text.trim().isEmpty ||
-          _utrCodeCtrl.text.trim().isEmpty ||
-          _commentsCtrl.text.trim().isEmpty) {
-        isValid = false;
-      }
     });
+
+    if (!isValid) {
+      _showValidationToast('Please fill in all required fields');
+    }
 
     return isValid;
   }
@@ -154,8 +161,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   // ==================== SUBMISSION HANDLERS ====================
 
   Future<void> _handleUpload() async {
-    if (uploadedDocumentFile == null) return;
-
+    // Skip if no document selected
     try {
       final docReqBody = _bindUploadDocRequestBody();
 
@@ -168,48 +174,85 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
         body: docReqBody,
         onProgress: (progress) {
           if (!mounted) return;
-          setState(() => _uploadProgress = progress);
+          setState(() {
+            _uploadProgress = progress;
+          });
         },
       );
 
-      setState(() => _isUploading = false);
+      setState(() {
+        _isUploading = false;
+      });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isUploading = false);
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      // Propagate failure to caller
       rethrow;
     }
   }
 
-  /// Pure API worker – no Navigator.pop, no snackbars.
+  /// Handles approval action
   Future<void> _handleApprove() async {
-    final requestId = widget.request.requestId;
-    final empId = widget.request.empId;
+    final request = widget.request;
+    final requestId = request.requestId!;
+    final empId = request.empId!;
 
-    if (requestId == null || empId == null) return;
+    try {
+      // STEP 1: Submit payment details
+      final response = await _client.submitByEsnaPayment(
+        requestId: requestId,
+        empId: empId,
+        commentsAssignedToEsna: _commentsCtrl.text.trim(),
+        poNumber: _poNumberCtrl.text.trim(),
+        poDateOfIssue: _poDateCtrl.text.trim(),
+        disbursementAmount: _disbursementAmountCtrl.text.trim(),
+        paymentDate: _paymentDateCtrl.text.trim(),
+        utr: _utrCodeCtrl.text.trim(),
+      );
 
-    await _client.submitByEsnaPayment(
-      requestId: requestId,
-      empId: empId,
-      commentsAssignedToEsna: _commentsCtrl.text.trim(),
-      poNumber: _poNumberCtrl.text.trim(),
-      poDateOfIssue: _poDateCtrl.text.trim(),
-      disbursementAmount: _disbursementAmountCtrl.text.trim(),
-      paymentDate: _paymentDateCtrl.text.trim(),
-      utr: _utrCodeCtrl.text.trim(),
-    );
+      // STEP 2: Upload document if file is selected
+      await _handleUpload();
+
+      // Success feedback
+      if (!mounted) return;
+      Navigator.pop(context, 'Request approved');
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context, 'Request failed');
+    }
   }
 
-  /// Pure API worker – no Navigator.pop, no snackbars.
+  /// Handles rejection action
   Future<void> _handleReject() async {
-    final requestId = widget.request.requestId;
-    final empId = widget.request.empId;
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
 
-    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) return;
+    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) {
+      _showValidationToast('Missing request or employee details');
+      return;
+    }
 
-    await _client.decrementStageOnReject(
-      requestId: requestId,
-      empId: empId,
-    );
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
 
   // ==================== DATA FETCHING ====================
@@ -229,7 +272,9 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
         commentsOnEsnaPayment =
             response.data?.commentsEmiUserApproval ?? 'NULL';
       });
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+    }
   }
 
   Future<void> _getDocumentsByRequestId() async {
@@ -280,6 +325,18 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   }
 
   // ==================== UI HELPERS ====================
+
+  void _showValidationToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 3,
+      backgroundColor: const Color(0xFFFFE3E3),
+      textColor: const Color(0xFFFA6262),
+      fontSize: 14.0,
+    );
+  }
 
   void _showSnackBar({
     required String message,
@@ -337,7 +394,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
           DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
           DetailRow(
             label: 'EMI approval comments',
-            value: commentsOnEsnaPayment ?? 'NULL',
+            value: commentsOnEsnaPayment ?? '',
           ),
           const SizedBox(height: 16),
 
@@ -452,21 +509,18 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
         },
         onPrimaryAction: () async {
           await _handleApprove();
-          if (!mounted) return;
           _showSnackBar(
             message: '${widget.request.requestId}: Request Approved',
             isSuccess: true,
           );
-          Navigator.pop(context);
         },
         onSecondaryAction: () async {
           await _handleReject();
-          if (!mounted) return;
+
           _showSnackBar(
             message: '${widget.request.requestId}: Request Rejected',
             isSuccess: true,
           );
-          Navigator.pop(context);
         },
       ),
     );
