@@ -131,6 +131,15 @@ class _MyAppState extends State<MyApp> {
             return FutureBuilder<UserRole>(
               future: _fetchEmployeeRole(empCode),
               builder: (context, roleSnapshot) {
+                if (roleSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(
+                        color: Color.fromRGBO(34, 197, 94, 1), // Your green color
+                      ),
+                    ),
+                  );
+                }
                 final role = roleSnapshot.data ?? UserRole.user;
                 return DashboardShell(role: role);
               },
