@@ -20,6 +20,7 @@ import '../../network/api_client.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
 import '../../network/api_models/uploaded_file_model.dart';
 import '../../core/helpers/file_downloader.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class InsuranceScreenModal extends StatefulWidget {
   final CarRequest request;
@@ -393,8 +394,7 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
     if (requestId == null) return;
     try
     {
-      // ---------------- STEP 1: Upload document (if selected) ----------------
-      // ---------------- STEP 2: Submit for insurance quote approval ----------------
+      // ---------------- STEP 1: Submit for insurance quote approval ----------------
       final response = await _client.SubmitForInsuranceQuoteApproval(
         requestId: requestId,
         baseInsurance: _baseInsuranceCtrl.text.trim().isEmpty
@@ -407,9 +407,10 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
             ? "0"
             : _addOnSapphireCtrl.text.trim(),
         commentsByGIT: _commentsCtrl.text.trim().isEmpty
-            ? 'Approved'
+            ? 'Approved by GIT'
             : _commentsCtrl.text.trim(),
       );
+      // ---------------- STEP 2: Upload document (if selected) ----------------
       await _handleUpload();
 
       if (!mounted) return;
@@ -511,13 +512,26 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
           tataText.isEmpty ||
           sapphireText.isEmpty) {
         isValid = false;
+        _showValidationToast('Enter all * marked fields');
       }
     });
-
+    
     return isValid;
   }
 
   // ==================== UI HELPERS ====================
+
+  void _showValidationToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 3,
+      backgroundColor: const Color(0xFFFFE3E3),
+      textColor: const Color(0xFFFA6262),
+      fontSize: 14.0,
+    );
+  }
 
   void _showSnackBar({
     required String message,
