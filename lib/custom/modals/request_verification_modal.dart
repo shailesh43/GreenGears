@@ -107,6 +107,11 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       setState(() {
         _commentsErrorText = 'Required'; // shows inline error
       });
+      _showValidationToast('Please enter comments');
+      return false;
+    }
+    if (uploadedDocumentFile == null) {
+      _showValidationToast('Please upload a document');
       return false;
     }
     return true;
@@ -117,14 +122,6 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   /// Handles document upload with progress tracking
   Future<void> _handleUpload() async {
     // Skip if no document selected
-    if (uploadedDocumentFile == null) {
-      _showSnackBar(
-        message: 'Missing request or ES&A details',
-        isSuccess: false,
-      );
-      return;
-    }
-
     try {
       final docReqBody = _bindUploadDocRequestBody();
 
@@ -160,16 +157,9 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
 
   /// Handles approval action
   Future<void> _handleApprove() async {
-    final requestId = widget.request.requestId;
-    final empId = widget.request.empId;
-
-    if (requestId == null || empId == null) {
-      _showSnackBar(
-        message: 'Missing request or ES&A details',
-        isSuccess: false,
-      );
-      return;
-    }
+    final request = widget.request;
+    final requestId = request.requestId!;
+    final empId = request.empId!;
 
     try {
       // STEP 1: Assign to insurance
@@ -199,10 +189,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
     final empId = request.empId;
 
     if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) {
-      _showSnackBar(
-        message: 'Missing request or employee details',
-        isSuccess: false,
-      );
+      _showValidationToast('Missing request or employee details');
       return;
     }
 
@@ -232,10 +219,6 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
     final requestId = request.requestId;
 
     if (requestId == null) {
-      _showSnackBar(
-        message: 'Missing request details',
-        isSuccess: false,
-      );
       return;
     }
 
@@ -251,10 +234,6 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       });
     } catch (e) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
     }
   }
 
@@ -413,7 +392,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
           ),
           DetailRow(
             label: 'Comments by Employee',
-            value: commentsOnEsnaReqVerif ?? 'NULL',
+            value: commentsOnEsnaReqVerif ?? '-',
           ),
           const SizedBox(height: 24),
 
