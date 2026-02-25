@@ -10,6 +10,7 @@ import '../../network/api_models/uploaded_file_model.dart';
 import 'package:file/file.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 // Customs
 import '../widgets/action_button_pair.dart';
@@ -20,7 +21,6 @@ import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
 import '../../core/helpers/file_downloader.dart';
-
 class RtoTaxReceiptModal extends StatefulWidget {
   final CarRequest request;
 
@@ -69,7 +69,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
 
     return {
       'emp_id': widget.request.empId.toString(),
-      'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
+      'process_stage': (Stage.rtoTaxReceipt?.stageNo ?? 27).toString(),
       'doc_id': (Document.rtoTaxReceiptDoc?.docId ?? 8).toString(),
       'files': [
         MultipartFile.fromBytes(
@@ -139,28 +139,29 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   // ==================== VALIDATION ====================
 
   bool _validateBeforeApprove() {
-    bool isValid = true;
+    final isVehicleEmpty = _vehicleNumberCtrl.text.trim().isEmpty;
+    final isChassisEmpty = _chassisNumberCtrl.text.trim().isEmpty;
+    final isEngineEmpty = _engineNumberCtrl.text.trim().isEmpty;
+    final isFastTagEmpty = _fastTagNumberCtrl.text.trim().isEmpty;
+    final isCommentsEmpty = _commentsCtrl.text.trim().isEmpty;
+
+    final isValid = !(isVehicleEmpty ||
+        isChassisEmpty ||
+        isEngineEmpty ||
+        isFastTagEmpty ||
+        isCommentsEmpty);
 
     setState(() {
-      _vehicleNumberErrorText =
-      _vehicleNumberCtrl.text.trim().isEmpty ? 'Required' : null;
-      _chassisNumberErrorText =
-      _chassisNumberCtrl.text.trim().isEmpty ? 'Required' : null;
-      _engineNumberErrorText =
-      _engineNumberCtrl.text.trim().isEmpty ? 'Required' : null;
-      _fastTagNumberErrorText =
-      _fastTagNumberCtrl.text.trim().isEmpty ? 'Required' : null;
-      _commentsErrorText =
-      _commentsCtrl.text.trim().isEmpty ? 'Required' : null;
-
-      if (_vehicleNumberCtrl.text.trim().isEmpty ||
-          _chassisNumberCtrl.text.trim().isEmpty ||
-          _engineNumberCtrl.text.trim().isEmpty ||
-          _fastTagNumberCtrl.text.trim().isEmpty ||
-          _commentsCtrl.text.trim().isEmpty) {
-        isValid = false;
-      }
+      _vehicleNumberErrorText = isVehicleEmpty ? 'Required' : null;
+      _chassisNumberErrorText = isChassisEmpty ? 'Required' : null;
+      _engineNumberErrorText = isEngineEmpty ? 'Required' : null;
+      _fastTagNumberErrorText = isFastTagEmpty ? 'Required' : null;
+      _commentsErrorText = isCommentsEmpty ? 'Required' : null;
     });
+
+    if (!isValid) {
+      _showValidationToast('Please fill in all required fields');
+    }
 
     return isValid;
   }
@@ -169,13 +170,13 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
 
   /// Pure API worker — no Navigator.pop, no snackbars.
   Future<void> _handleApprove() async {
-    final requestId = widget.request.requestId;
-    final empId = widget.request.empId;
+    final request = widget.request;
+    final requestId = request.requestId!;
+    final empId = request.empId!;
 
-    if (requestId == null || empId == null) return;
     try {
       // STEP 1: Submit RTO tax receipt
-      await _client.submitByEsnaRtoTaxReceipt(
+      final  response = await _client.submitByEsnaRtoTaxReceipt(
         requestId: requestId,
         empId: empId,
         commentsAssignedToEsna: _commentsCtrl.text.trim(),
@@ -188,8 +189,10 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
         fastTagNumber: _fastTagNumberCtrl.text.trim(),
       );
 
-      // STEP 2: Upload document (silently skip if no file selected)
+      // STEP 2: Upload document if file is selected
       await _handleUpload();
+      // Success feedback
+
       if (!mounted) return;
       Navigator.pop(context, 'Request approved');
     }
@@ -199,23 +202,39 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
     }
   }
 
-  /// Pure API worker — no Navigator.pop, no snackbars.
-  Future<void> _handleReject() async {
-    final requestId = widget.request.requestId;
-    final empId = widget.request.empId;
+  /// Handles rejection action
+  Future<void> _handleReject() async
+  {
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
 
-    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) return;
+    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) {
+      _showValidationToast('Missing request or employee details');
+      return;
+    }
 
-    await _client.decrementStageOnReject(
-      requestId: requestId,
-      empId: empId,
-    );
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
 
   /// Silently skips if no file selected — upload is optional.
   Future<void> _handleUpload() async {
-    if (uploadedRtoFile == null) return;
-
+    // Skip if no document selected
     try {
       final docReqBody = _bindUploadDocRequestBody();
 
@@ -228,14 +247,23 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
         body: docReqBody,
         onProgress: (progress) {
           if (!mounted) return;
-          setState(() => _uploadProgress = progress);
+          setState(() {
+            _uploadProgress = progress;
+          });
         },
       );
 
-      setState(() => _isUploading = false);
+      setState(() {
+        _isUploading = false;
+      });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isUploading = false);
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      // Propagate failure to caller
       rethrow;
     }
   }
@@ -243,8 +271,12 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   // ==================== DATA FETCHING ====================
 
   Future<void> _getCommentsByRequestId() async {
-    final requestId = widget.request.requestId;
-    if (requestId == null) return;
+    final request = widget.request;
+    final requestId = request.requestId;
+
+    if (requestId == null) {
+      return;
+    }
 
     try {
       final response = await _client.getCommentsByRequestId(
@@ -254,10 +286,11 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       if (!mounted) return;
 
       setState(() {
-        commentsOnEsnaRto =
-            response.data?.commentsPaymentDetailsEsna ?? 'NULL';
+        commentsOnEsnaRto = response.data?.commentsByUser ?? 'NULL';
       });
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+    }
   }
 
   Future<void> _getDocumentsByRequestId() async {
@@ -308,6 +341,18 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   }
 
   // ==================== UI HELPERS ====================
+
+  void _showValidationToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 3,
+      backgroundColor: const Color(0xFFFFE3E3),
+      textColor: const Color(0xFFFA6262),
+      fontSize: 14.0,
+    );
+  }
 
   void _showSnackBar({
     required String message,
@@ -362,7 +407,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
           DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
           DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
-          DetailRow(label: 'Comments by ES&A', value: commentsOnEsnaRto ?? 'NULL'),
+          DetailRow(label: 'Comments by ES&A', value: commentsOnEsnaRto ?? ''),
           const SizedBox(height: 16),
 
           FormTextField(
