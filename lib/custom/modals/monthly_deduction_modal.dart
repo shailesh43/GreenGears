@@ -16,6 +16,7 @@ import '../widgets/excel_file_upload_field.dart';
 import '../widgets/form_text_field.dart';
 import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class MonthlyDeductionModal extends StatefulWidget {
   final CarRequest request;
@@ -41,6 +42,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   // G16 = Company Contribution
   // B3 = EMI Tenure (Years)
   // G17 = Monthly EMI
+
   double? _totalEmi;           // G14
   double? _carAllowance;        // G15
   double? _companyContribution; // G16
@@ -106,9 +108,28 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
       setState(() {
         _commentsErrorText = 'Required';
       });
+      _showValidationToast('Please enter comments');
       return false;
     }
+
+    if (uploadedExcelFile == null) {
+      _showValidationToast('Please upload an excel file for EMI');
+      return false;
+    }
+
     return true;
+  }
+
+  void _showValidationToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 3,
+      backgroundColor: const Color(0xFFFFE3E3),
+      textColor: const Color(0xFFFA6262),
+      fontSize: 14.0,
+    );
   }
 
   // ==================== EXCEL TEMPLATE DOWNLOAD ====================
@@ -177,22 +198,31 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
 
       if (sheet == null) throw Exception('Could not read Excel sheet');
 
-      // Extract and parse — fall back to 100.0 if a cell is empty/invalid
-      final totalEmiValue =
-          _parseNumericValue(sheet.cell(CellIndex.indexByString('G14')).value) ??
-              100.0;
-      final carAllowanceValue =
-          _parseNumericValue(sheet.cell(CellIndex.indexByString('G15')).value) ??
-              100.0;
-      final companyContributionValue =
-          _parseNumericValue(sheet.cell(CellIndex.indexByString('G16')).value) ??
-              100.0;
-      final emiTenureValue =
-          _parseNumericValue(sheet.cell(CellIndex.indexByString('B3')).value) ??
-              100.0;
-      final monthlyEmiValue =
-          _parseNumericValue(sheet.cell(CellIndex.indexByString('G17')).value) ??
-              100.0;
+      final f13 = _parseNumericValue(
+        sheet.cell(CellIndex.indexByString('F13')).value,
+      ) ?? 0.0;
+
+      final g13 = _parseNumericValue(
+        sheet.cell(CellIndex.indexByString('G13')).value,
+      ) ?? 0.0;
+
+      final g15 = _parseNumericValue(
+        sheet.cell(CellIndex.indexByString('G15')).value,
+      ) ?? 0.0;
+
+      final b3 = _parseNumericValue(
+        sheet.cell(CellIndex.indexByString('B3')).value,
+      ) ?? 0.0;
+
+      final g17 = _parseNumericValue(
+        sheet.cell(CellIndex.indexByString('G17')).value,
+      ) ?? 0.0;
+
+      final totalEmiValue = f13 + g13;          // G14
+      final carAllowanceValue = g15;            // G15 (already correct)
+      final companyContributionValue = f13;     // G16
+      final emiTenureValue = b3;                // B3
+      final monthlyEmiValue = g17;        // G17 (simplified)
 
       setState(() {
         uploadedExcelFile = file;
@@ -269,16 +299,14 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
   /// Pure API worker — no Navigator.pop, no snackbars.
   /// Falls back to 100 for any Excel value that was not extracted.
   Future<void> _handleApprove() async {
-    final requestId = widget.request.requestId;
-    final empId = widget.request.empId;
+    final request = widget.request;
+    final requestId = request.requestId!;
+    final empId = request.empId!;
 
-    if (requestId == null || empId == null) return;
-
-    // STEP 1: Upload EMI calculation Excel document (optional)
-    await _handleUpload();
-
+    try
+    {
     // STEP 2: Submit for EMI approval with extracted data (100 fallback each)
-    await _client.submitByEsnaEmi(
+    final response = await _client.submitByEsnaEmi(
       requestId: requestId,
       empId: empId,
       commentsAssignedToEsna: _commentsCtrl.text.trim(),
@@ -288,21 +316,45 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
       completeEmiTenure: (_emiTenure ?? 100).toInt().toString(),
       emiAmount: (_monthlyEmi ?? 100).toString(),
     );
+    // STEP 2: Upload EMI calculation Excel document
+    await _handleUpload();
+    if (!mounted) return;
+    Navigator.pop(context, 'Request approved');
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context, 'Request failed');
+
+    }
   }
 
   /// Pure API worker — no Navigator.pop, no snackbars.
   Future<void> _handleReject() async {
-    final requestId = widget.request.requestId;
-    final empId = widget.request.empId;
+    final request = widget.request;
+    final requestId = request.requestId;
+    final empId = request.empId;
 
-    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) return;
+    if (requestId == null || requestId.isEmpty || empId == null || empId.isEmpty) {
+      _showValidationToast('Missing request or employee details');
+      return;
+    }
 
-    await _client.decrementStageOnReject(
-      requestId: requestId,
-      empId: empId,
-    );
+    try {
+      final response = await _client.decrementStageOnReject(
+        requestId: requestId,
+        empId: empId,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context, response);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
-
   // ==================== DATA FETCHING ====================
 
   Future<void> _getCommentsByRequestId() async {
@@ -422,7 +474,7 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
 
           // Step 2: Upload Filled Excel
           ExcelFileUploadField(
-            label: '2. Upload Excel',
+            label: '2. Upload Excel (NOTE: Must be filled via Excel Desktop)',
             onFileSelected: _handleExcelUpload,
           ),
           const SizedBox(height: 24),
@@ -439,11 +491,11 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
               ),
             ),
             const SizedBox(height: 12),
-            DetailRow(label: 'Total EMI (Rs)', value: _formatCurrency(_totalEmi)),
-            DetailRow(label: 'Car Allowance (Rs)', value: _formatCurrency(_carAllowance)),
-            DetailRow(label: 'Company Contribution (Rs)', value: _formatCurrency(_companyContribution)),
+            DetailRow(label: 'Total EMI', value: _formatCurrency(_totalEmi)),
+            DetailRow(label: 'Car Allowance', value: _formatCurrency(_carAllowance)),
+            DetailRow(label: 'Company Contribution', value: _formatCurrency(_companyContribution)),
             DetailRow(label: 'EMI Tenure', value: _formatTenure(_emiTenure)),
-            DetailRow(label: 'Monthly EMI (Rs)', value: _formatCurrency(_monthlyEmi)),
+            DetailRow(label: 'Monthly EMI', value: _formatCurrency(_monthlyEmi)),
             const SizedBox(height: 24),
           ],
 
@@ -467,21 +519,18 @@ class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
         },
         onPrimaryAction: () async {
           await _handleApprove();
-          if (!mounted) return;
           _showSnackBar(
             message: '${widget.request.requestId}: Request Approved',
             isSuccess: true,
           );
-          Navigator.pop(context);
         },
         onSecondaryAction: () async {
           await _handleReject();
-          if (!mounted) return;
+
           _showSnackBar(
             message: '${widget.request.requestId}: Request Rejected',
             isSuccess: true,
           );
-          Navigator.pop(context);
         },
       ),
     );
