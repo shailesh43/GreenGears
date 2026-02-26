@@ -61,8 +61,8 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
 
     return {
       'emp_id': widget.request.empId.toString(),
-      'process_stage': (Stage.requested?.stageNo ?? 20).toString(),
-      'doc_id': (Document.rtoTaxReceiptDoc?.docId ?? 8).toString(),
+      'process_stage': (Stage.paymentDetails?.stageNo ?? 26).toString(),
+      'doc_id': (Document.paymentDetailsDoc?.docId ?? 7).toString(),
       'files': [
         MultipartFile.fromBytes(
           uploadedDocumentFile!.bytes!,
