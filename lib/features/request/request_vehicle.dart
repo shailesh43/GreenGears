@@ -262,14 +262,12 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
       final carRequestBody = _bindCreateVehicleRequestBody();
       final response2 = await _client.createNewVehicleRequest(carRequestBody);
       logger.d('New Request created: $response2');
-
-      // STEP 3 (fire & forget)
-      _handleUploadSafely();
-
       if (!mounted) return;
 
       // Exit screen immediately
       Navigator.pop(context);
+      // STEP 3 (fire & forget)
+      _handleUploadSafely();
 
     } catch (e) {
       logger.e('Error during submission: $e');
@@ -290,6 +288,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
 
   /// Handles document upload with progress tracking
   Future<void> _handleUpload() async {
+    // Skip if no document selected
     try {
       final docReqBody = _bindUploadDocRequestBody();
 
@@ -545,7 +544,7 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                       });
 
                       await _handleSubmit();
-                      Navigator.pop(context);
+                      // Navigator.pop(context);
                       _showSnackBar(message: "New Request Created successfully", isSuccess: true);
                     } finally {
                       if (mounted) {
