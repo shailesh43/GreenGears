@@ -56,12 +56,14 @@ class ApiConstants {
 
   // User screens
   static const String firstUserApproval = 'insurance-quote-approval'; // 23 -> 24
-  static const String secondUserApproval = ''; // 25 -> 26
+  static const String secondUserApproval = 'saveOrUpdateCommentAndIncrementStage'; // 25 -> 26
 
   // Processing Screens (ES&A and Insurance)
   static const String monthlyDeduction = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
-  static const String paymentDetails = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
-  static const String rtoTaxReceipt = 'saveOrUpdateCommentAndIncrementStage'; // 24 -> 25
+  static const String paymentDetails = 'saveOrUpdateCommentAndIncrementStage'; // 26 -> 27
+  static const String rtoTaxReceipt = 'saveOrUpdateCommentAndIncrementStage'; // 27 -> 28
+
+  static const String employeeFeedback = 'saveOrUpdateCommentAndIncrementStage'; // 28 -> 29
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -132,6 +134,9 @@ class ApiConstants {
         break;
       case "getAllUploadedDocuments":
         endPointUrl = "$baseURl$getAllUploadedDocuments";
+        break;
+      case "employeeFeedback":
+        endPointUrl = "$baseURl$employeeFeedback";
         break;
     }
     return endPointUrl;

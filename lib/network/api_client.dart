@@ -39,6 +39,7 @@ import './api_models/submit_by_esna_payment_model.dart';
 import './api_models/submit_by_esna_receipt_model.dart';
 import './api_models/comments_response_model.dart';
 import './api_models/get_all_docs_response_model.dart';
+import './api_models/user_feedback_model.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -278,7 +279,6 @@ class ApiClient {
     return CreateVehicleResponseModel.fromJson(data);
   }
 
-  // TODO: Test & Rewrite this endpoint
   // 4.3) API Endpoint: /uploadDocument
   // ==========================================
   // FIXED uploadDocument METHOD FOR ApiClient
@@ -810,7 +810,7 @@ class ApiClient {
     return CommentsResponseModel.fromJson(data);
   }
 
-  // 19. GET Uploaded Documents posted by specified EmpId
+  // 20. GET Uploaded Documents posted by specified EmpId
   // API Endpoint: /getAllUploadedDocuments
   Future<GetAllDocsResponseModel> getAllUploadedDocsFromS3({
     required String requestId,
@@ -842,6 +842,41 @@ class ApiClient {
 
     final data = _handleResponse(response, 'POST');
     return GetAllDocsResponseModel.fromJson(data);
+  }
+
+  // 21. Submit By User: Vehicle history (Feedback)
+  // API Endpoint: /saveOrUpdateCommentAndIncrementStage
+  Future<UserFeedbackModel> submitUserFeedback({
+    required String empId,
+    required String requestId,
+    required int userExperienceRating,
+    required int easeOfUseRating,
+    required int dealerExperienceRating,
+  }) async
+  {
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('employeeFeedback');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'emp_id': empId,
+      'req_id': requestId,
+      'user_experience': userExperienceRating,
+      'ease_of_use': easeOfUseRating,
+      'dealer_experience': dealerExperienceRating,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return UserFeedbackModel.fromJson(data);
   }
 
 }
