@@ -232,7 +232,7 @@ class _ActiveRequestPageState extends State<ActiveRequestPage> {
           ),
         ),
         Text(
-          request.stage?.label ?? 'NULL',
+          request.stage?.label ?? 'Completed',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
