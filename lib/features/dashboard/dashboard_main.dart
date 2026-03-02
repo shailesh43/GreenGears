@@ -555,7 +555,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       // Quotation docs
                       ActionCardWide(
                         icon: Icons.description_outlined,
-                        title: 'Quotation docs',
+                        title: 'Uploaded Documents',
                         subtitle: 'List of uploaded quotation docs till now',
                         onTap: () {
                           final reqId = widget.request?.requestId ?? '';
