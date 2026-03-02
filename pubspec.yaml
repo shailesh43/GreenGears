@@ -42,7 +42,7 @@ dependencies:
   crypto: ^3.0.7
   collection: ^1.19.1
   fluttertoast: ^9.0.0
-
+  pdf: ^3.11.1
   # Excel Processing
   excel: 3.0.0
 

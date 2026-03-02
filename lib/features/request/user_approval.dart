@@ -239,7 +239,7 @@ class _UserApprovalState extends State<UserApproval> {
   // UPLOAD REQUEST BODY & handler - As per what approval stage is
   Map<String, dynamic> _bindUploadDocRequestBodyForEmiApproval() {
     if (uploadedDocumentFile == null) {
-      throw Exception('No file selected');
+      return {};
     }
 
     final request = widget.approvalRequest;
@@ -263,7 +263,7 @@ class _UserApprovalState extends State<UserApproval> {
 
   Map<String, dynamic> _bindUploadDocRequestBodyForInsurance() {
     if (uploadedDocumentFile == null) {
-      throw Exception('No file selected');
+      return {};
     }
 
     final request = widget.approvalRequest;
@@ -286,6 +286,7 @@ class _UserApprovalState extends State<UserApproval> {
   }
 
   Future<void> _handleUpload() async {
+
     // Skip if no document selected
     try {
       final docReqBody = approvalType == ApprovalType.insuranceQuote
@@ -506,6 +507,7 @@ class _UserApprovalState extends State<UserApproval> {
               uploadedDocumentFile = file;
             });
           },
+          required: false
         ),
         const SizedBox(height: 16),
         Row(
@@ -714,6 +716,7 @@ class _UserApprovalState extends State<UserApproval> {
               uploadedDocumentFile = file;
             });
           },
+          required: false,
         ),
         const SizedBox(height: 16),
         Row(
