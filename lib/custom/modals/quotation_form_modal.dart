@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
+import '../../network/api_client.dart';
+import '../../constants/local_prefs.dart';
 import '../widgets/form_text_field.dart';
 import '../widgets/integer_range_field.dart';
 
@@ -16,6 +19,8 @@ class QuotationFormModal extends StatefulWidget {
 }
 
 class _QuotationFormModalState extends State<QuotationFormModal> {
+  final ApiClient _client = ApiClient();
+
   final TextEditingController _baseCostController = TextEditingController();
   final TextEditingController _corpRegController = TextEditingController();
   final TextEditingController _miscController = TextEditingController();
@@ -29,6 +34,8 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
   String? _cgstErrorText;
   String? _cessErrorText;
   String? _corpRegErrorText;
+
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -104,28 +111,79 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
       }
     });
 
+    if (!isValid) {
+      _showValidationToast('Please fill all required fields');
+    }
+
     return isValid;
   }
 
-  // ==================== CONFIRM HANDLER ====================
+  void _showValidationToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 3,
+      backgroundColor: const Color(0xFFFFE3E3),
+      textColor: const Color(0xFFFA6262),
+      fontSize: 14.0,
+    );
+  }
 
-  void _handleConfirm() {
+  // ==================== API CALL ====================
+
+  Future<void> _handleConfirm() async {
     if (!_validate()) return;
 
-    final double baseCost = double.tryParse(_baseCostController.text) ?? 0;
-    final double sgstPercent = double.tryParse(_sgstController.text) ?? 0;
-    final double cgstPercent = double.tryParse(_cgstController.text) ?? 0;
-    final double cessPercent = double.tryParse(_cessController.text) ?? 0;
-    final double corpReg = double.tryParse(_corpRegController.text) ?? 0;
+    setState(() => _isSubmitting = true);
 
-    final double sgst = baseCost * (sgstPercent / 100);
-    final double cgst = baseCost * (cgstPercent / 100);
-    final double cess = baseCost * (cessPercent / 100);
+    try {
+      final empId = await LocalPrefs.getEmpCode();
 
-    final double total = baseCost + sgst + cgst + cess + corpReg;
+      if (empId == null || empId.isEmpty) {
+        _showValidationToast('Employee ID not found');
+        setState(() => _isSubmitting = false);
+        return;
+      }
 
-    widget.onConfirm(total.toStringAsFixed(2));
-    Navigator.pop(context);
+      // Convert to proper types - INT for amounts, DOUBLE for percentages
+      final String baseCost = _baseCostController.text.trim();
+      final String sgstPercentage = _sgstController.text.trim();
+      final String cgstPercentage = _cgstController.text.trim();
+      final String cessPercentage = _cessController.text.trim();
+      final String registrationAmount = _corpRegController.text.trim();
+      final String additionalAccessories = _miscController.text.trim().isEmpty
+          ? '0'
+          : _miscController.text.trim();
+
+      // Call API
+      final response = await _client.updateVehicleQuotation(
+        baseCost: baseCost,
+        sgstPercentage: sgstPercentage,
+        cgstPercentage: cgstPercentage,
+        cessPercentage: cessPercentage,
+        registrationAmount: registrationAmount,
+        additionalAccessories: additionalAccessories,
+        empId: empId,
+      );
+
+      // Extract final quotation amount from response
+      final finalQuotationAmount = response.vehicleQuotation?.finalQuotationAmount ?? '0';
+
+      // Pass the result back
+      widget.onConfirm(finalQuotationAmount);
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      debugPrint('Error updating vehicle quotation: $e');
+      _showValidationToast('Failed to calculate quotation. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   // ==================== BUILD METHOD ====================
@@ -166,80 +224,93 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isSubmitting ? null : () => Navigator.pop(context),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
 
-              // Base Cost
+              // Base Cost (Integer)
               IntegerRangeField(
-                label: 'Base Cost (₹)',
+                label: 'Base Cost (',
                 hint: 'Enter Base cost in INR',
                 min: 18,
-                max: 60,
+                max: 100000000,
                 controller: _baseCostController,
                 errorText: _baseCostErrorText,
+                isInteger: true,
+                required: true,
               ),
               const SizedBox(height: 20),
 
-              // SGST and CGST Row
+              // SGST and CGST Row (Decimal)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: IntegerRangeField(
-                      label: 'SGST (%)',
+                      label: 'SGST (%) *',
                       hint: 'Enter SGST %',
                       min: 1,
                       max: 30,
                       controller: _sgstController,
                       errorText: _sgstErrorText,
+                      isInteger: false,
+                      required: true,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: IntegerRangeField(
-                      label: 'CGST (%)',
+                      label: 'CGST (%) *',
                       hint: 'Enter CGST %',
                       min: 1,
                       max: 30,
                       controller: _cgstController,
                       errorText: _cgstErrorText,
+                      isInteger: false,
+                      required: true,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
 
-              // CESS Percentage
+              // CESS Percentage (Decimal)
               IntegerRangeField(
-                label: 'CESS Percentage',
+                label: 'CESS Percentage *',
                 hint: 'Enter CESS %',
                 min: 1,
                 max: 30,
                 controller: _cessController,
                 errorText: _cessErrorText,
+                isInteger: false,
+                required: true,
               ),
               const SizedBox(height: 20),
 
-              // Corporate Registration Amount
+              // Corporate Registration Amount (Integer)
               IntegerRangeField(
-                label: 'Corporate Registration Amount (₹)',
+                label: 'Corporate Registration Amount (₹) *',
                 hint: 'Enter Corporate Amount in INR',
                 min: 1,
                 max: 100000000,
                 controller: _corpRegController,
                 errorText: _corpRegErrorText,
+                isInteger: true,
+                required: true,
               ),
               const SizedBox(height: 20),
 
-              // Miscellaneous (not required)
-              const SizedBox(height: 8),
-              FormTextField(
+              // Miscellaneous (Integer, not required)
+              IntegerRangeField(
                 label: 'Miscellaneous',
                 hint: 'Enter Miscellaneous',
+                min: 0,
+                max: 100000000,
                 controller: _miscController,
+                isInteger: true,
+                required: false,
               ),
               const SizedBox(height: 32),
 
@@ -248,7 +319,7 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _handleConfirm,
+                  onPressed: _isSubmitting ? null : _handleConfirm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0EA5E9),
                     shape: RoundedRectangleBorder(
@@ -256,7 +327,16 @@ class _QuotationFormModalState extends State<QuotationFormModal> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
+                  child: _isSubmitting
+                      ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                      : const Text(
                     'Confirm',
                     style: TextStyle(
                       fontSize: 16,

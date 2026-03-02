@@ -7,8 +7,10 @@ class IntegerRangeField extends StatelessWidget {
   final double min;
   final double max;
   final TextEditingController controller;
-  final ValueChanged<double>? onChanged;
+  final ValueChanged<String>? onChanged;
   final String? errorText;
+  final bool isInteger; // To distinguish int vs double
+  final bool required; // To show asterisk
 
   const IntegerRangeField({
     super.key,
@@ -19,6 +21,8 @@ class IntegerRangeField extends StatelessWidget {
     required this.controller,
     this.onChanged,
     this.errorText,
+    this.isInteger = true, // Default to integer
+    this.required = false, // Default to not required
   });
 
   @override
@@ -26,20 +30,37 @@ class IntegerRangeField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF757575),
-          ),
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF757575),
+              ),
+            ),
+            if (required)
+              const Text(
+                ' *',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.red,
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.numberWithOptions(decimal: !isInteger),
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+            FilteringTextInputFormatter.allow(
+                isInteger ? RegExp(r'^\d*') : RegExp(r'^\d*\.?\d*')
+            ),
           ],
           decoration: InputDecoration(
             hintText: hint,
@@ -82,20 +103,17 @@ class IntegerRangeField extends StatelessWidget {
 
             final number = double.tryParse(value);
             if (number == null) {
-              return 'Invalid Decimal number';
+              return isInteger ? 'Invalid number' : 'Invalid decimal number';
             }
 
             if (number < min || number > max) {
-              return 'Enter value between $min and $max';
+              return 'Enter value between ${min.toStringAsFixed(isInteger ? 0 : 2)} and ${max.toStringAsFixed(isInteger ? 0 : 2)}';
             }
 
             return null;
           },
           onChanged: (value) {
-            final parsed = double.tryParse(value);
-            if (parsed != null) {
-              onChanged?.call(parsed);
-            }
+            onChanged?.call(value);
           },
         ),
       ],
