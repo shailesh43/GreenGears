@@ -41,7 +41,6 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   final _vehicleNumberCtrl = TextEditingController();
   final _chassisNumberCtrl = TextEditingController();
   final _engineNumberCtrl = TextEditingController();
-  final _fastTagNumberCtrl = TextEditingController();
   final _vehicleHandoverDateCtrl = TextEditingController();
 
   // Fetched data
@@ -54,7 +53,6 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
   String? _vehicleNumberErrorText;
   String? _chassisNumberErrorText;
   String? _engineNumberErrorText;
-  String? _fastTagNumberErrorText;
   String? _commentsErrorText;
 
   // Document upload & progress
@@ -110,13 +108,6 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       }
     });
 
-    _fastTagNumberCtrl.addListener(() {
-      if (_fastTagNumberErrorText != null &&
-          _fastTagNumberCtrl.text.trim().isNotEmpty) {
-        setState(() => _fastTagNumberErrorText = null);
-      }
-    });
-
     _commentsCtrl.addListener(() {
       if (_commentsErrorText != null &&
           _commentsCtrl.text.trim().isNotEmpty) {
@@ -131,7 +122,6 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
     _vehicleNumberCtrl.dispose();
     _chassisNumberCtrl.dispose();
     _engineNumberCtrl.dispose();
-    _fastTagNumberCtrl.dispose();
     _vehicleHandoverDateCtrl.dispose();
     super.dispose();
   }
@@ -142,20 +132,17 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
     final isVehicleEmpty = _vehicleNumberCtrl.text.trim().isEmpty;
     final isChassisEmpty = _chassisNumberCtrl.text.trim().isEmpty;
     final isEngineEmpty = _engineNumberCtrl.text.trim().isEmpty;
-    final isFastTagEmpty = _fastTagNumberCtrl.text.trim().isEmpty;
     final isCommentsEmpty = _commentsCtrl.text.trim().isEmpty;
 
     final isValid = !(isVehicleEmpty ||
         isChassisEmpty ||
         isEngineEmpty ||
-        isFastTagEmpty ||
         isCommentsEmpty);
 
     setState(() {
       _vehicleNumberErrorText = isVehicleEmpty ? 'Required' : null;
       _chassisNumberErrorText = isChassisEmpty ? 'Required' : null;
       _engineNumberErrorText = isEngineEmpty ? 'Required' : null;
-      _fastTagNumberErrorText = isFastTagEmpty ? 'Required' : null;
       _commentsErrorText = isCommentsEmpty ? 'Required' : null;
     });
 
@@ -186,7 +173,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
         chassisNumber: _chassisNumberCtrl.text.trim(),
         engineNumber: _engineNumberCtrl.text.trim(),
         vehicleHandoverDate: _vehicleHandoverDateCtrl.text.trim(),
-        fastTagNumber: _fastTagNumberCtrl.text.trim(),
+        fastTagNumber: '',
       );
 
       // STEP 2: Upload document if file is selected
@@ -234,6 +221,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
 
   /// Silently skips if no file selected — upload is optional.
   Future<void> _handleUpload() async {
+    if (uploadedRtoFile == null) return;
     // Skip if no document selected
     try {
       final docReqBody = _bindUploadDocRequestBody();
@@ -286,7 +274,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       if (!mounted) return;
 
       setState(() {
-        commentsOnEsnaRto = response.data?.commentsByUser ?? 'NULL';
+        commentsOnEsnaRto = response.data?.commentsPaymentDetailsEsna ?? 'NULL';
       });
     } catch (e) {
       if (!mounted) return;
@@ -434,20 +422,12 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
             errorText: _engineNumberErrorText,
           ),
           const SizedBox(height: 16),
-          FormTextField(
-            label: 'Fastag Number',
-            hint: 'Enter Fastag Number',
-            required: true,
-            controller: _fastTagNumberCtrl,
-            errorText: _fastTagNumberErrorText,
-          ),
-          const SizedBox(height: 16),
           DatePickerField(
             label: 'Vehicle Handover Date',
             controller: _vehicleHandoverDateCtrl,
           ),
           const SizedBox(height: 16),
-          const FileUploadField(label: 'Upload Files'),
+          FileUploadField(label: 'Upload Document', required: false,),
           const SizedBox(height: 16),
 
           // Document Viewer Dropdown with Download/View functionality
