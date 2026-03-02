@@ -251,43 +251,8 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
   // ==================== SUBMISSION HANDLERS ====================
 
   /// Main submission handler - orchestrates the three-step process
-  Future<void> _handleSubmit() async {
-    try {
-      // STEP 1
-      final newEmpRequestBody = _bindNewEmployeeRequestBody();
-      final response1 = await _client.createNewEmployee(newEmpRequestBody);
-      logger.d('Updating Employee: $response1');
-
-      // STEP 2
-      final carRequestBody = _bindCreateVehicleRequestBody();
-      final response2 = await _client.createNewVehicleRequest(carRequestBody);
-      logger.d('New Request created: $response2');
-      if (!mounted) return;
-
-      // Exit screen immediately
-      Navigator.pop(context);
-      // STEP 3 (fire & forget)
-      _handleUploadSafely();
-
-    } catch (e) {
-      logger.e('Error during submission: $e');
-      if (!mounted) return;
-    }
-  }
-
-  void _handleUploadSafely() {
-    Future(() async {
-      try {
-        await _handleUpload();
-        logger.d("Upload completed in background");
-      } catch (e) {
-        logger.e("Background upload failed: $e");
-      }
-    });
-  }
-
-  /// Handles document upload with progress tracking
   Future<void> _handleUpload() async {
+    if (uploadedQuotationFile == null) return;
     // Skip if no document selected
     try {
       final docReqBody = _bindUploadDocRequestBody();
@@ -322,7 +287,54 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
     }
   }
 
-  // ==================== UI HELPERS ====================
+  void _handleUploadSafely() {
+    Future(() async {
+      try {
+        await _handleUpload();
+        logger.d("Upload completed in background");
+      } catch (e) {
+        logger.e("Background upload failed: $e");
+      }
+    });
+  }
+
+  /// Handles document upload with progress tracking
+  Future<bool> _handleSubmit() async {
+    try {
+      // STEP 1
+      final newEmpRequestBody = _bindNewEmployeeRequestBody();
+      await _client.createNewEmployee(newEmpRequestBody);
+
+      // STEP 2
+      final carRequestBody = _bindCreateVehicleRequestBody();
+
+      try {
+        await _client.createNewVehicleRequest(carRequestBody);
+      } catch (e) {
+        if (!mounted) return false;
+
+        if (e.toString().contains('500')) {
+          _showSnackBar(
+            message: "Error: Cooling period not completed.",
+            isSuccess: false,
+          );
+          return false; // ❌ stop here
+        }
+
+        rethrow;
+      }
+
+      if (!mounted) return false;
+
+      Navigator.pop(context);
+      _handleUploadSafely();
+
+      return true; // ✅ success
+    } catch (e) {
+      logger.e('Error during submission: $e');
+      return false;
+    }
+  }  // ==================== UI HELPERS ====================
 
   void _showQuotationModal() {
     showModalBottomSheet(
@@ -472,12 +484,12 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                     // Upload Document
                     FileUploadField(
                       label: 'Upload Quotation Document',
-                      allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
                       onFileSelected: (file) {
                         setState(() {
                           uploadedQuotationFile = file;
                         });
                       },
+                      required: true,
                     ),
                     const SizedBox(height: 20),
 
@@ -536,22 +548,25 @@ class _VehicleRequestPageState extends State<VehicleRequestPage> {
                   onPressed: _isUploading
                       ? null
                       : () async {
-                    // if (!_formKey.currentState!.validate()) return;
                     if (!_validateBeforeSubmit()) return;
-                    try {
-                      setState(() {
-                        _isUploading = true;
-                      });
 
-                      await _handleSubmit();
-                      // Navigator.pop(context);
-                      _showSnackBar(message: "New Request Created successfully", isSuccess: true);
-                    } finally {
-                      if (mounted) {
-                        setState(() {
-                          _isUploading = false;
-                        });
-                      }
+                    setState(() {
+                      _isUploading = true;
+                    });
+
+                    final success = await _handleSubmit();
+
+                    if (success && mounted) {
+                      _showSnackBar(
+                        message: "New Request Created successfully",
+                        isSuccess: true,
+                      );
+                    }
+
+                    if (mounted) {
+                      setState(() {
+                        _isUploading = false;
+                      });
                     }
                   },
                   style: ElevatedButton.styleFrom(

@@ -187,24 +187,31 @@ class _MultipleFileUploadFieldState extends State<MultipleFileUploadField> {
 
   Future<void> _pickFiles() async {
     // Check max files limit
-    if (widget.maxFiles != null && _selectedFiles.length >= widget.maxFiles!) {
+    if (widget.maxFiles != null &&
+        _selectedFiles.length >= widget.maxFiles!) {
       _showMaxFilesError();
       return;
     }
 
     try {
+      // ✅ Use passed extensions OR default ones
+      final extensions = (widget.allowedExtensions ??
+          ['xls', 'xlsx', 'docx', 'pdf', 'jpg', 'png'])
+          .map((e) => e.toLowerCase())
+          .toList();
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: widget.allowedExtensions ?? ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+        allowedExtensions: extensions,
         allowMultiple: true,
-        withData: true, // 🔴 REQUIRED for bytes
+        withData: true, // REQUIRED for bytes
       );
 
       if (result != null && result.files.isNotEmpty) {
         setState(() {
-          // Add new files, respecting max limit
           if (widget.maxFiles != null) {
-            final remainingSlots = widget.maxFiles! - _selectedFiles.length;
+            final remainingSlots =
+                widget.maxFiles! - _selectedFiles.length;
             _selectedFiles.addAll(result.files.take(remainingSlots));
           } else {
             _selectedFiles.addAll(result.files);
@@ -212,9 +219,7 @@ class _MultipleFileUploadFieldState extends State<MultipleFileUploadField> {
         });
 
         // Notify parent
-        if (widget.onFilesChanged != null) {
-          widget.onFilesChanged!(_selectedFiles);
-        }
+        widget.onFilesChanged?.call(_selectedFiles);
       }
     } catch (e) {
       debugPrint('Error picking files: $e');

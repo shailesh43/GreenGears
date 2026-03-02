@@ -7,6 +7,7 @@ class FileUploadField extends StatefulWidget {
   final List<String>? allowedExtensions;
   final Function(PlatformFile?)? onFileSelected;
   final String? initialFileName;
+  final bool required;
 
   const FileUploadField({
     Key? key,
@@ -14,6 +15,7 @@ class FileUploadField extends StatefulWidget {
     this.allowedExtensions,
     this.onFileSelected,
     this.initialFileName,
+    this.required = false,
   }) : super(key: key);
 
   @override
@@ -31,10 +33,14 @@ class _FileUploadFieldState extends State<FileUploadField> {
   }
 
   Future<void> _pickFile() async {
+    // ✅ Use passed extensions OR default ones
+    final extensions = widget.allowedExtensions ??
+        ['xls', 'xlsx', 'docx', 'pdf', 'jpg', 'png'];
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
-      withData: true, // 🔴 REQUIRED
+      allowedExtensions: extensions,
+      withData: true, // REQUIRED
     );
 
     if (result != null) {
@@ -45,27 +51,40 @@ class _FileUploadFieldState extends State<FileUploadField> {
         _fileName = pickedFile.name;
       });
 
-      // ✅ SEND FILE TO PARENT
+      // Send file to parent
       if (widget.onFileSelected != null) {
         widget.onFileSelected!(pickedFile);
       }
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF757575),
-          ),
+        Row(
+          children: [
+            Text(
+              widget.label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF757575),
+              ),
+            ),
+            if (widget.required)
+              const Text(
+                ' *',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.red,
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         GestureDetector(
