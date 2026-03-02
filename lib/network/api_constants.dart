@@ -4,10 +4,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiConstants {
 
   // BASEURL of GreenGears node backend
-  // static String baseURl = "http://localhost:3010/api/";
+  static String baseURl = "http://localhost:3010/api/";
 
   // BASEURL of GreenGears Production backend
-  static String baseURl = "https://bizapps.tatapower.com/api/greengears/carmanagement/api/";
+  // static String baseURl = "https://bizapps.tatapower.com/api/greengears/carmanagement/api/";
 
   // SAMAL auth credentials & URL params
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
@@ -64,6 +64,7 @@ class ApiConstants {
   static const String rtoTaxReceipt = 'saveOrUpdateCommentAndIncrementStage'; // 27 -> 28
 
   static const String employeeFeedback = 'saveOrUpdateCommentAndIncrementStage'; // 28 -> 29
+  static const String updateVehicleQuotation = 'createOrUpdateVehicleQuotation'; // 28 -> 29
 
   // getX function for getting the "API endpoint url"
   static getEndPointUrl(String endPointName) async {
@@ -137,6 +138,9 @@ class ApiConstants {
         break;
       case "employeeFeedback":
         endPointUrl = "$baseURl$employeeFeedback";
+        break;
+      case "updateVehicleQuotation":
+        endPointUrl = "$baseURl$updateVehicleQuotation";
         break;
     }
     return endPointUrl;

@@ -40,6 +40,7 @@ import './api_models/submit_by_esna_receipt_model.dart';
 import './api_models/comments_response_model.dart';
 import './api_models/get_all_docs_response_model.dart';
 import './api_models/user_feedback_model.dart';
+import './api_models/calculate_quotation_response.dart';
 
 class ApiClient {
   final http.Client _client = http.Client();
@@ -877,6 +878,45 @@ class ApiClient {
 
     final data = _handleResponse(response, 'POST');
     return UserFeedbackModel.fromJson(data);
+  }
+
+  // 22. Update Vehicle Quotation
+  // API Endpoint: /updateVehicleQuotation
+  Future<CalculateQuotationResponse> updateVehicleQuotation({
+    required String baseCost,
+    required String sgstPercentage,
+    required String cgstPercentage,
+    required String cessPercentage,
+    required String registrationAmount,
+    required String additionalAccessories,
+    required String empId,
+  }) async {
+
+    final endpointUrl =
+    await ApiConstants.getEndPointUrl('updateVehicleQuotation');
+
+    final url = Uri.parse(endpointUrl);
+
+    final body = {
+      'base_cost': baseCost,
+      'sgst_percentage': sgstPercentage,
+      'cgst_percentage': cgstPercentage,
+      'cess_percentage': cessPercentage,
+      'registration_amount': registrationAmount,
+      'additional_accessories': additionalAccessories,
+      'emp_id': empId,
+    };
+
+    final response = await _client.post(
+      url,
+      headers: _defaultHeaders(),
+      body: jsonEncode(body),
+    );
+
+    logger.d('${response.statusCode} > URL: $url');
+
+    final data = _handleResponse(response, 'POST');
+    return CalculateQuotationResponse.fromJson(data);
   }
 
 }
