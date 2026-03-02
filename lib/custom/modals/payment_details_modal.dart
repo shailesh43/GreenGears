@@ -161,6 +161,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
   // ==================== SUBMISSION HANDLERS ====================
 
   Future<void> _handleUpload() async {
+    if (uploadedDocumentFile == null) return;
     // Skip if no document selected
     try {
       final docReqBody = _bindUploadDocRequestBody();
@@ -435,6 +436,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
                 uploadedDocumentFile = file;
               });
             },
+            required: false,
           ),
           const SizedBox(height: 16),
 

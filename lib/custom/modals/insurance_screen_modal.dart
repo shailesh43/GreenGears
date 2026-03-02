@@ -204,9 +204,9 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
           /// Upload Multiple Documents ✅
           MultipleFileUploadField(
             label: 'Upload Insurance Documents',
-            allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
+            allowedExtensions: ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
             maxFiles: 5,
-            required: false,
+            required: true,
             onFilesChanged: (files) {
               setState(() {
                 uploadedFiles = files;

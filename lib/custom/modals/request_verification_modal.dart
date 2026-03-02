@@ -82,7 +82,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
   /// Prepares the document upload payload
   Map<String, dynamic> _bindUploadDocRequestBody() {
     if (uploadedDocumentFile == null) {
-      throw Exception('No file selected');
+      return {};
     }
 
     return {
@@ -110,10 +110,6 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       _showValidationToast('Please enter comments');
       return false;
     }
-    if (uploadedDocumentFile == null) {
-      _showValidationToast('Please upload a document');
-      return false;
-    }
     return true;
   }
 
@@ -121,6 +117,8 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
 
   /// Handles document upload with progress tracking
   Future<void> _handleUpload() async {
+    if (uploadedDocumentFile == null) return;
+
     // Skip if no document selected
     try {
       final docReqBody = _bindUploadDocRequestBody();
@@ -416,6 +414,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
                 uploadedDocumentFile = file;
               });
             },
+            required: false,
           ),
           const SizedBox(height: 16),
 
