@@ -200,6 +200,14 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
             errorText: _addOnSapphireErrorText,
           ),
           const SizedBox(height: 16),
+          /// Comments (not required — no errorText)
+          FormTextField(
+            label: 'Comments',
+            hint: 'Your Comments',
+            maxLines: 3,
+            controller: _commentsCtrl,
+          ),
+          const SizedBox(height: 16),
 
           /// Upload Multiple Documents ✅
           MultipleFileUploadField(
@@ -212,15 +220,6 @@ class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
                 uploadedFiles = files;
               });
             },
-          ),
-          const SizedBox(height: 16),
-
-          /// Comments (not required — no errorText)
-          FormTextField(
-            label: 'Comments',
-            hint: 'Enter Comments',
-            maxLines: 3,
-            controller: _commentsCtrl,
           ),
           const SizedBox(height: 16),
 

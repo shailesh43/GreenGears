@@ -228,7 +228,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
       if (!mounted) return;
 
       setState(() {
-        commentsOnEsnaReqVerif = response.data?.commentsByUser ?? 'NULL';
+        commentsOnEsnaReqVerif = response.data?.commentsByUser ?? '-';
       });
     } catch (e) {
       if (!mounted) return;

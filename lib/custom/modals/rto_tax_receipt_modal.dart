@@ -274,7 +274,7 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
       if (!mounted) return;
 
       setState(() {
-        commentsOnEsnaRto = response.data?.commentsPaymentDetailsEsna ?? 'NULL';
+        commentsOnEsnaRto = response.data?.commentsPaymentDetailsEsna ?? '-';
       });
     } catch (e) {
       if (!mounted) return;
@@ -427,6 +427,15 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
             controller: _vehicleHandoverDateCtrl,
           ),
           const SizedBox(height: 16),
+          FormTextField(
+            label: 'Comments',
+            hint: 'Your Comments',
+            required: true,
+            maxLines: 3,
+            controller: _commentsCtrl,
+            errorText: _commentsErrorText,
+          ),
+          const SizedBox(height: 16),
           FileUploadField(label: 'Upload Document', required: false,),
           const SizedBox(height: 16),
 
@@ -480,15 +489,6 @@ class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
                 ),
               ],
             ],
-          ),
-          const SizedBox(height: 16),
-          FormTextField(
-            label: 'Comments',
-            hint: 'Your Comments',
-            required: true,
-            maxLines: 3,
-            controller: _commentsCtrl,
-            errorText: _commentsErrorText,
           ),
           const SizedBox(height: 24),
         ],

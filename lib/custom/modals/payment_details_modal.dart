@@ -271,7 +271,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
 
       setState(() {
         commentsOnEsnaPayment =
-            response.data?.commentsEmiUserApproval ?? 'NULL';
+            response.data?.commentsEmiUserApproval ?? '-';
       });
     } catch (e) {
       if (!mounted) return;
@@ -428,6 +428,15 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
             errorText: _utrCodeErrorText,
           ),
           const SizedBox(height: 16),
+          FormTextField(
+            label: 'Comments',
+            hint: 'Your Comments',
+            maxLines: 3,
+            required: true,
+            controller: _commentsCtrl,
+            errorText: _commentsErrorText,
+          ),
+          const SizedBox(height: 16),
           FileUploadField(
             label: 'Upload Document - File Type Allowed: .pdf/.txt/.docx',
             allowedExtensions: const ['pdf', 'txt', 'doc', 'docx'],
@@ -490,15 +499,6 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
                 ),
               ],
             ],
-          ),
-          const SizedBox(height: 16),
-          FormTextField(
-            label: 'Comments',
-            hint: 'Your Comments',
-            maxLines: 3,
-            required: true,
-            controller: _commentsCtrl,
-            errorText: _commentsErrorText,
           ),
           const SizedBox(height: 24),
         ],

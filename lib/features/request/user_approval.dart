@@ -143,8 +143,8 @@ class _UserApprovalState extends State<UserApproval> {
       if (!mounted) return;
 
       setState(() {
-        commentsOnInsuranceQuote = response.data?.commentsAssignedToGit ?? '';
-        commentsOnEmiApproval = response.data?.commentsEmiUserApproval ?? '';
+        commentsOnInsuranceQuote = response.data?.commentsAssignedToGit ?? '-';
+        commentsOnEmiApproval = response.data?.commentsEmiCalculationEsna ?? '-';
       });
     } catch (e) {
       if (!mounted) return;
@@ -499,6 +499,15 @@ class _UserApprovalState extends State<UserApproval> {
             value: insuranceValue,
           ),
         const SizedBox(height: 16),
+        FormTextField(
+          label: 'Comments',
+          hint: 'Add your comments',
+          maxLines: 3,
+          required: true,
+          controller: _commentsInsuranceCtrl,
+          errorText: _commentsInsuranceErrorText,
+        ),
+        const SizedBox(height: 16),
         FileUploadField(
           label: 'Upload Document',
           allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
@@ -559,14 +568,6 @@ class _UserApprovalState extends State<UserApproval> {
           ],
         ),
         const SizedBox(height: 16),
-        FormTextField(
-          label: 'Comments',
-          hint: 'Add your comments',
-          maxLines: 3,
-          required: true,
-          controller: _commentsInsuranceCtrl,
-          errorText: _commentsInsuranceErrorText,
-        ),
       ],
     );
   }
@@ -708,6 +709,15 @@ class _UserApprovalState extends State<UserApproval> {
           value: commentsOnEmiApproval ?? '',
         ),
         const SizedBox(height: 16),
+        FormTextField(
+          label: 'Employee Comments',
+          hint: 'Your comments',
+          maxLines: 3,
+          required: true,
+          controller: _commentsEmiCtrl,
+          errorText: _commentsEmiErrorText,
+        ),
+        const SizedBox(height: 16),
         FileUploadField(
           label: 'Upload Document',
           allowedExtensions: const ['pdf', 'xls', 'xlsx', 'docx', 'jpg', 'png'],
@@ -769,14 +779,6 @@ class _UserApprovalState extends State<UserApproval> {
           ],
         ),
         const SizedBox(height: 16),
-        FormTextField(
-          label: 'Employee Comments',
-          hint: 'Your comments',
-          maxLines: 3,
-          required: true,
-          controller: _commentsEmiCtrl,
-          errorText: _commentsEmiErrorText,
-        ),
       ],
     );
   }
