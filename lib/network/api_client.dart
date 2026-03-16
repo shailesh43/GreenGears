@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:logger/logger.dart';
 import 'package:dio/dio.dart';
+import 'package:http_certificate_pinning/http_certificate_pinning.dart';
 
 // REFERENCES
 import './api_constants.dart';
@@ -51,11 +52,29 @@ class ApiClient {
       receiveTimeout: const Duration(seconds: 30),
     ),
   );
+
+  Future<void> _checkSSLPinning() async {
+    final result = await HttpCertificatePinning.check(
+      serverURL: '${ApiConstants.serverURL}',
+      headerHttp: {},
+      sha: SHA.SHA256,
+      allowedSHAFingerprints: [
+        '${ApiConstants.SHAFingerprint}'
+      ],
+    );
+
+    if (result.contains("CONNECTION_SECURE")) {
+      logger.d("SSL Pinning Passed");
+    } else {
+      throw Exception("SSL Pinning Failed");
+    }
+  }
+
   // ---------------- GET ----------------
   Future<Map<String, dynamic>> get(String endpoint) async
   {
     final url = Uri.parse('${ApiConstants.baseURl}$endpoint');
-
+    await _checkSSLPinning();
     final response = await _client.get(
       url,
       headers: _defaultHeaders(),
@@ -72,7 +91,7 @@ class ApiClient {
       }) async
   {
     final url = Uri.parse('${ApiConstants.baseURl}$endpoint');
-
+    await _checkSSLPinning();
     final response = await _client.post(
       url,
       headers: headers ?? _defaultHeaders(),
