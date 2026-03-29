@@ -408,7 +408,7 @@ class _RequestVerificationModalState extends State<RequestVerificationModal> {
           // Document Upload
           FileUploadField(
             label: 'Upload Document - File Type Allowed: .pdf/.txt/.docx',
-            allowedExtensions: const ['pdf', 'txt', 'doc', 'docx'],
+            allowedExtensions: const ['pdf', 'txt', 'docx'],
             onFileSelected: (file) {
               setState(() {
                 uploadedDocumentFile = file;

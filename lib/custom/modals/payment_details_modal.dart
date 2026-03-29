@@ -439,7 +439,7 @@ class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
           const SizedBox(height: 16),
           FileUploadField(
             label: 'Upload Document - File Type Allowed: .pdf/.txt/.docx',
-            allowedExtensions: const ['pdf', 'txt', 'doc', 'docx'],
+            allowedExtensions: const ['pdf', 'txt', 'docx'],
             onFileSelected: (file) {
               setState(() {
                 uploadedDocumentFile = file;
