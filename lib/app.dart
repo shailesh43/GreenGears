@@ -13,6 +13,7 @@ import './auth/azure_auth_service.dart';
 import './constants/local_prefs.dart';
 import './network/api_client.dart';
 import './core/utils/enum.dart';
+import './core/helpers/emulator_detector.dart';
 
 // Change this line in app.dart
 final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
@@ -52,10 +53,18 @@ class _MyAppState extends State<MyApp> {
 
   // Initialize app with splash screen delay
   Future<String?> _initializeApp() async {
-    // Ensure splash shows for minimum duration
     await Future.delayed(const Duration(seconds: 2));
 
-    // Then check login status
+    // 🔐 Emulator detection
+    final isEmulator = await EmulatorDetector.isEmulator();
+
+    if (isEmulator) {
+      debugPrint("⚠️ Emulator detected");
+
+      // Just flag it
+      return "EMULATOR_BLOCKED";
+    }
+
     return _checkLoginStatus();
   }
 
@@ -124,7 +133,17 @@ class _MyAppState extends State<MyApp> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashScreen();
           }
-
+          // Emulator Detection
+          if (snapshot.hasData && snapshot.data == "EMULATOR_BLOCKED") {
+            return const Scaffold(
+              body: Center(
+                child: Text(
+                  "This app cannot run on emulator",
+                  style: TextStyle(color: Colors.red, fontSize: 16),
+                ),
+              ),
+            );
+          }
           // Check if login was successful
           if (snapshot.hasData && snapshot.data != null) {
             final empCode = snapshot.data!;
