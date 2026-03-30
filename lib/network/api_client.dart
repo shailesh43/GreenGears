@@ -42,10 +42,17 @@ import './api_models/comments_response_model.dart';
 import './api_models/get_all_docs_response_model.dart';
 import './api_models/user_feedback_model.dart';
 import './api_models/calculate_quotation_response.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:http/io_client.dart';
 
 class ApiClient {
-  final http.Client _client = http.Client();
+  // ✅ Static pinned client — shared across ALL instances
+  static http.Client? _pinnedClient;
+  static bool _isPinningVerified = false; // ✅ static so all instances share it
+
   final Logger logger = Logger();
+
   final Dio _dio = Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 30),
@@ -53,51 +60,62 @@ class ApiClient {
     ),
   );
 
-  Future<void> _checkSSLPinning() async {
-    final result = await HttpCertificatePinning.check(
-      serverURL: '${ApiConstants.serverURL}',
-      headerHttp: {},
-      sha: SHA.SHA256,
-      allowedSHAFingerprints: [
-        '${ApiConstants.SHAFingerprint}'
-      ],
-    );
+  // Called ONCE from main() before app loads
+  Future<void> initSSLPinning() async {
+    if (_isPinningVerified) return; // already done, skip
+    _pinnedClient = await _buildPinnedClient();
+    _isPinningVerified = true;
+    logger.d("SSL Pinning initialized");
+  }
 
-    if (result.contains("CONNECTION_SECURE")) {
-      logger.d("SSL Pinning Passed");
-    } else {
-      throw Exception("SSL Pinning Failed");
+  // Builds the pinned HTTP client from your .pem cert
+  static Future<http.Client> _buildPinnedClient() async {
+    final sslCert = await rootBundle.load('assets/docs/bizapps-cert.pem');
+    final securityContext = SecurityContext(withTrustedRoots: false);
+    securityContext.setTrustedCertificatesBytes(sslCert.buffer.asInt8List());
+
+    final httpClient = HttpClient(context: securityContext);
+    httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) {
+      return host == "bizapps.tatapower.com"; // only allow your domain
+    };
+
+    return IOClient(httpClient);
+  }
+
+  // Returns the pinned client — used by ALL request methods
+  http.Client get _client {
+    _assertPinningVerified();
+    return _pinnedClient!;
+  }
+
+  // Guard — throws if initSSLPinning() was never called
+  void _assertPinningVerified() {
+    if (!_isPinningVerified || _pinnedClient == null) {
+      throw Exception("SSL Pinning not initialized. Call initSSLPinning() first.");
     }
   }
 
   // ---------------- GET ----------------
-  Future<Map<String, dynamic>> get(String endpoint) async
-  {
+  Future<Map<String, dynamic>> get(String endpoint) async {
+    _assertPinningVerified();
     final url = Uri.parse('${ApiConstants.baseURl}$endpoint');
-    await _checkSSLPinning();
-    final response = await _client.get(
-      url,
-      headers: _defaultHeaders(),
-    );
-
+    final response = await _client.get(url, headers: _defaultHeaders());
     return _handleResponse(response, 'GET');
   }
 
   // ---------------- POST ----------------
-  Future<Map<String, dynamic>> post(
-      String endpoint, {
-        required Map<String, dynamic> body,
-        required Map<String, String>? headers,
-      }) async
+  Future<Map<String, dynamic>> post(String endpoint, {
+    required Map<String, dynamic> body,
+    required Map<String, String>? headers,
+  }) async
   {
+    _assertPinningVerified();
     final url = Uri.parse('${ApiConstants.baseURl}$endpoint');
-    await _checkSSLPinning();
     final response = await _client.post(
       url,
       headers: headers ?? _defaultHeaders(),
       body: jsonEncode(body),
     );
-
     return _handleResponse(response, 'POST');
   }
 
@@ -125,6 +143,7 @@ class ApiClient {
   // 1. Fetch Employee Role on LoginPage (empId)
   // API Endpoint: /role-by-employee/:empId
   Future<RoleByEmployeeModel> getRoleByEmployee(String empId) async {
+    _assertPinningVerified();
     final endpointUrl = await ApiConstants.getEndPointUrl('roleByEmployee');
     final fullUrl = '$endpointUrl/$empId';
     final url = Uri.parse(fullUrl);
@@ -144,6 +163,7 @@ class ApiClient {
   // API Endpoint: /employees (POST request with encrypted empId)
   Future<EmployeeProfileData?> getEmployeeProfile(String empId) async {
     try {
+      _assertPinningVerified();
       // Encrypt the empId before sending
       final encryptedEmpId = encryptData(empId);
       if (encryptedEmpId == null) {
@@ -227,6 +247,7 @@ class ApiClient {
       };
 
       final requestBody = jsonEncode(map);
+      _assertPinningVerified();
       final fullUrl = await ApiConstants.getEndPointUrl("getCarEligibility"); // endpoint key
       final url = Uri.parse(fullUrl);
 
@@ -261,6 +282,7 @@ class ApiClient {
       Map<String, dynamic> body,
       ) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('createNewEmployee');
 
@@ -282,6 +304,7 @@ class ApiClient {
       Map<String, dynamic> body,
       ) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('createVehicleRequest');
 
@@ -311,6 +334,7 @@ class ApiClient {
   }) async
   {
     try {
+      _assertPinningVerified();
       final endpointUrl =
       await ApiConstants.getEndPointUrl('uploadDocument');
 
@@ -352,6 +376,7 @@ class ApiClient {
     required List<int> roleIds,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl = await ApiConstants.getEndPointUrl('getAllRequests');
 
     final url = Uri.parse(endpointUrl);
@@ -375,7 +400,9 @@ class ApiClient {
 
   // 6. Get List of ES&As on AssignEsnaScreen
   // API Endpoint: /getEmployeesRoleDetail
-  Future<List<GetListOfEsnaModel>> getListOfEsna() async {
+  Future<List<GetListOfEsnaModel>> getListOfEsna() async
+  {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('getListOfEsna');
     final url = Uri.parse(endpointUrl);
@@ -399,6 +426,7 @@ class ApiClient {
     required int role,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('getStatusFilteredRequests');
 
@@ -428,6 +456,7 @@ class ApiClient {
     required int role,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('getUserApprovalRequest');
 
@@ -458,6 +487,7 @@ class ApiClient {
     required String empId,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('deleteRequest');
 
@@ -488,6 +518,7 @@ class ApiClient {
     required String assignedEsnaEmpId,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('assignESNA');
 
@@ -517,6 +548,7 @@ class ApiClient {
     required String empId,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('decrementStage');
 
@@ -547,6 +579,7 @@ class ApiClient {
     required String commentsAssignedToEsna,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('assignInsurance');
 
@@ -580,6 +613,7 @@ class ApiClient {
     required String commentsByGIT,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('insuranceQuoteApprovalUser');
 
@@ -615,6 +649,7 @@ class ApiClient {
     String? addOnSapphirePlus,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('firstUserApproval');
 
@@ -653,6 +688,7 @@ class ApiClient {
     required String commentsAssignedToEsna,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('secondUserApproval');
 
@@ -689,6 +725,7 @@ class ApiClient {
     required String carAllowance
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('emiCalculationEsna');
 
@@ -730,6 +767,7 @@ class ApiClient {
     required String utr,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('paymentDetailsEsna');
 
@@ -773,6 +811,7 @@ class ApiClient {
     required String fastTagNumber
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('rtoTaxReceipt');
 
@@ -809,6 +848,7 @@ class ApiClient {
     required String requestId,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('commentsByRequestId');
 
@@ -834,7 +874,9 @@ class ApiClient {
   // API Endpoint: /getAllUploadedDocuments
   Future<GetAllDocsResponseModel> getAllUploadedDocsFromS3({
     required String requestId,
-  }) async {
+  }) async
+  {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('getAllUploadedDocuments');
 
@@ -874,6 +916,7 @@ class ApiClient {
     required int dealerExperienceRating,
   }) async
   {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('employeeFeedback');
 
@@ -909,8 +952,9 @@ class ApiClient {
     required String registrationAmount,
     required String additionalAccessories,
     required String empId,
-  }) async {
-
+  }) async
+  {
+    _assertPinningVerified();
     final endpointUrl =
     await ApiConstants.getEndPointUrl('updateVehicleQuotation');
 
