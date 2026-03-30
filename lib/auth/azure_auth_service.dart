@@ -28,9 +28,9 @@ class AuthenticationService {
         },
       );
 
-      debugPrint('🔐 Starting authentication...');
-      debugPrint('Auth URL: ${authUri.toString()}');
-      debugPrint('Redirect URI: ${ApiConstants.redirectUri}');
+      // debugPrint('🔐 Starting authentication...');
+      // debugPrint('Auth URL: ${authUri.toString()}');
+      // debugPrint('Redirect URI: ${ApiConstants.redirectUri}');
 
       // Step 2: Authenticate with Microsoft
       // IMPORTANT: Use 'msauth' for signature hash format
@@ -40,7 +40,6 @@ class AuthenticationService {
       );
 
       debugPrint('✅ Authentication callback received');
-      debugPrint('Result: $result');
 
       // Step 3: Extract authorization code
       final code = Uri.parse(result).queryParameters['code'];
@@ -66,7 +65,7 @@ class AuthenticationService {
 
       if (tokenResponse.statusCode != 200) {
         debugPrint('❌ Token exchange failed: ${tokenResponse.statusCode}');
-        debugPrint('Response: ${tokenResponse.body}');
+        // debugPrint('Response: ${tokenResponse.body}');
         throw Exception('Failed to exchange token: ${tokenResponse.statusCode}');
       }
 
@@ -91,7 +90,7 @@ class AuthenticationService {
 
       if (userResponse.statusCode != 200) {
         debugPrint('❌ User info fetch failed: ${userResponse.statusCode}');
-        debugPrint('Response: ${userResponse.body}');
+        // debugPrint('Response: ${userResponse.body}');
         throw Exception('Failed to fetch user info: ${userResponse.statusCode}');
       }
 

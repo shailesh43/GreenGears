@@ -9,7 +9,7 @@ class ApiConstants {
   // BASEURL of GreenGears Production backend
   static String baseURl = "https://bizapps.tatapower.com/api/greengears/carmanagement/api/";
   static String serverURL = "https://bizapps.tatapower.com";
-  static String SHAFingerprint = "e9236db206c6fbe9be010127fd7440db5d430986a15d3cb851eed58931fa9a86";
+  static String get SHAFingerprint => dotenv.env['SHA_FINGERPRINT'] ?? '';
   // SAMAL auth credentials & URL params
   static String get tenantId => dotenv.env['TENANT_ID'] ?? '';
   static String get clientId => dotenv.env['CLIENT_ID'] ?? '';

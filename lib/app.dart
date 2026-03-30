@@ -14,6 +14,7 @@ import './constants/local_prefs.dart';
 import './network/api_client.dart';
 import './core/utils/enum.dart';
 import './core/helpers/emulator_detector.dart';
+import 'package:greengears/main.dart';
 
 // Change this line in app.dart
 final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
@@ -26,7 +27,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
   bool isLoading = false;
 
   late Future<String?> _initFuture;
