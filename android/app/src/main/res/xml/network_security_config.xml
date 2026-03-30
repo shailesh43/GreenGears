@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- ONLY trust System CAs. User-installed CAs like PortSwigger are ignored -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Certificate pinning for your specific domain -->
+    <domain-config>
+        <domain includeSubdomains="true">bizapps.tatapower.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+        <!-- Pin your server's certificate public key hash -->
+        <pin-set expiration="2027-01-01">
+            <!-- Replace this with your actual certificate SHA-256 pin -->
+            <pin digest="SHA-256">6SNtsgbG++m+AQEn/XRA211DCYahXTy4Ue7ViTH6moY==</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>
