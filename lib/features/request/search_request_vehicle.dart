@@ -12,6 +12,7 @@ import '../profile/profile_page.dart';
 import '../../custom/widgets/custom_search_bar.dart';
 import '../../custom/widgets/request_card.dart';
 import '../../custom/modals/delete_request_modal.dart';
+import 'package:greengears/main.dart';
 
 class SearchScreen extends StatefulWidget {
   final UserRole role;
@@ -27,7 +28,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
 
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
   bool isLoading = false;
 
   final TextEditingController _searchController = TextEditingController();

@@ -17,6 +17,7 @@ import 'package:dio/dio.dart';
 import '../../core/utils/enum.dart';
 import '../../core/helpers/file_downloader.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:greengears/main.dart';
 
 enum ApprovalType {
   insuranceQuote,
@@ -36,7 +37,7 @@ class UserApproval extends StatefulWidget {
 }
 
 class _UserApprovalState extends State<UserApproval> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
   bool isLoading = true;
 
   // State variable to hold the approval request

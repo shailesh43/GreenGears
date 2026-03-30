@@ -7,7 +7,7 @@ import '../../network/api_client.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
 import '../../network/api_models/uploaded_file_model.dart';
 import '../../core/helpers/file_downloader.dart';
-
+import 'package:greengears/main.dart';
 
 // ---------------------------------------------------------------------------
 // Widget
@@ -24,7 +24,7 @@ class UploadedQuotations extends StatefulWidget {
 }
 
 class _UploadedQuotationsState extends State<UploadedQuotations> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   bool _isLoading = true;
   String? _errorMessage;

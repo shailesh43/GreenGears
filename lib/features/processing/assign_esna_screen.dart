@@ -12,6 +12,7 @@ import '../../network/api_models/list_of_esna_model.dart';
 import '../../core/utils/enum.dart';
 import '../../constants/local_prefs.dart';
 import '../../core/helpers/normalize.dart';
+import 'package:greengears/main.dart';
 
 class AssignEsnaScreen extends StatefulWidget {
   const AssignEsnaScreen({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class AssignEsnaScreen extends StatefulWidget {
 }
 
 class _AssignEsnaScreenState extends State<AssignEsnaScreen> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
   final TextEditingController _searchController = TextEditingController();
 
   AdminPageResponse? adminPageResponse;

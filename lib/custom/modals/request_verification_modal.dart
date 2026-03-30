@@ -15,6 +15,7 @@ import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../core/helpers/file_downloader.dart';
+import 'package:greengears/main.dart';
 
 class RequestVerificationModal extends StatefulWidget {
   final CarRequest request;
@@ -32,7 +33,7 @@ class RequestVerificationModal extends StatefulWidget {
 }
 
 class _RequestVerificationModalState extends State<RequestVerificationModal> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   // Form Controllers
   final _commentsCtrl = TextEditingController();

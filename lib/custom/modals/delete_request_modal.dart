@@ -8,6 +8,7 @@ import './base_modal.dart';
 
 import '../../constants/local_prefs.dart';
 import '../../network/api_client.dart';
+import 'package:greengears/main.dart';
 
 class DeleteRequestModal extends StatefulWidget {
   final CarRequest request;
@@ -28,7 +29,7 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
   int? roleId;
   String? requestId;
 
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   Future<void> _loadEmpCodeAndRol() async {
     empCode = await LocalPrefs.getEmpCode();

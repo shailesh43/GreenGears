@@ -13,6 +13,7 @@ import '../../custom/modals/quotation_form_modal.dart';
 import '../../custom/widgets/form_text_field.dart';
 import '../../custom/widgets/form_detail_row.dart';
 import '../../custom/widgets/drop_down.dart';
+import 'package:greengears/main.dart';
 
 class VehicleRequestPage extends StatefulWidget {
   const VehicleRequestPage({super.key});
@@ -23,7 +24,7 @@ class VehicleRequestPage extends StatefulWidget {
 
 class _VehicleRequestPageState extends State<VehicleRequestPage> {
   final _formKey = GlobalKey<FormState>();
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
   final Logger logger = Logger();
 
   // Form Controllers

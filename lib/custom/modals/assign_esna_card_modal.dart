@@ -12,6 +12,7 @@ import '../../core/utils/enum.dart';
 import '../../network/api_models/get_all_docs_response_model.dart';
 import '../../network/api_models/uploaded_file_model.dart';
 import '../../core/helpers/file_downloader.dart';
+import 'package:greengears/main.dart';
 
 class AssignEsnaCardModal extends StatefulWidget {
   final CarRequest request;
@@ -28,7 +29,7 @@ class AssignEsnaCardModal extends StatefulWidget {
 }
 
 class _AssignEsnaCardModalState extends State<AssignEsnaCardModal> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   String? selectedEsnaName;
   String? selectedEsnaEmpId;

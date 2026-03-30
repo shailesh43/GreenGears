@@ -21,6 +21,7 @@ import '../../network/api_models/get_all_docs_response_model.dart';
 import '../../network/api_models/uploaded_file_model.dart';
 import '../../core/helpers/file_downloader.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:greengears/main.dart';
 
 class InsuranceScreenModal extends StatefulWidget {
   final CarRequest request;
@@ -39,7 +40,7 @@ class InsuranceScreenModal extends StatefulWidget {
 
 class _InsuranceScreenModalState extends State<InsuranceScreenModal> {
   String? selectedDocumentName;
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
   String? commentsOnInsurance;
 
   final _baseInsuranceCtrl = TextEditingController();

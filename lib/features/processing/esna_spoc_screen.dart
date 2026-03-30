@@ -14,6 +14,7 @@ import '../../custom/modals/request_verification_modal.dart';
 import '../../custom/modals/monthly_deduction_modal.dart';
 import '../../custom/modals/payment_details_modal.dart';
 import '../../custom/modals/rto_tax_receipt_modal.dart';
+import 'package:greengears/main.dart';
 
 class EsnaSpocScreen extends StatefulWidget {
   const EsnaSpocScreen({Key? key}) : super(key: key);
@@ -22,7 +23,7 @@ class EsnaSpocScreen extends StatefulWidget {
 }
 
 class _EsnaSpocScreenState extends State<EsnaSpocScreen> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
   final TextEditingController _searchController = TextEditingController();
 
   int _selectedTabIndex = 0;

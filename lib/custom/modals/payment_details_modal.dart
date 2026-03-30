@@ -17,6 +17,7 @@ import '../../network/api_models/get_all_docs_response_model.dart';
 import '../../network/api_models/uploaded_file_model.dart';
 import '../../core/helpers/file_downloader.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:greengears/main.dart';
 
 class PaymentDetailsModal extends StatefulWidget {
   final CarRequest request;
@@ -31,7 +32,7 @@ class PaymentDetailsModal extends StatefulWidget {
 }
 
 class _PaymentDetailsModalState extends State<PaymentDetailsModal> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   // Form Controllers
   final _commentsCtrl = TextEditingController();

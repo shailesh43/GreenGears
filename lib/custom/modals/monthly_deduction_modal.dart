@@ -17,6 +17,7 @@ import '../widgets/form_text_field.dart';
 import '../widgets/action_button_pair.dart';
 import './base_modal.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:greengears/main.dart';
 
 class MonthlyDeductionModal extends StatefulWidget {
   final CarRequest request;
@@ -31,7 +32,7 @@ class MonthlyDeductionModal extends StatefulWidget {
 }
 
 class _MonthlyDeductionModalState extends State<MonthlyDeductionModal> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   // Form Controllers
   final _commentsCtrl = TextEditingController();

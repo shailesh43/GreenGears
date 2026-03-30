@@ -21,6 +21,8 @@ import '../widgets/file_uploader.dart';
 import '../widgets/drop_down.dart';
 import './base_modal.dart';
 import '../../core/helpers/file_downloader.dart';
+import 'package:greengears/main.dart';
+
 class RtoTaxReceiptModal extends StatefulWidget {
   final CarRequest request;
 
@@ -34,7 +36,7 @@ class RtoTaxReceiptModal extends StatefulWidget {
 }
 
 class _RtoTaxReceiptModalState extends State<RtoTaxReceiptModal> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   // Form Controllers
   final _commentsCtrl = TextEditingController();

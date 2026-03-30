@@ -20,9 +20,9 @@ import '../../constants/local_prefs.dart';
 
 import '../../network/api_models/car_request.dart';
 
-// 🔥 Import for RouteObserver
+//  Import for RouteObserver
 import '../../app.dart';
-
+import 'package:greengears/main.dart';
 class MainDashboard extends StatefulWidget {
   final UserRole role;
 
@@ -36,7 +36,7 @@ class MainDashboard extends StatefulWidget {
 }
 
 class _MainDashboard extends State<MainDashboard> with RouteAware {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   // Employee data
   String? empName;

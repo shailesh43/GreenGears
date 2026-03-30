@@ -11,6 +11,7 @@ import '../../network/api_models/admin_page_response.dart';
 import '../../core/utils/enum.dart';
 import '../../constants/local_prefs.dart';
 import '../../core/helpers/normalize.dart';
+import 'package:greengears/main.dart';
 
 class InsuranceScreen extends StatefulWidget {
   const InsuranceScreen({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class InsuranceScreen extends StatefulWidget {
 
 class _InsuranceScreenState extends State<InsuranceScreen> {
 
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';

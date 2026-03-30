@@ -5,6 +5,7 @@ import '../../network/api_client.dart';
 import '../../constants/local_prefs.dart';
 import '../widgets/form_text_field.dart';
 import '../widgets/integer_range_field.dart';
+import 'package:greengears/main.dart';
 
 class QuotationFormModal extends StatefulWidget {
   final Function(String) onConfirm;
@@ -19,7 +20,7 @@ class QuotationFormModal extends StatefulWidget {
 }
 
 class _QuotationFormModalState extends State<QuotationFormModal> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   final TextEditingController _baseCostController = TextEditingController();
   final TextEditingController _corpRegController = TextEditingController();

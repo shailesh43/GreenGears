@@ -4,6 +4,7 @@ import '../../custom/widgets/form_detail_row.dart';
 import '../../constants/local_prefs.dart';
 import '../../network/api_client.dart';
 import 'package:intl/intl.dart';
+import 'package:greengears/main.dart';
 
 class ActiveRequestPage extends StatefulWidget {
   final CarRequest request;
@@ -21,7 +22,7 @@ class _ActiveRequestPageState extends State<ActiveRequestPage> {
   String? empCode;
   int? roleId;
 
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   @override
   void initState() {

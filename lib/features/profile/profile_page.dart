@@ -7,6 +7,7 @@ import '../request/request_vehicle.dart';
 import '../../constants/local_prefs.dart';
 import 'dart:async';
 import 'dart:core';
+import 'package:greengears/main.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -17,7 +18,7 @@ class ProfilePage extends StatefulWidget {
 
 // Employee Profile Page
 class _ProfilePageState extends State<ProfilePage> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   // int? roleId;
   bool isLoading = true;
@@ -465,7 +466,7 @@ class EmployeeFeedbackPage extends StatefulWidget {
 }
 
 class _EmployeeFeedbackPageState extends State<EmployeeFeedbackPage> {
-  final ApiClient _client = ApiClient();
+  final ApiClient _client = globalApiClient;
 
   // Feedback ratings
   int userExperienceRating = 0;
