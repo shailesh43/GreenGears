@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:core';
 import 'dart:ui';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter/services.dart';
@@ -47,6 +48,8 @@ class _MyAppState extends State<MyApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadAssets(context);
     });
+
+
   }
 
   Future<void> _preloadAssets(BuildContext context) async {
@@ -59,11 +62,42 @@ class _MyAppState extends State<MyApp> {
   Future<_InitResult> _initializeApp() async {
     await Future.delayed(const Duration(seconds: 2));
 
-    final isEmulator = await EmulatorDetector.isEmulator();
-    if (isEmulator) {
-      return const _InitResult.emulatorBlocked();
+    if (Platform.isAndroid) {
+      var isRoot = await androidRootChecker();
+      var isDeveloperMode = await developerMode();
+      var isEmulatorDevice = await isEmulator();
+      if (!isRoot && !isDeveloperMode && !isEmulatorDevice) {
+        moveToNext();
+      } else {
+        if (isRoot) {
+          showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
+        } else if (isDeveloperMode) {
+          showErrorDialog(
+            'Developer Mode is enabled, preventing you from using the app. To disable it, go to Settings > search for Developer > select Developer options > toggle it Off, then restart the app.',
+          );
+        } else if (isEmulatorDevice) {
+          showErrorDialog('The Tata Power CP app cannot run on an emulator. Please install the app on a physical device.');
+        }
+      }
+    } else if (Platform.isIOS) {
+      var isIosJailbreak = await iosJailbreak();
+      var isEmulatorDevice = await isEmulator();
+      if (!isIosJailbreak && !isEmulatorDevice) {
+        moveToNext();
+      } else {
+        if (isIosJailbreak) {
+          showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
+        } else if (isEmulatorDevice) {
+          showErrorDialog('The Tata Power CP app cannot run on an emulator. Please install the app on a physical device.');
+        }
+      }
     }
 
+    return null;
+
+  }
+
+  moveToNext() {
     // If we already have a stored empId, skip login entirely
     final storedEmpId = await LocalPrefs.getEmpCode();
     if (storedEmpId != null && storedEmpId.isNotEmpty) {
@@ -72,6 +106,108 @@ class _MyAppState extends State<MyApp> {
 
     // No session — launch SAMAL login
     return _login();
+  }
+
+  Future<bool> androidRootChecker() async {
+    if (kDebugMode) {
+      return false;
+    }
+    try {
+      return await JailbreakRootDetection.instance.isJailBroken;
+      // return (await RootCheckerPlus.isRootChecker())!;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<bool> isEmulator() async {
+    if (kDebugMode) {
+      return false;
+    }
+    return !(await JailbreakRootDetection.instance.isRealDevice);
+    // final deviceInfoPlugin = DeviceInfoPlugin();
+    // if (Platform.isAndroid) {
+    //   final androidInfo = await deviceInfoPlugin.androidInfo;
+    //   return !androidInfo.isPhysicalDevice;
+    // } else if (Platform.isIOS) {
+    //   final iosInfo = await deviceInfoPlugin.iosInfo;
+    //   return !iosInfo.isPhysicalDevice;
+    // }
+    return false;
+  }
+
+  Future<bool> developerMode() async {
+    if (kDebugMode) {
+      return false;
+    }
+    try {
+      return await JailbreakRootDetection.instance.isDevMode;
+      // return (await RootCheckerPlus.isDeveloperMode())!;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<bool> iosJailbreak() async {
+    if (kDebugMode) {
+      return false;
+    }
+    try {
+      final bundleId = 'com.tatapower.greengears';
+      return await JailbreakRootDetection.instance.isJailBroken || await JailbreakRootDetection.instance.isTampered(bundleId);
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  void showErrorDialog(String message) {
+    Get.dialog(
+      PopScope(
+        canPop: false,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(15)),
+                margin: EdgeInsets.symmetric(horizontal: 15),
+                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Error', style: TextStyle(color: AppColors.redColor, fontSize: 22, fontWeight: FontWeight.w600)),
+                      verticalSpace(15),
+                      Text(message, style: TextStyle(color: AppColors.black, fontSize: 16, fontWeight: FontWeight.w400)),
+                      verticalSpace(25),
+                      SizedBox(
+                        width: Get.width,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            exit(0);
+                          },
+                          style: primaryButtonStyle,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Exit App', style: TextStyle(color: AppColors.white)),
+                              horizontalSpace(10),
+                              Icon(Icons.arrow_forward, size: 20, color: AppColors.white),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }
 
   Future<_InitResult> _login() async {
