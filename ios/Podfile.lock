@@ -55,6 +55,10 @@ PODS:
     - Alamofire (~> 5.9.0)
     - CryptoSwift
     - Flutter
+  - IOSSecuritySuite (1.9.11)
+  - jailbreak_root_detection (1.0.1):
+    - Flutter
+    - IOSSecuritySuite (~> 1.9.10)
   - open_filex (0.0.2):
     - Flutter
   - permission_handler_apple (9.3.0):
@@ -79,6 +83,7 @@ DEPENDENCIES:
   - flutter_web_auth_2 (from `.symlinks/plugins/flutter_web_auth_2/ios`)
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - http_certificate_pinning (from `.symlinks/plugins/http_certificate_pinning/ios`)
+  - jailbreak_root_detection (from `.symlinks/plugins/jailbreak_root_detection/ios`)
   - open_filex (from `.symlinks/plugins/open_filex/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
@@ -92,6 +97,7 @@ SPEC REPOS:
     - CryptoSwift
     - DKImagePickerController
     - DKPhotoGallery
+    - IOSSecuritySuite
     - SDWebImage
     - SwiftyGif
 
@@ -110,6 +116,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/fluttertoast/ios"
   http_certificate_pinning:
     :path: ".symlinks/plugins/http_certificate_pinning/ios"
+  jailbreak_root_detection:
+    :path: ".symlinks/plugins/jailbreak_root_detection/ios"
   open_filex:
     :path: ".symlinks/plugins/open_filex/ios"
   permission_handler_apple:
@@ -134,6 +142,8 @@ SPEC CHECKSUMS:
   flutter_web_auth_2: 5c8d9dcd7848b5a9efb086d24e7a9adcae979c80
   fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
   http_certificate_pinning: 133f28ad5c2d1ecda2581dd2d2cd9dc74da59012
+  IOSSecuritySuite: b51056d5411aee567153ca86ce7f6edfdc5d2654
+  jailbreak_root_detection: 9201e1dfd51dc23069cbfb8d4f4a2d18305170bf
   open_filex: 432f3cd11432da3e39f47fcc0df2b1603854eff1
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   SDWebImage: 1bb6a1b84b6fe87b972a102bdc77dd589df33477

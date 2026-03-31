@@ -5,19 +5,28 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-// Construct pages through shell
 import 'core/dashboard_shell.dart';
-// SAMAL(msauth) Login & logout function
 import './auth/azure_auth_service.dart';
-// Local storage
 import './constants/local_prefs.dart';
 import './network/api_client.dart';
 import './core/utils/enum.dart';
 import './core/helpers/emulator_detector.dart';
 import 'package:greengears/main.dart';
 
-// Change this line in app.dart
 final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
+
+// Wrapper so FutureBuilder can distinguish "cancelled" from "hard failure"
+enum _LoginResult { success, cancelled, failed }
+
+class _InitResult {
+  final String? empId;
+  final _LoginResult loginResult;
+
+  const _InitResult.success(this.empId) : loginResult = _LoginResult.success;
+  const _InitResult.cancelled() : empId = null, loginResult = _LoginResult.cancelled;
+  const _InitResult.failed() : empId = null, loginResult = _LoginResult.failed;
+  const _InitResult.emulatorBlocked() : empId = "EMULATOR_BLOCKED", loginResult = _LoginResult.success;
+}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -28,18 +37,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final ApiClient _client = globalApiClient;
-  bool isLoading = false;
 
-  late Future<String?> _initFuture;
+  late Future<_InitResult> _initFuture;
 
   @override
   void initState() {
     super.initState();
-
-    // Start app initialization (auth + delay)
     _initFuture = _initializeApp();
-
-    // Preload visual assets AFTER first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadAssets(context);
     });
@@ -52,68 +56,55 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  // Initialize app with splash screen delay
-  Future<String?> _initializeApp() async {
+  Future<_InitResult> _initializeApp() async {
     await Future.delayed(const Duration(seconds: 2));
 
-    // 🔐 Emulator detection
     final isEmulator = await EmulatorDetector.isEmulator();
-
     if (isEmulator) {
-      debugPrint("⚠️ Emulator detected");
-
-      // Just flag it
-      return "EMULATOR_BLOCKED";
+      return const _InitResult.emulatorBlocked();
     }
 
-    return _checkLoginStatus();
-  }
-
-  // Check if user is already logged in
-  Future<String?> _checkLoginStatus() async {
-    final isLoggedIn = await LocalPrefs.getIsLoggedIn();
-
-    if (isLoggedIn) {
-      // User is already logged in, get empId from local storage
-      final empId = await LocalPrefs.getEmpCode();
-      if (empId != null && empId.isNotEmpty) {
-        return empId;
-      }
+    // If we already have a stored empId, skip login entirely
+    final storedEmpId = await LocalPrefs.getEmpCode();
+    if (storedEmpId != null && storedEmpId.isNotEmpty) {
+      return _InitResult.success(storedEmpId);
     }
 
-    // User is not logged in, perform login
+    // No session — launch SAMAL login
     return _login();
   }
 
-  // Login method that returns empId
-  Future<String?> _login() async {
+  Future<_InitResult> _login() async {
     final empId = await AuthenticationService.login();
 
     if (empId != null) {
       await LocalPrefs.saveEmpId(empCode: empId);
-      // Save login status as true
       await LocalPrefs.saveLoginStatus(isLoggedIn: true);
+      return _InitResult.success(empId);
     }
-    return empId;
+
+    // AuthenticationService.login() returns null for both cancellation
+    // and hard failure. The SAMAL screen was shown — returning cancelled
+    // so the UI shows the retry screen without a harsh error message.
+    // If you later want to distinguish cancellation from failure,
+    // AuthenticationService.login() would need to surface that separately.
+    return const _InitResult.cancelled();
   }
 
-  // Fetch role from API
   Future<UserRole> _fetchEmployeeRole(String empCode) async {
-    if (empCode.isEmpty) {
-      return UserRole.user; // default fallback
-    }
+    if (empCode.isEmpty) return UserRole.user;
 
     try {
       final result = await _client.getRoleByEmployee(empCode);
       final roleId = result.roleIds.isNotEmpty ? result.roleIds.first : 1;
-
-      // Save roleId to local storage
       await LocalPrefs.saveRoleId(roleId: roleId);
-
       return UserRole.fromId(roleId) ?? UserRole.user;
     } catch (e) {
-      debugPrint('Error fetching role: $e');
-      return UserRole.user; // default fallback on error
+      assert(() {
+        debugPrint('Error fetching role: $e');
+        return true;
+      }());
+      return UserRole.user;
     }
   }
 
@@ -127,15 +118,18 @@ class _MyAppState extends State<MyApp> {
         scaffoldBackgroundColor: Colors.white,
       ),
       navigatorObservers: [routeObserver],
-      home: FutureBuilder<String?>(
+      home: FutureBuilder<_InitResult>(
         future: _initFuture,
         builder: (context, snapshot) {
-          // Show splash screen while initializing
+          // Still initialising — show splash
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashScreen();
           }
-          // Emulator Detection
-          if (snapshot.hasData && snapshot.data == "EMULATOR_BLOCKED") {
+
+          final result = snapshot.data;
+
+          // Emulator blocked
+          if (result?.empId == "EMULATOR_BLOCKED") {
             return const Scaffold(
               body: Center(
                 child: Text(
@@ -145,9 +139,10 @@ class _MyAppState extends State<MyApp> {
               ),
             );
           }
-          // Check if login was successful
-          if (snapshot.hasData && snapshot.data != null) {
-            final empCode = snapshot.data!;
+
+          // Login succeeded — fetch role and enter app
+          if (result?.loginResult == _LoginResult.success && result?.empId != null) {
+            final empCode = result!.empId!;
             return FutureBuilder<UserRole>(
               future: _fetchEmployeeRole(empCode),
               builder: (context, roleSnapshot) {
@@ -155,7 +150,7 @@ class _MyAppState extends State<MyApp> {
                   return const Scaffold(
                     body: Center(
                       child: CircularProgressIndicator(
-                        color: Color.fromRGBO(34, 197, 94, 1), // Your green color
+                        color: Color.fromRGBO(34, 197, 94, 1),
                       ),
                     ),
                   );
@@ -165,21 +160,47 @@ class _MyAppState extends State<MyApp> {
               },
             );
           }
-          // Login failed - show error message
+
+          // Cancelled or failed — show retry screen.
+          // Only show the error text on a hard failure, not on cancellation.
+          final isCancelled = result?.loginResult == _LoginResult.cancelled;
           return Scaffold(
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    '404 :(',
-                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, letterSpacing: -0.8, color: Colors.redAccent),
-                  ),
-                  const Text(
-                    'Error! Login failed Please try again.',
-                    style: TextStyle(fontSize: 18, letterSpacing: -0.2, color: Colors.redAccent),
-                  ),
-                  const SizedBox(height: 16),
+                  if (!isCancelled) ...[
+                    const Text(
+                      '404 :(',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.8,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                    const Text(
+                      'Error! Login failed. Please try again.',
+                      style: TextStyle(
+                        fontSize: 18,
+                        letterSpacing: -0.2,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (isCancelled)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'Sign in to continue.',
+                        style: TextStyle(
+                          fontSize: 18,
+                          letterSpacing: -0.2,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
@@ -187,17 +208,18 @@ class _MyAppState extends State<MyApp> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.80), // glass effect
+                      backgroundColor: Colors.white.withOpacity(0.80),
                       foregroundColor: Colors.black,
                       elevation: 6,
                       shadowColor: Colors.black.withOpacity(0.20),
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
                     child: const Text(
-                      'Retry',
+                      'Sign in',
                       style: TextStyle(
                         color: Color.fromRGBO(80, 80, 80, 1.0),
                         fontSize: 16,
@@ -225,7 +247,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _slideController;
   late final Animation<Offset> _slideAnimation;
 
@@ -239,7 +260,7 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(-1.2, 0), // off-screen left
+      begin: const Offset(-1.2, 0),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
@@ -265,7 +286,6 @@ class _SplashScreenState extends State<SplashScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Logo + Text Block
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -287,16 +307,13 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 42),
-
-          // ✅ Full-width Lottie
           SizedBox(
             width: double.infinity,
             height: 200,
             child: Lottie.asset(
               'assets/anims/moving_car_lottie.json',
-              fit: BoxFit.cover, // important for full width feel
+              fit: BoxFit.cover,
               repeat: true,
             ),
           ),

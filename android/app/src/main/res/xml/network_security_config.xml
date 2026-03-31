@@ -13,10 +13,12 @@
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
-        <!-- Pin your server's certificate public key hash -->
         <pin-set expiration="2027-01-01">
-            <!-- Replace this with your actual certificate SHA-256 pin -->
-            <pin digest="SHA-256">6SNtsgbG++m+AQEn/XRA211DCYahXTy4Ue7ViTH6moY==</pin>
+            <!-- Primary pin: SHA-256 public key hash of bizapps.tatapower.com -->
+            <pin digest="SHA-256">LqRJqQv6S2zvHQUI5BNI/3HxRfG8J8nagodSJDGcAhY=</pin>
+            <!-- Backup pin: run the openssl command against your intermediate/root CA cert -->
+            <!-- IMPORTANT: without a valid backup pin, Android will reject the config -->
+            <pin digest="SHA-256">i7WTqTvh0OioIruIfFR4kMPnBqrS2rdiVPl/s2uC/CY=</pin>
         </pin-set>
     </domain-config>
 </network-security-config>

@@ -47,9 +47,9 @@ import 'package:flutter/services.dart';
 import 'package:http/io_client.dart';
 
 class ApiClient {
-  // ✅ Static pinned client — shared across ALL instances
+  // Static pinned client — shared across ALL instances
   static http.Client? _pinnedClient;
-  static bool _isPinningVerified = false; // ✅ static so all instances share it
+  static bool _isPinningVerified = false; // static so all instances share it
 
   final Logger logger = Logger();
 
@@ -82,6 +82,12 @@ class ApiClient {
     return IOClient(httpClient);
   }
 
+  static http.Client get pinnedHttpClient {
+    if (!_isPinningVerified || _pinnedClient == null) {
+      throw Exception("SSL Pinning not initialized. Call initSSLPinning() first.");
+    }
+    return _pinnedClient!;
+  }
   // Returns the pinned client — used by ALL request methods
   http.Client get _client {
     _assertPinningVerified();
