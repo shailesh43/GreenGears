@@ -71,13 +71,13 @@ class ApiClient {
   // Builds the pinned HTTP client from your .pem cert
   static Future<http.Client> _buildPinnedClient() async {
     final sslCert = await rootBundle.load('assets/docs/bizapps-cert.pem');
-    final securityContext = SecurityContext(withTrustedRoots: false);
+    final securityContext = SecurityContext();
     securityContext.setTrustedCertificatesBytes(sslCert.buffer.asInt8List());
 
     final httpClient = HttpClient(context: securityContext);
-    httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) {
-      return host == "bizapps.tatapower.com"; // only allow your domain
-    };
+    // httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) {
+    //   return host == "bizapps.tatapower.com"; // only allow your domain
+    // };
 
     return IOClient(httpClient);
   }
