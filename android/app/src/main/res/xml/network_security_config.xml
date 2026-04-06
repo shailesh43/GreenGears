@@ -21,4 +21,17 @@
             <pin digest="SHA-256">i7WTqTvh0OioIruIfFR4kMPnBqrS2rdiVPl/s2uC/CY=</pin>
         </pin-set>
     </domain-config>
+
+    <!-- Microsoft SSO token + Graph endpoints -->
+<!--    <domain-config cleartextTrafficPermitted="false">-->
+<!--        <domain includeSubdomains="true">login.microsoftonline.com</domain>-->
+<!--        <domain includeSubdomains="true">graph.microsoft.com</domain>-->
+<!--        &lt;!&ndash; Microsoft's DigiCert intermediate CA — more stable than leaf cert pins &ndash;&gt;-->
+<!--        &lt;!&ndash; Obtain current values from: https://www.microsoft.com/pki/mscorp/cps &ndash;&gt;-->
+<!--        <pin-set expiration="2026-12-31">-->
+<!--            <pin digest="SHA-256">rCXAcsLoo3jsXsQA7+PqEKJ2e8ISqNdKfNwfOpgloZQ=</pin>-->
+<!--            &lt;!&ndash; Backup pin — always include a second pin to avoid bricking the app &ndash;&gt;-->
+<!--            <pin digest="SHA-256">Wec45nQiFwKvHtuHxSAMGkt19k+uPSw9JlEkxhvYPHk=</pin>-->
+<!--        </pin-set>-->
+<!--    </domain-config>-->
 </network-security-config>

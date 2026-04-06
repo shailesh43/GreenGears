@@ -44,10 +44,7 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data
-                    android:scheme="msauth"
-                    android:host="com.tatapower.greengears"
-                    android:path="/fwX9a9GPV9I3xuDOLwxkrh63k3w="/>
+                <data android:scheme="msauth"/>
             </intent-filter>
         </activity>
 
