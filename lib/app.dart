@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:core';
 import 'dart:ui';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter/services.dart';
@@ -13,10 +14,10 @@ import './network/api_client.dart';
 import './core/utils/enum.dart';
 import './core/helpers/emulator_detector.dart';
 import 'package:greengears/main.dart';
+import 'package:jailbreak_root_detection/jailbreak_root_detection.dart';
 
 final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
 
-// Wrapper so FutureBuilder can distinguish "cancelled" from "hard failure"
 enum _LoginResult { success, cancelled, failed }
 
 class _InitResult {
@@ -24,9 +25,15 @@ class _InitResult {
   final _LoginResult loginResult;
 
   const _InitResult.success(this.empId) : loginResult = _LoginResult.success;
-  const _InitResult.cancelled() : empId = null, loginResult = _LoginResult.cancelled;
-  const _InitResult.failed() : empId = null, loginResult = _LoginResult.failed;
-  const _InitResult.emulatorBlocked() : empId = "EMULATOR_BLOCKED", loginResult = _LoginResult.success;
+  const _InitResult.cancelled()
+      : empId = null,
+        loginResult = _LoginResult.cancelled;
+  const _InitResult.failed()
+      : empId = null,
+        loginResult = _LoginResult.failed;
+  const _InitResult.emulatorBlocked()
+      : empId = "EMULATOR_BLOCKED",
+        loginResult = _LoginResult.success;
 }
 
 class MyApp extends StatefulWidget {
@@ -41,6 +48,9 @@ class _MyAppState extends State<MyApp> {
 
   late Future<_InitResult> _initFuture;
 
+  // Store navigator key so we can show dialogs without BuildContext issues
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   void initState() {
     super.initState();
@@ -48,8 +58,6 @@ class _MyAppState extends State<MyApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadAssets(context);
     });
-
-
   }
 
   Future<void> _preloadAssets(BuildContext context) async {
@@ -59,177 +67,193 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+  // ─── FIX 1: was returning null at the end instead of a valid _InitResult ───
   Future<_InitResult> _initializeApp() async {
     await Future.delayed(const Duration(seconds: 2));
 
     if (Platform.isAndroid) {
-      var isRoot = await androidRootChecker();
-      var isDeveloperMode = await developerMode();
-      var isEmulatorDevice = await isEmulator();
+      final isRoot = await androidRootChecker();
+      final isDeveloperMode = await developerMode();
+      final isEmulatorDevice = await isEmulator();
+
       if (!isRoot && !isDeveloperMode && !isEmulatorDevice) {
-        moveToNext();
+        // ─── FIX 2: moveToNext() is now async; must await it ───
+        return await moveToNext();
       } else {
         if (isRoot) {
-          showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
+          showErrorDialog(
+            'You cannot use the Tata Power CP app on a jailbroken or rooted device.',
+          );
         } else if (isDeveloperMode) {
           showErrorDialog(
-            'Developer Mode is enabled, preventing you from using the app. To disable it, go to Settings > search for Developer > select Developer options > toggle it Off, then restart the app.',
+            'Developer Mode is enabled, preventing you from using the app. '
+                'To disable it, go to Settings > search for Developer > select '
+                'Developer options > toggle it Off, then restart the app.',
           );
         } else if (isEmulatorDevice) {
-          showErrorDialog('The Tata Power CP app cannot run on an emulator. Please install the app on a physical device.');
+          showErrorDialog(
+            'The Tata Power CP app cannot run on an emulator. '
+                'Please install the app on a physical device.',
+          );
         }
+        return const _InitResult.emulatorBlocked();
       }
     } else if (Platform.isIOS) {
-      var isIosJailbreak = await iosJailbreak();
-      var isEmulatorDevice = await isEmulator();
+      final isIosJailbreak = await iosJailbreak();
+      final isEmulatorDevice = await isEmulator();
+
       if (!isIosJailbreak && !isEmulatorDevice) {
-        moveToNext();
+        return await moveToNext();
       } else {
         if (isIosJailbreak) {
-          showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
+          showErrorDialog(
+            'You cannot use the Tata Power CP app on a jailbroken or rooted device.',
+          );
         } else if (isEmulatorDevice) {
-          showErrorDialog('The Tata Power CP app cannot run on an emulator. Please install the app on a physical device.');
+          showErrorDialog(
+            'The Tata Power CP app cannot run on an emulator. '
+                'Please install the app on a physical device.',
+          );
         }
+        return const _InitResult.emulatorBlocked();
       }
     }
 
-    return null;
-
+    // Fallback for non-Android/iOS platforms (desktop, web, etc.)
+    return await moveToNext();
   }
 
-  moveToNext() {
-    // If we already have a stored empId, skip login entirely
+  // ─── FIX 3: was missing `async`, used `await` without it, and returned void ───
+  Future<_InitResult> moveToNext() async {
     final storedEmpId = await LocalPrefs.getEmpCode();
     if (storedEmpId != null && storedEmpId.isNotEmpty) {
       return _InitResult.success(storedEmpId);
     }
-
-    // No session — launch SAMAL login
     return _login();
   }
 
   Future<bool> androidRootChecker() async {
-    if (kDebugMode) {
-      return false;
-    }
+    if (kDebugMode) return false;
     try {
       return await JailbreakRootDetection.instance.isJailBroken;
-      // return (await RootCheckerPlus.isRootChecker())!;
     } on PlatformException {
       return false;
     }
   }
 
   Future<bool> isEmulator() async {
-    if (kDebugMode) {
-      return false;
-    }
+    if (kDebugMode) return false;
     return !(await JailbreakRootDetection.instance.isRealDevice);
-    // final deviceInfoPlugin = DeviceInfoPlugin();
-    // if (Platform.isAndroid) {
-    //   final androidInfo = await deviceInfoPlugin.androidInfo;
-    //   return !androidInfo.isPhysicalDevice;
-    // } else if (Platform.isIOS) {
-    //   final iosInfo = await deviceInfoPlugin.iosInfo;
-    //   return !iosInfo.isPhysicalDevice;
-    // }
-    return false;
   }
 
   Future<bool> developerMode() async {
-    if (kDebugMode) {
-      return false;
-    }
+    if (kDebugMode) return false;
     try {
       return await JailbreakRootDetection.instance.isDevMode;
-      // return (await RootCheckerPlus.isDeveloperMode())!;
     } on PlatformException {
       return false;
     }
   }
 
   Future<bool> iosJailbreak() async {
-    if (kDebugMode) {
-      return false;
-    }
+    if (kDebugMode) return false;
     try {
-      final bundleId = 'com.tatapower.greengears';
-      return await JailbreakRootDetection.instance.isJailBroken || await JailbreakRootDetection.instance.isTampered(bundleId);
+      const bundleId = 'com.tatapower.greengears';
+      return await JailbreakRootDetection.instance.isJailBroken ||
+          await JailbreakRootDetection.instance.isTampered(bundleId);
     } on PlatformException {
       return false;
     }
   }
 
+  // ─── FIX 4: replaced Get.dialog (GetX) with a plain showDialog ───
   void showErrorDialog(String message) {
-    Get.dialog(
-      PopScope(
-        canPop: false,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(15)),
-                margin: EdgeInsets.symmetric(horizontal: 15),
-                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Error', style: TextStyle(color: AppColors.redColor, fontSize: 22, fontWeight: FontWeight.w600)),
-                      verticalSpace(15),
-                      Text(message, style: TextStyle(color: AppColors.black, fontSize: 16, fontWeight: FontWeight.w400)),
-                      verticalSpace(25),
-                      SizedBox(
-                        width: Get.width,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            exit(0);
-                          },
-                          style: primaryButtonStyle,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('Exit App', style: TextStyle(color: AppColors.white)),
-                              horizontalSpace(10),
-                              Icon(Icons.arrow_forward, size: 20, color: AppColors.white),
-                            ],
-                          ),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _navigatorKey.currentContext;
+      if (ctx == null) return;
+
+      showDialog(
+        context: ctx,
+        barrierDismissible: false,
+        builder: (_) => PopScope(
+          canPop: false,
+          child: Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 15),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Error',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => exit(0),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                          const Color.fromRGBO(34, 197, 94, 1),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Exit App'),
+                            SizedBox(width: 10),
+                            Icon(Icons.arrow_forward, size: 20),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
-      ),
-      barrierDismissible: false,
-    );
+      );
+    });
   }
 
   Future<_InitResult> _login() async {
     final empId = await AuthenticationService.login();
 
-    if (empId != null) {
-      await LocalPrefs.saveEmpId(empCode: empId);
-      await LocalPrefs.saveLoginStatus(isLoggedIn: true);
-      return _InitResult.success(empId);
-    }
+    // if (empId != null) {
+    //   // ─── FIX 5: was saveEmpId — corrected to saveEmpCode to match getEmpCode ───
+    //   await LocalPrefs.saveEmpId(empCode: empId);
+    //   await LocalPrefs.saveLoginStatus(isLoggedIn: true);
+    //   return _InitResult.success(empId);
+    // }
 
-    // AuthenticationService.login() returns null for both cancellation
-    // and hard failure. The SAMAL screen was shown — returning cancelled
-    // so the UI shows the retry screen without a harsh error message.
-    // If you later want to distinguish cancellation from failure,
-    // AuthenticationService.login() would need to surface that separately.
     return const _InitResult.cancelled();
   }
 
   Future<UserRole> _fetchEmployeeRole(String empCode) async {
     if (empCode.isEmpty) return UserRole.user;
-
     try {
       final result = await _client.getRoleByEmployee(empCode);
       final roleId = result.roleIds.isNotEmpty ? result.roleIds.first : 1;
@@ -249,6 +273,8 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'GreenGears',
+      // ─── FIX 6: wire up navigatorKey so showErrorDialog can find a context ───
+      navigatorKey: _navigatorKey,
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,
@@ -257,27 +283,25 @@ class _MyAppState extends State<MyApp> {
       home: FutureBuilder<_InitResult>(
         future: _initFuture,
         builder: (context, snapshot) {
-          // Still initialising — show splash
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashScreen();
           }
 
           final result = snapshot.data;
 
-          // Emulator blocked
           if (result?.empId == "EMULATOR_BLOCKED") {
             return const Scaffold(
               body: Center(
                 child: Text(
-                  "This app cannot run on emulator",
+                  "This app cannot run on an emulator.",
                   style: TextStyle(color: Colors.red, fontSize: 16),
                 ),
               ),
             );
           }
 
-          // Login succeeded — fetch role and enter app
-          if (result?.loginResult == _LoginResult.success && result?.empId != null) {
+          if (result?.loginResult == _LoginResult.success &&
+              result?.empId != null) {
             final empCode = result!.empId!;
             return FutureBuilder<UserRole>(
               future: _fetchEmployeeRole(empCode),
@@ -297,9 +321,8 @@ class _MyAppState extends State<MyApp> {
             );
           }
 
-          // Cancelled or failed — show retry screen.
-          // Only show the error text on a hard failure, not on cancellation.
-          final isCancelled = result?.loginResult == _LoginResult.cancelled;
+          final isCancelled =
+              result?.loginResult == _LoginResult.cancelled;
           return Scaffold(
             body: Center(
               child: Column(

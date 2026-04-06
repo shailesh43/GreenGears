@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:flutter_appauth/flutter_appauth.dart';
 
 import '../network/api_constants.dart';
 import '../constants/local_prefs.dart';
@@ -49,78 +50,48 @@ http.Client _buildMicrosoftClient() {
     };
   return IOClient(httpClient);
 }
+
+
 // ---------------------------------------------------------------------------
 
+
+
+
+
 class AuthenticationService {
-  // LOGIN - Returns empId only
+  // Nitish Sir Code
   static Future<String?> login() async {
     try {
-      // PKCE
-      final codeVerifier = _generateCodeVerifier();
-      final codeChallenge = _generateCodeChallenge(codeVerifier);
+      final FlutterAppAuth appAuth = FlutterAppAuth();
 
-      // Step 1: Build authorization URL
-      final authUri = Uri.parse(ApiConstants.authorizationEndpoint).replace(
-        queryParameters: {
-          'client_id': ApiConstants.clientId,
-          'response_type': 'code',
-          'redirect_uri': ApiConstants.redirectUri,
-          'response_mode': 'query',
-          'scope': ApiConstants.scope,
-          'prompt': 'select_account',
-          'code_challenge': codeChallenge,
-          'code_challenge_method': 'S256',
-        },
+      // AppAuth handles PKCE (S256) automatically — no manual implementation needed
+      final AuthorizationTokenResponse? result =
+      await appAuth.authorizeAndExchangeCode(
+        AuthorizationTokenRequest(
+          ApiConstants.clientId,
+          ApiConstants.redirectUri,
+          // Correct: discovery document URL, not the authorization endpoint
+          discoveryUrl:
+          'https://login.microsoftonline.com/${ApiConstants.tenantId}/v2.0/.well-known/openid-configuration',
+          scopes: ['User.Read', 'openid', 'profile', 'email', 'offline_access'],
+          promptValues: ['select_account'],
+        ),
       );
 
-      // Step 2: Authenticate with Microsoft
-      // IMPORTANT: Use 'msauth' for signature hash format
-      final result = await FlutterWebAuth2.authenticate(
-        url: authUri.toString(),
-        callbackUrlScheme: 'msauth',
-      );
+      if (result == null || result.accessToken == null) return null;
 
-      // Step 3: Extract authorization code
-      final code = Uri.parse(result).queryParameters['code'];
-      if (code == null) {
-        throw Exception('Authorization code not found in callback');
-      }
+      assert(() {
+        debugPrint('✅ Token exchange successful');
+        return true;
+      }());
 
-      // Microsoft client — uses system trust store but rejects non-Microsoft hosts.
-      // Cannot use the pinned client here because pinning is scoped to bizapps.tatapower.com.
+      // Fetch employee ID from Microsoft Graph — same as existing flow
       final msClient = _buildMicrosoftClient();
-
       try {
-        // Step 4: Exchange code for access token
-        final tokenResponse = await msClient.post(
-          Uri.parse(ApiConstants.tokenEndpoint),
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-          body: {
-            'client_id': ApiConstants.clientId,
-            'scope': ApiConstants.scope,
-            'code': code,
-            'redirect_uri': ApiConstants.redirectUri,
-            'grant_type': 'authorization_code',
-            'code_verifier': codeVerifier, // PKCE
-          },
-        );
-
-        if (tokenResponse.statusCode != 200) {
-          throw Exception('Failed to exchange token: ${tokenResponse.statusCode}');
-        }
-
-        final tokenData = jsonDecode(tokenResponse.body);
-        final accessToken = tokenData['access_token'];
-
-        if (accessToken == null) {
-          throw Exception('Access token not found in token response');
-        }
-
-        // Step 5: Fetch user info from Microsoft Graph
         final userResponse = await msClient.get(
           Uri.parse(ApiConstants.userGraphUrl),
           headers: {
-            'Authorization': 'Bearer $accessToken',
+            'Authorization': 'Bearer ${result.accessToken}',
             'Content-Type': 'application/json',
           },
         );
@@ -131,8 +102,8 @@ class AuthenticationService {
 
         final userData = jsonDecode(userResponse.body);
 
-        // Step 6: Extract employee ID
-        const extensionKey = 'extension_6d1109881ca84719973dbff443d7b820_employeeNumber';
+        const extensionKey =
+            'extension_6d1109881ca84719973dbff443d7b820_employeeNumber';
         final empId = userData[extensionKey]?.toString();
 
         if (empId == null || empId.isEmpty) {
@@ -140,13 +111,11 @@ class AuthenticationService {
         }
 
         return empId;
-
       } finally {
         msClient.close();
       }
 
     } on PlatformException catch (e) {
-      // Only handle cancellation silently; all other platform errors are unexpected
       if (e.code != 'CANCELED') {
         assert(() {
           debugPrint('❌ Platform error: ${e.code} - ${e.message}');
@@ -154,18 +123,11 @@ class AuthenticationService {
         }());
       }
       return null;
-
     } on TimeoutException {
       return null;
-
-    } on FormatException {
-      return null;
-
     } on SocketException {
       return null;
-
     } catch (e, stackTrace) {
-      // Stack trace logged in debug builds only via assert (stripped in release)
       assert(() {
         debugPrint('❌ Auth error: $e');
         debugPrint('Stack trace: $stackTrace');
@@ -173,7 +135,129 @@ class AuthenticationService {
       }());
       return null;
     }
-  }
+  }  // LOGIN - Returns empId only
+
+  // static Future<String?> login() async {
+  //   try {
+  //     // PKCE
+  //     final codeVerifier = _generateCodeVerifier();
+  //     final codeChallenge = _generateCodeChallenge(codeVerifier);
+  //
+  //     // Step 1: Build authorization URL
+  //     final authUri = Uri.parse(ApiConstants.authorizationEndpoint).replace(
+  //       queryParameters: {
+  //         'client_id': ApiConstants.clientId,
+  //         'response_type': 'code',
+  //         'redirect_uri': ApiConstants.redirectUri,
+  //         'response_mode': 'query',
+  //         'scope': ApiConstants.scope,
+  //         'prompt': 'select_account',
+  //         'code_challenge': codeChallenge,
+  //         'code_challenge_method': 'S256',
+  //       },
+  //     );
+  //
+  //     // Step 2: Authenticate with Microsoft
+  //     // IMPORTANT: Use 'msauth' for signature hash format
+  //     final result = await FlutterWebAuth2.authenticate(
+  //       url: authUri.toString(),
+  //       callbackUrlScheme: 'msauth',
+  //     );
+  //
+  //     // Step 3: Extract authorization code
+  //     final code = Uri.parse(result).queryParameters['code'];
+  //     if (code == null) {
+  //       throw Exception('Authorization code not found in callback');
+  //     }
+  //
+  //     // Microsoft client — uses system trust store but rejects non-Microsoft hosts.
+  //     // Cannot use the pinned client here because pinning is scoped to bizapps.tatapower.com.
+  //     final msClient = _buildMicrosoftClient();
+  //
+  //     try {
+  //       // Step 4: Exchange code for access token
+  //       final tokenResponse = await msClient.post(
+  //         Uri.parse(ApiConstants.tokenEndpoint),
+  //         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+  //         body: {
+  //           'client_id': ApiConstants.clientId,
+  //           'scope': ApiConstants.scope,
+  //           'code': code,
+  //           'redirect_uri': ApiConstants.redirectUri,
+  //           'grant_type': 'authorization_code',
+  //           'code_verifier': codeVerifier, // PKCE
+  //         },
+  //       );
+  //
+  //       if (tokenResponse.statusCode != 200) {
+  //         throw Exception('Failed to exchange token: ${tokenResponse.statusCode}');
+  //       }
+  //
+  //       final tokenData = jsonDecode(tokenResponse.body);
+  //       final accessToken = tokenData['access_token'];
+  //
+  //       if (accessToken == null) {
+  //         throw Exception('Access token not found in token response');
+  //       }
+  //
+  //       // Step 5: Fetch user info from Microsoft Graph
+  //       final userResponse = await msClient.get(
+  //         Uri.parse(ApiConstants.userGraphUrl),
+  //         headers: {
+  //           'Authorization': 'Bearer $accessToken',
+  //           'Content-Type': 'application/json',
+  //         },
+  //       );
+  //
+  //       if (userResponse.statusCode != 200) {
+  //         throw Exception('Failed to fetch user info: ${userResponse.statusCode}');
+  //       }
+  //
+  //       final userData = jsonDecode(userResponse.body);
+  //
+  //       // Step 6: Extract employee ID
+  //       const extensionKey = 'extension_6d1109881ca84719973dbff443d7b820_employeeNumber';
+  //       final empId = userData[extensionKey]?.toString();
+  //
+  //       if (empId == null || empId.isEmpty) {
+  //         throw Exception('Employee ID not found in user profile');
+  //       }
+  //
+  //       return empId;
+  //
+  //     } finally {
+  //       msClient.close();
+  //     }
+  //
+  //   } on PlatformException catch (e) {
+  //     // Only handle cancellation silently; all other platform errors are unexpected
+  //     if (e.code != 'CANCELED') {
+  //       assert(() {
+  //         debugPrint('❌ Platform error: ${e.code} - ${e.message}');
+  //         return true;
+  //       }());
+  //     }
+  //     return null;
+  //
+  //   } on TimeoutException {
+  //     return null;
+  //
+  //   } on FormatException {
+  //     return null;
+  //
+  //   } on SocketException {
+  //     return null;
+  //
+  //   } catch (e, stackTrace) {
+  //     // Stack trace logged in debug builds only via assert (stripped in release)
+  //     assert(() {
+  //       debugPrint('❌ Auth error: $e');
+  //       debugPrint('Stack trace: $stackTrace');
+  //       return true;
+  //     }());
+  //     return null;
+  //   }
+  // }
 
   static Future<Token> refreshToken(
       BuildContext context, String? refreshToken) async {
