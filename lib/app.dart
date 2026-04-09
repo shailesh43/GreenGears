@@ -241,11 +241,11 @@ class _MyAppState extends State<MyApp> {
 
   Future<_InitResult> _login() async {
     final empId = await AuthenticationService.login();
-
     if (empId != null) {
       // ─── FIX 5: was saveEmpId — corrected to saveEmpCode to match getEmpCode ───
       await LocalPrefs.saveEmpId(empCode: empId);
       await LocalPrefs.saveLoginStatus(isLoggedIn: true);
+      print("✅ EMPID received - ${empId}, isLoggedIn = true");
       return _InitResult.success(empId);
     }
 
