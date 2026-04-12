@@ -76,14 +76,23 @@ class _MyAppState extends State<MyApp> {
       final isDeveloperMode = await developerMode();
       final isEmulatorDevice = await isEmulator();
 
-      if (!isRoot && !isDeveloperMode && !isEmulatorDevice) {
-        // ─── FIX 2: moveToNext() is now async; must await it ───
+      // ── NEW: check for user-installed CA certs ──
+      bool hasRogueCA = false;
+      if (!kDebugMode) {
+        try {
+          hasRogueCA = await const MethodChannel('com.tatapower.greengears/security')
+              .invokeMethod('hasUserInstalledCACerts');
+        } on PlatformException {
+          hasRogueCA = true; // fail safe
+        }
+      }
+      // ────────────────────────────────────────────
+
+      if (!isRoot && !isDeveloperMode && !isEmulatorDevice && !hasRogueCA) {
         return await moveToNext();
       } else {
         if (isRoot) {
-          showErrorDialog(
-            'You cannot use the Tata Power CP app on a jailbroken or rooted device.',
-          );
+          showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
         } else if (isDeveloperMode) {
           showErrorDialog(
             'Developer Mode is enabled, preventing you from using the app. '
@@ -91,14 +100,15 @@ class _MyAppState extends State<MyApp> {
                 'Developer options > toggle it Off, then restart the app.',
           );
         } else if (isEmulatorDevice) {
+          showErrorDialog('The Tata Power CP app cannot run on an emulator. Please install the app on a physical device.');
+        } else if (hasRogueCA) {
           showErrorDialog(
-            'The Tata Power CP app cannot run on an emulator. '
-                'Please install the app on a physical device.',
-          );
+            'A user-installed CA certificate was detected on this device.');
         }
         return const _InitResult.emulatorBlocked();
       }
     } else if (Platform.isIOS) {
+      // iOS block unchanged
       final isIosJailbreak = await iosJailbreak();
       final isEmulatorDevice = await isEmulator();
 
@@ -106,20 +116,14 @@ class _MyAppState extends State<MyApp> {
         return await moveToNext();
       } else {
         if (isIosJailbreak) {
-          showErrorDialog(
-            'You cannot use the Tata Power CP app on a jailbroken or rooted device.',
-          );
+          showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
         } else if (isEmulatorDevice) {
-          showErrorDialog(
-            'The Tata Power CP app cannot run on an emulator. '
-                'Please install the app on a physical device.',
-          );
+          showErrorDialog('The Tata Power CP app cannot run on an emulator. Please install the app on a physical device.');
         }
         return const _InitResult.emulatorBlocked();
       }
     }
 
-    // Fallback for non-Android/iOS platforms (desktop, web, etc.)
     return await moveToNext();
   }
 
@@ -216,7 +220,7 @@ class _MyAppState extends State<MyApp> {
                         onPressed: () => exit(0),
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                          const Color.fromRGBO(34, 197, 94, 1),
+                          const Color.fromRGBO(250, 98, 98, 1.0),
                           foregroundColor: Colors.white,
                         ),
                         child: const Row(
@@ -240,7 +244,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<_InitResult> _login() async {
-    final empId = await AuthenticationService.login();
+    final empId = await AuthenticationService.login(context);
     if (empId != null) {
       // ─── FIX 5: was saveEmpId — corrected to saveEmpCode to match getEmpCode ───
       await LocalPrefs.saveEmpId(empCode: empId);

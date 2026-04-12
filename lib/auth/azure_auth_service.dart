@@ -16,6 +16,7 @@ import 'dart:convert'; // For jsonDecode
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart'; // add crypto: ^3.0.3 to pubspec.yaml if not present
+import '../core/helpers/ssl_pinning.dart';
 
 // ---------------------------------------------------------------------------
 // PKCE helpers (RFC 7636)
@@ -60,8 +61,9 @@ http.Client _buildMicrosoftClient() {
 
 class AuthenticationService {
   // Nitish Sir Code
-  static Future<String?> login() async {
+  static Future<String?> login(BuildContext context) async {
     try {
+      await SSLSecurity.checkUserCACertificates(context);
       final FlutterAppAuth appAuth = FlutterAppAuth();
 
       // AppAuth handles PKCE (S256) automatically — no manual implementation needed
@@ -140,7 +142,7 @@ class AuthenticationService {
   static Future<Token> refreshToken(
       BuildContext context, String? refreshToken) async {
     if (refreshToken == null) {
-      final empId = await login();
+      final empId = await login(context);
       if (empId == null) {
         throw Exception('Login failed - unable to get employee ID');
       }
