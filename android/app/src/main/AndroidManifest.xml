@@ -1,6 +1,7 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="GreenGears"
@@ -24,8 +25,8 @@
                 android:resource="@style/NormalTheme" />
 
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
         </activity>
@@ -35,31 +36,20 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- Flutter Web Auth 2 Callback Activity -->
-<!--        <activity-->
-<!--            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"-->
-<!--            android:exported="true"-->
-<!--            android:launchMode="singleTop">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.VIEW"/>-->
-<!--                <category android:name="android.intent.category.DEFAULT"/>-->
-<!--                <category android:name="android.intent.category.BROWSABLE"/>-->
-<!--                <data android:scheme="msauth"/>-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
-
         <activity
             android:name="net.openid.appauth.RedirectUriReceiverActivity"
             android:exported="true"
             tools:node="replace">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
                     android:scheme="msauth"
                     android:host="com.tatapower.greengears"
-                    android:path="/fwX9a9GPV9I3xuDOLwxkrh63k3w="/>
+                    android:path="/fwX9a9GPV9I3xuDOLwxkrh63k3w=" />
             </intent-filter>
         </activity>
 
@@ -67,14 +57,14 @@
 
     <queries>
         <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
         </intent>
         <!-- Allow opening browsers for authentication -->
         <intent>
-            <action android:name="android.intent.action.VIEW"/>
-            <category android:name="android.intent.category.BROWSABLE"/>
-            <data android:scheme="https"/>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
         </intent>
     </queries>
 
