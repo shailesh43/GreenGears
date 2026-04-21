@@ -147,7 +147,16 @@ class _MyAppState extends State<MyApp> {
 
   Future<bool> isEmulator() async {
     if (kDebugMode) return false;
-    return !(await JailbreakRootDetection.instance.isRealDevice);
+
+    final jailbreakCheck = !(await JailbreakRootDetection.instance.isRealDevice);
+
+    // Only run device_info check on Android, where EmulatorDetector works
+    bool deviceInfoCheck = false;
+    if (Platform.isAndroid) {
+      deviceInfoCheck = await EmulatorDetector.isEmulator();
+    }
+
+    return jailbreakCheck || deviceInfoCheck;
   }
 
   Future<bool> developerMode() async {
