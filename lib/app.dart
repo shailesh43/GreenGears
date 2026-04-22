@@ -23,7 +23,6 @@ enum _LoginResult { success, cancelled, failed }
 class _InitResult {
   final String? empId;
   final _LoginResult loginResult;
-
   const _InitResult.success(this.empId) : loginResult = _LoginResult.success;
   const _InitResult.cancelled()
       : empId = null,
@@ -146,14 +145,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<bool> isEmulator() async {
-    if (kDebugMode) return false;
+    // if (kDebugMode) return false;
 
-    final jailbreakCheck = !(await JailbreakRootDetection.instance.isRealDevice);
-
+    final jailbreakCheck = !(await JailbreakRootDetection.instance.isOnExternalStorage);
+    print('jailbreakCheck: $jailbreakCheck');
     // Only run device_info check on Android, where EmulatorDetector works
     bool deviceInfoCheck = false;
     if (Platform.isAndroid) {
       deviceInfoCheck = await EmulatorDetector.isEmulator();
+      print('deviceInfoCheck: $deviceInfoCheck');
     }
 
     return jailbreakCheck || deviceInfoCheck;
