@@ -9,6 +9,7 @@ import './base_modal.dart';
 import '../../constants/local_prefs.dart';
 import '../../network/api_client.dart';
 import 'package:greengears/main.dart';
+import '../../features/docs/uploaded_quotations.dart';
 
 class DeleteRequestModal extends StatefulWidget {
   final CarRequest request;
@@ -119,8 +120,8 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
 
       final response = await _client.deleteRequest(
         requestId: request.requestId!,
-        role: roleId!, // your logged-in role
-        empId: request.empId!, // logged-in employee id
+        role: roleId,
+        empId: request.empId!,
       );
       _showSnackBar(
         context: context,
@@ -173,13 +174,33 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
           DetailRow(label: 'Vehicle Type', value: widget.request.vehicleType ?? 'NULL'),
           DetailRow(label: 'Color', value: widget.request.colorChoice ?? 'NULL'),
           DetailRow(label: 'Quotation', value: widget.request.quotation?.toString() ?? 'NULL'),
-          const SizedBox(height: 16),
-          _buildStatusRow(request),
           const SizedBox(height: 8),
+          _buildStatusRow(request),
+          const SizedBox(height: 12),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFE8E8E8)),
+          const SizedBox(height: 12),
+
+          // ── Uploaded Documents Section ────────────────────────────
+          const Text(
+            'Uploaded Documents',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xF5323232),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // asPage: false → no Scaffold/AppBar, shrinkWrapped ListView,
+          // safe to embed inside this modal's scroll view.
+          UploadedQuotations(
+            requestId: widget.request.requestId?.toString() ?? '',
+            asPage: false,
+          ),
         ],
       ),
 
-      /// BOTTOM (DELETE MOVED HERE ✅)
+      /// BOTTOM
       bottom: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: SizedBox(
@@ -214,18 +235,19 @@ class _DeleteRequestModalState extends State<DeleteRequestModal> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text(
-          'STATUS',
+          'Status',
           style: TextStyle(
             fontFamily: 'Inter',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF757575)
           ),
         ),
         Text(
           request.stage?.label ?? 'NULL',
           style: const TextStyle(
             fontFamily: 'Inter',
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Color(0xFF2196F3),
           ),

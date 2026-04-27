@@ -16,8 +16,15 @@ class UploadedQuotations extends StatefulWidget {
   /// The request ID whose documents should be fetched.
   final String requestId;
 
-  const UploadedQuotations({Key? key, required this.requestId})
-      : super(key: key);
+  /// When true, wraps content in a Scaffold with AppBar (standalone page).
+  /// When false, renders content only — safe to embed inside modals/columns.
+  final bool asPage;
+
+  const UploadedQuotations({
+    Key? key,
+    required this.requestId,
+    this.asPage = true,
+  }) : super(key: key);
 
   @override
   State<UploadedQuotations> createState() => _UploadedQuotationsState();
@@ -66,127 +73,143 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    // Standalone page — keep original Scaffold + AppBar
+    if (widget.asPage) {
+      return Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Uploaded Documents',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
           ),
-        ),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Request ID header ─────────────────────────────────────
-          Container(
-            width: double.infinity,
-            color: const Color(0xFFEFEFEF),
-            padding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              children: [
-                const Icon(Icons.confirmation_number_outlined,
-                    color: Color(0xF5323232), size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  'Your Active Request: ',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  widget.requestId,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xF50483DE),
-                  ),
-                ),
-              ],
+          title: const Text(
+            'Uploaded Documents',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFE8F5E9)),
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Request ID header ─────────────────────────────────────
+            Container(
+              width: double.infinity,
+              color: const Color(0xFFEFEFEF),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.confirmation_number_outlined,
+                      color: Color(0xF5323232), size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Your Active Request: ',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    widget.requestId,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xF50483DE),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, thickness: 1, color: Color(0xFFE8F5E9)),
 
-          // ── Body ─────────────────────────────────────────────────
-          Expanded(child: _buildBody()),
-        ],
-      ),
-    );
+            // ── Body ─────────────────────────────────────────────────
+            Expanded(child: _buildBody(shrinkWrap: false)),
+          ],
+        ),
+      );
+    }
+
+    // Embedded mode — no Scaffold, no AppBar, renders inline
+    return _buildBody(shrinkWrap: true);
   }
 
-  Widget _buildBody() {
+  /// [shrinkWrap] — pass true when embedded inside a scroll view (modal).
+  Widget _buildBody({required bool shrinkWrap}) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF42B347)),
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF42B347)),
+        ),
       );
     }
 
     if (_errorMessage != null) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, color: Colors.red[300], size: 48),
-            const SizedBox(height: 12),
-            Text(
-              _errorMessage!,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextButton.icon(
-              onPressed: _loadDocs,
-              icon: const Icon(Icons.refresh, color: Color(0xFF42B347)),
-              label: const Text(
-                'Retry',
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, color: Colors.red[300], size: 48),
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  color: Color(0xFF42B347),
-                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Colors.grey[600],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: _loadDocs,
+                icon: const Icon(Icons.refresh, color: Color(0xFF42B347)),
+                label: const Text(
+                  'Retry',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    color: Color(0xFF42B347),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_docs.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.folder_open_outlined,
-                color: Colors.grey[400], size: 64),
-            const SizedBox(height: 12),
-            Text(
-              'No documents found for your request',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[500],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.folder_open_outlined,
+                  color: Colors.grey[400], size: 64),
+              const SizedBox(height: 12),
+              Text(
+                'No documents found for your request',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[500],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -201,7 +224,15 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
     final sortedDocIds = grouped.keys.toList()..sort();
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      // shrinkWrap=true + NeverScrollableScrollPhysics when embedded in a
+      // parent scroll view (e.g. modal's SingleChildScrollView).
+      shrinkWrap: shrinkWrap,
+      physics: shrinkWrap
+          ? const NeverScrollableScrollPhysics()
+          : const AlwaysScrollableScrollPhysics(),
+      padding: shrinkWrap
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(vertical: 12),
       itemCount: sortedDocIds.length,
       itemBuilder: (context, groupIndex) {
         final docId = sortedDocIds[groupIndex];
@@ -239,7 +270,6 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
               padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
               child: Row(
                 children: [
-                  // Arrow: down when expanded, right when collapsed
                   Icon(
                     isExpanded
                         ? Icons.keyboard_arrow_down_rounded
@@ -351,7 +381,7 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
           ),
           const SizedBox(width: 8),
 
-          // Download button — downloads via Dio, bypassing Safari MIME issues
+          // Download button
           GestureDetector(
             onTap: () => FileDownloader.downloadAndOpenFile(
               context: context,
