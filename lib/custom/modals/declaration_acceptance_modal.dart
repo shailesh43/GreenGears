@@ -328,7 +328,7 @@ class DeclarationAcceptanceModal extends StatelessWidget {
 
               // Car Details Paragraph
               pw.Paragraph(
-                text: 'Under the said Car policy I am being provided with a car model ${request.manufacturer ?? 'Manufacturer'}, ${request.carModel ?? 'Model'} and ${request.colorChoice ?? 'Color'} (Vehicle/ Car) bearing Request Number ${request.requestId ?? 'Request ID'}, at an agreed capitalized cost of Rs. ${request.quotation?.toStringAsFixed(2) ?? '0.00'} (Rupees in words) including GST @ XX% and other incidental charges of Rs. XXXX, for a period of ${request.completeEmiTenure ?? 'XX'} months commencing from the date of disbursement of car payment to dealership.',
+                text: 'Under the said Car policy I am being provided with a car model ${request.manufacturer ?? 'Manufacturer'}, ${request.carModel ?? 'Model'} and ${request.colorChoice ?? 'Color'} (Vehicle/ Car) bearing Request Number ${request.requestId ?? 'Request ID'}, at an agreed capitalized cost of Rs. ${request.quotation?.toStringAsFixed(2) ?? '0.00'}',
                 style: const pw.TextStyle(fontSize: 12),
                 textAlign: pw.TextAlign.justify,
               ),
