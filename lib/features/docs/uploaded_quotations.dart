@@ -117,7 +117,7 @@ class _UploadedQuotationsState extends State<UploadedQuotations> {
                       color: Colors.grey[600],
                     ),
                   ),
-                  Text(
+                    Text(
                     widget.requestId,
                     style: const TextStyle(
                       fontFamily: 'Inter',

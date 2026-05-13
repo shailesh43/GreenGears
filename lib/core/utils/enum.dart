@@ -1,8 +1,6 @@
 import 'package:collection/collection.dart';
 
-/// --------------------
-/// USER ROLES
-/// --------------------
+// USER ROLES
 enum UserRole {
   user(1, 'User'),
   centralAdmin(2, 'Central Admin'),
@@ -20,38 +18,7 @@ enum UserRole {
   }
 }
 
-/// --------------------
-/// REQUEST STATUS (LIFECYCLE)
-/// --------------------
-enum RequestStatus {
-  active(1, 'Active'),
-  inProcess(31, 'In Process'),
-  terminatedByAdmin(82, 'Terminated by Admin'),
-  deletedByUser(110, 'Deleted by User');
-
-  final int code;
-  final String label;
-
-  const RequestStatus(this.code, this.label);
-
-  static RequestStatus? fromCode(int? code) {
-    if (code == null) return null;
-    return RequestStatus.values
-        .firstWhereOrNull((e) => e.code == code);
-  }
-
-  /// Only these are considered ACTIVE
-  bool get isActive =>
-      this == RequestStatus.active ||
-          this == RequestStatus.inProcess;
-
-  /// Everything else is INACTIVE
-  bool get isInactive => !isActive;
-}
-
-/// --------------------
-/// PROCESS STAGES (WORKFLOW)
-/// --------------------
+// PROCESS STAGES (request-flow)
 enum Stage {
   requested(20, 'Requested'),
   assignedToEsna(21, 'Assigned to ES&A'),
@@ -78,9 +45,7 @@ enum Stage {
   }
 }
 
-/// --------------------
-/// Document Upload (stages)
-/// --------------------
+// Document Upload (stages)
 enum Document {
   initialQuotationDoc(1, 'Initial quotation Document'),
   esnaUploadDoc(2, 'ES&A Upload Document'),

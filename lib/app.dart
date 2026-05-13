@@ -44,10 +44,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final ApiClient _client = globalApiClient;
-
   late Future<_InitResult> _initFuture;
-
-  // Store navigator key so we can show dialogs without BuildContext issues
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -66,7 +63,6 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  // ─── FIX 1: was returning null at the end instead of a valid _InitResult ───
   Future<_InitResult> _initializeApp() async {
     await Future.delayed(const Duration(seconds: 2));
 
@@ -75,7 +71,6 @@ class _MyAppState extends State<MyApp> {
       final isDeveloperMode = await developerMode();
       final isEmulatorDevice = await isEmulator();
 
-      // ── NEW: check for user-installed CA certs ──
       bool hasRogueCA = false;
       if (!kDebugMode) {
         try {
@@ -85,7 +80,6 @@ class _MyAppState extends State<MyApp> {
           hasRogueCA = true; // fail safe
         }
       }
-      // ────────────────────────────────────────────
 
       if (!isRoot && !isDeveloperMode && !isEmulatorDevice && !hasRogueCA) {
         return await moveToNext();
@@ -145,7 +139,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<bool> isEmulator() async {
-    // if (kDebugMode) return false;
+    if (kDebugMode) return false;
 
     final jailbreakCheck = !(await JailbreakRootDetection.instance.isOnExternalStorage);
     print('jailbreakCheck: $jailbreakCheck');

@@ -89,8 +89,8 @@ class FileDownloader {
     }
 
     try {
-      // 2️⃣  Download bytes via Dio — this hits S3 directly with all the
-      //     presigned auth params intact, no browser/WebView in the loop.
+      // Download bytes via Dio — this hits S3 directly with all the
+      // presigned auth params intact, no browser/WebView in the loop.
       final dir = await getTemporaryDirectory();
       final savePath = '${dir.path}/$trueFileName';
 
@@ -104,7 +104,7 @@ class FileDownloader {
         ),
       );
 
-      // 3️⃣  Open the saved file with the OS default viewer.
+      // Open the saved file with the OS default viewer.
       if (!context.mounted) return;
       if (showProgress) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();

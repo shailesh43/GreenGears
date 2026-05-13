@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
-
-//Home Page body
 import '../features/dashboard/dashboard_main.dart';
-// Processing page body
 import '../features/processing/processing_page.dart';
-// Profile page body
 import '../features/profile/profile_page.dart';
-//Policy page body
 import '../features/policy/policy_page.dart';
-
-// Import UserRole enum & Fetch role from Local prefs
 import '../core/utils/enum.dart';
 import '../constants/local_prefs.dart';
 
@@ -47,29 +40,21 @@ class _DashboardShellState extends State<DashboardShell> {
     _initializeData();
   }
 
-  // Load role-based pages
   Future<void> _initializeData() async {
-    // load empId
     final code = await LocalPrefs.getEmpCode();
     setState(() {
       empId = code ?? '';
     });
-
-    // load roleId
     int rId = await getUserRole();
     setState(() {
       roleId = rId;
     });
-
-    // setup pages
     _setupPagesAndNav();
-
     setState(() {
       isLoading = false;
     });
   }
 
-  // Sets up the pages & bottom nav-items based on the role
   void _setupPagesAndNav() {
 
     const _fourTabNav = [
@@ -136,7 +121,6 @@ class _DashboardShellState extends State<DashboardShell> {
         ?  _fourTabNav
         : _threeTabNav;
   }
-
 
   @override
   Widget build(BuildContext context) {

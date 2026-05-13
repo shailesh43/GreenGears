@@ -110,8 +110,6 @@ class _Policy extends State<Policy> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Section Filter Dropdown
-
             // Policy Version Info
             Container(
               padding: const EdgeInsets.all(12),
