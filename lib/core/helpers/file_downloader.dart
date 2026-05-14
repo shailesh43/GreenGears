@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// A utility class providing reusable file download functionality.
@@ -110,7 +110,7 @@ class FileDownloader {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
 
-      final result = await OpenFilex.open(savePath);
+      final result = await OpenFile.open(savePath);
 
       if (result.type != ResultType.done && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

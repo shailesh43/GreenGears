@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
           showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
         } else if (isDeveloperMode) {
           showErrorDialog(
-            'Developer Mode is enabled, preventing you from using the app. '
+            'Developer Mode is ena bled, preventing you from using the app. '
                 'To disable it, go to Settings > search for Developer > select '
                 'Developer options > toggle it Off, then restart the app.',
           );
@@ -116,7 +116,6 @@ class _MyAppState extends State<MyApp> {
         return const _InitResult.emulatorBlocked();
       }
     }
-
     return await moveToNext();
   }
 
