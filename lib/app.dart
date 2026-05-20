@@ -85,7 +85,7 @@ class _MyAppState extends State<MyApp> {
         return await moveToNext();
       } else {
         if (isRoot) {
-          showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
+          showErrorDialog('You cannot use the Tata Power GreenGears app on a jailbroken or rooted device.');
         } else if (isDeveloperMode) {
           showErrorDialog(
             'Developer Mode is ena bled, preventing you from using the app. '
@@ -93,7 +93,7 @@ class _MyAppState extends State<MyApp> {
                 'Developer options > toggle it Off, then restart the app.',
           );
         } else if (isEmulatorDevice) {
-          showErrorDialog('The Tata Power CP app cannot run on an emulator. Please install the app on a physical device.');
+          showErrorDialog('The Tata Power GreenGears app cannot run on an emulator. Please install the app on a physical device.');
         } else if (hasRogueCA) {
           showErrorDialog(
             'A user-installed CA certificate was detected on this device.');
@@ -109,9 +109,9 @@ class _MyAppState extends State<MyApp> {
         return await moveToNext();
       } else {
         if (isIosJailbreak) {
-          showErrorDialog('You cannot use the Tata Power CP app on a jailbroken or rooted device.');
+          showErrorDialog('You cannot use the Tata Power GreenGears app on a jailbroken or rooted device.');
         } else if (isEmulatorDevice) {
-          showErrorDialog('The Tata Power CP app cannot run on an emulator. Please install the app on a physical device.');
+          showErrorDialog('The Tata Power GreenGears app cannot run on an emulator. Please install the app on a physical device.');
         }
         return const _InitResult.emulatorBlocked();
       }
