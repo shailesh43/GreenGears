@@ -70,6 +70,7 @@ class _MyAppState extends State<MyApp> {
       final isRoot = await androidRootChecker();
       final isDeveloperMode = await developerMode();
       final isEmulatorDevice = await isEmulator();
+      final hasSuspiciousStorage = await suspiciousStorageCheck();
 
       bool hasRogueCA = false;
       if (!kDebugMode) {
@@ -140,16 +141,19 @@ class _MyAppState extends State<MyApp> {
   Future<bool> isEmulator() async {
     if (kDebugMode) return false;
 
-    final jailbreakCheck = !(await JailbreakRootDetection.instance.isOnExternalStorage);
-    print('jailbreakCheck: $jailbreakCheck');
-    // Only run device_info check on Android, where EmulatorDetector works
-    bool deviceInfoCheck = false;
-    if (Platform.isAndroid) {
-      deviceInfoCheck = await EmulatorDetector.isEmulator();
-      print('deviceInfoCheck: $deviceInfoCheck');
+    try {
+      return await EmulatorDetector.isEmulator();
+    } catch (e) {
+      return false;
     }
+  }
 
-    return jailbreakCheck || deviceInfoCheck;
+  Future<bool> suspiciousStorageCheck() async {
+    try {
+      return !(await JailbreakRootDetection.instance.isOnExternalStorage);
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<bool> developerMode() async {

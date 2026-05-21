@@ -1,53 +1,57 @@
+import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 
 class EmulatorDetector {
   static Future<bool> isEmulator() async {
-    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    final androidInfo = await deviceInfo.androidInfo;
+    try {
+      if (!Platform.isAndroid) return false;
 
-    final model = androidInfo.model.toLowerCase();
-    final brand = androidInfo.brand.toLowerCase();
-    final device = androidInfo.device.toLowerCase();
-    final product = androidInfo.product.toLowerCase();
-    final hardware = androidInfo.hardware.toLowerCase();
-    final manufacturer = androidInfo.manufacturer.toLowerCase();
-    final fingerprint = androidInfo.fingerprint.toLowerCase();
+      final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+      final androidInfo = await deviceInfo.androidInfo;
 
-    return !androidInfo.isPhysicalDevice ||
+      final model = androidInfo.model.toLowerCase();
+      final product = androidInfo.product.toLowerCase();
+      final hardware = androidInfo.hardware.toLowerCase();
+      final manufacturer = androidInfo.manufacturer.toLowerCase();
+      final fingerprint = androidInfo.fingerprint.toLowerCase();
 
-        // Standard Android emulator
-        model.contains('sdk') ||
-        model.contains('emulator') ||
-        hardware.contains('goldfish') ||
-        hardware.contains('ranchu') ||
-        brand.contains('generic') ||
-        device.contains('generic') ||
-        product.contains('sdk') ||
+      // Strong emulator indicators only
+      final isGenericEmulator =
+          !androidInfo.isPhysicalDevice ||
+              hardware.contains('goldfish') ||
+              hardware.contains('ranchu') ||
+              model.contains('sdk') ||
+              model.contains('emulator') ||
+              product.contains('sdk') ||
+              product.contains('google_sdk') ||
+              fingerprint.startsWith('generic');
 
-        // NoxPlayer
-        manufacturer.contains('nox') ||
-        model.contains('nox') ||
-        product.contains('nox') ||
-        device.contains('nox') ||
+      // NoxPlayer
+      final isNox =
+          manufacturer.contains('nox') ||
+              model.contains('nox') ||
+              product.contains('nox') ||
+              hardware.contains('nox');
 
-        // BlueStacks
-        manufacturer.contains('bluestacks') ||
-        model.contains('bluestacks') ||
-        product.contains('bluestacks') ||
-        fingerprint.contains('bluestacks') ||
+      // BlueStacks
+      final isBlueStacks =
+          manufacturer.contains('bluestacks') ||
+              model.contains('bluestacks') ||
+              product.contains('bluestacks');
 
-        // LDPlayer
-        manufacturer.contains('ldplayer') ||
-        model.contains('ldplayer') ||
-        product.contains('ld') ||
-        device.contains('ld_') ||
+      // LDPlayer
+      final isLDPlayer =
+          manufacturer.contains('ldplayer') ||
+              model.contains('ldplayer') ||
+              hardware.contains('vbox');
 
-        // Generic third-party emulator signals
-        fingerprint.contains('generic') ||
-        fingerprint.contains('emulator') ||
-        fingerprint.contains('unknown') ||
-        hardware.contains('vbox') ||        // VirtualBox-based emulators
-        hardware.contains('nox') ||
-        product.contains('google_sdk');
+      return isGenericEmulator ||
+          isNox ||
+          isBlueStacks ||
+          isLDPlayer;
+
+    } catch (e) {
+      return false;
+    }
   }
 }
