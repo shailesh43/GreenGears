@@ -6,50 +6,14 @@ PODS:
   - AppAuth/Core (1.7.5)
   - AppAuth/ExternalUserAgent (1.7.5):
     - AppAuth/Core
-  - CryptoSwift (1.8.4)
+  - CryptoSwift (1.10.0)
   - device_info_plus (0.0.1):
-    - Flutter
-  - DKImagePickerController/Core (4.3.9):
-    - DKImagePickerController/ImageDataManager
-    - DKImagePickerController/Resource
-  - DKImagePickerController/ImageDataManager (4.3.9)
-  - DKImagePickerController/PhotoGallery (4.3.9):
-    - DKImagePickerController/Core
-    - DKPhotoGallery
-  - DKImagePickerController/Resource (4.3.9)
-  - DKPhotoGallery (0.0.19):
-    - DKPhotoGallery/Core (= 0.0.19)
-    - DKPhotoGallery/Model (= 0.0.19)
-    - DKPhotoGallery/Preview (= 0.0.19)
-    - DKPhotoGallery/Resource (= 0.0.19)
-    - SDWebImage
-    - SwiftyGif
-  - DKPhotoGallery/Core (0.0.19):
-    - DKPhotoGallery/Model
-    - DKPhotoGallery/Preview
-    - SDWebImage
-    - SwiftyGif
-  - DKPhotoGallery/Model (0.0.19):
-    - SDWebImage
-    - SwiftyGif
-  - DKPhotoGallery/Preview (0.0.19):
-    - DKPhotoGallery/Model
-    - DKPhotoGallery/Resource
-    - SDWebImage
-    - SwiftyGif
-  - DKPhotoGallery/Resource (0.0.19):
-    - SDWebImage
-    - SwiftyGif
-  - file_picker (0.0.1):
-    - DKImagePickerController/PhotoGallery
     - Flutter
   - Flutter (1.0.0)
   - flutter_appauth (0.0.1):
     - AppAuth (= 1.7.5)
     - Flutter
   - flutter_web_auth_2 (3.0.0):
-    - Flutter
-  - fluttertoast (0.0.2):
     - Flutter
   - http_certificate_pinning (3.0.0):
     - Alamofire (~> 5.9.0)
@@ -59,99 +23,60 @@ PODS:
   - jailbreak_root_detection (1.0.1):
     - Flutter
     - IOSSecuritySuite (~> 1.9.10)
-  - open_filex (0.0.2):
+  - open_file_ios (1.0.3):
     - Flutter
   - permission_handler_apple (9.3.0):
-    - Flutter
-  - SDWebImage (5.21.6):
-    - SDWebImage/Core (= 5.21.6)
-  - SDWebImage/Core (5.21.6)
-  - share_plus (0.0.1):
-    - Flutter
-  - shared_preferences_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - SwiftyGif (5.4.5)
-  - url_launcher_ios (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
-  - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - flutter_appauth (from `.symlinks/plugins/flutter_appauth/ios`)
   - flutter_web_auth_2 (from `.symlinks/plugins/flutter_web_auth_2/ios`)
-  - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - http_certificate_pinning (from `.symlinks/plugins/http_certificate_pinning/ios`)
   - jailbreak_root_detection (from `.symlinks/plugins/jailbreak_root_detection/ios`)
-  - open_filex (from `.symlinks/plugins/open_filex/ios`)
+  - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
-  - share_plus (from `.symlinks/plugins/share_plus/ios`)
-  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
 SPEC REPOS:
-  trunk:
+  https://github.com/CocoaPods/Specs.git:
     - Alamofire
     - AppAuth
     - CryptoSwift
-    - DKImagePickerController
-    - DKPhotoGallery
     - IOSSecuritySuite
-    - SDWebImage
-    - SwiftyGif
 
 EXTERNAL SOURCES:
   device_info_plus:
     :path: ".symlinks/plugins/device_info_plus/ios"
-  file_picker:
-    :path: ".symlinks/plugins/file_picker/ios"
   Flutter:
     :path: Flutter
   flutter_appauth:
     :path: ".symlinks/plugins/flutter_appauth/ios"
   flutter_web_auth_2:
     :path: ".symlinks/plugins/flutter_web_auth_2/ios"
-  fluttertoast:
-    :path: ".symlinks/plugins/fluttertoast/ios"
   http_certificate_pinning:
     :path: ".symlinks/plugins/http_certificate_pinning/ios"
   jailbreak_root_detection:
     :path: ".symlinks/plugins/jailbreak_root_detection/ios"
-  open_filex:
-    :path: ".symlinks/plugins/open_filex/ios"
+  open_file_ios:
+    :path: ".symlinks/plugins/open_file_ios/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
-  share_plus:
-    :path: ".symlinks/plugins/share_plus/ios"
-  shared_preferences_foundation:
-    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
-  url_launcher_ios:
-    :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
   Alamofire: f36a35757af4587d8e4f4bfa223ad10be2422b8c
   AppAuth: 501c04eda8a8d11f179dbe8637b7a91bb7e5d2fa
-  CryptoSwift: e64e11850ede528a02a0f3e768cec8e9d92ecb90
-  device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
-  DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
-  DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
-  file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be
+  CryptoSwift: e2e7776512f250e66205955da748e7a4e4abffe0
+  device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_appauth: 273bf736e38f7d85000b1a9ac15ace5800c277f2
   flutter_web_auth_2: 5c8d9dcd7848b5a9efb086d24e7a9adcae979c80
-  fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
   http_certificate_pinning: 133f28ad5c2d1ecda2581dd2d2cd9dc74da59012
   IOSSecuritySuite: b51056d5411aee567153ca86ce7f6edfdc5d2654
   jailbreak_root_detection: 9201e1dfd51dc23069cbfb8d4f4a2d18305170bf
-  open_filex: 432f3cd11432da3e39f47fcc0df2b1603854eff1
+  open_file_ios: 46184d802ee7959203f6392abcfa0dd49fdb5be0
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
-  SDWebImage: 1bb6a1b84b6fe87b972a102bdc77dd589df33477
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
-  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
-  SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
-  url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
 
-PODFILE CHECKSUM: 913a1be2f7b27e6ea330106af0bb995e71a27eb0
+PODFILE CHECKSUM: 73ba595134bf35f04779d32488f5d0b24296f5a3
 
 COCOAPODS: 1.16.2
